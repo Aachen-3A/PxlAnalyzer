@@ -14,7 +14,7 @@ clean:
 chfactory:	PXL.o PXLdCache.o chfactory.o TConfig/TConfigDict.o TConfig/TConfig.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/CcEventClass.o  ParticleMatcher/ParticleMatcher.o ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/HistoPolisher.o
 		$(CXX) -o chfactory PXL.o PXLdCache.o chfactory.o TConfig/TConfigDict.o TConfig/TConfig.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/CcEventClass.o  ParticleMatcher/ParticleMatcher.o ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/HistoPolisher.o $(LDFLAGS) -lz
 
-		rm -f *.o */*.o
+#		rm -f *.o */*.o
 #-------------------------------------------------------------------------------
 %.o: %.cc
 	g++ -g -s -c $(LDFLAGS) -o $@ $<
