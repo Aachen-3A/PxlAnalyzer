@@ -5,10 +5,10 @@ LHAPDFDIR:=/home/home1/institut_3a/chof/Generators/LHAPDFLIB/lhapdf-5.3.1/
 CXXFLAGS:=-O3 --ansi -Wall -fpic -g  $(ROOT_GLIBS) $(SYSLIBS) -I$(ROOT_INCLUDE) -I/opt/d-cache/dcap/include/ -fomit-frame-pointer -I.
 LDFLAGS:= -L. $(ROOT_GLIBS) $(SYSLIBS) -L/opt/d-cache/dcap/lib -ldcap -I$(ROOT_INCLUDE) -I/opt/d-cache/dcap/include/ -lLHAPDF -L$(LHAPDFDIR)../lhapdf/lib/ 
 
-all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so
+all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler
         
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict*
 	rm -f */*/*Dict*
@@ -49,7 +49,8 @@ MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o PXL.o EventClassFactory/TEventClass
 MISalgo/TECResult.so:	PXL.o EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o MISalgo/TECResult.o MISalgo/TECResultDict.o TConfig/TConfigDict.o TConfig/TConfig.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECUpDownError.o ControlPlotFactory/HistoPolisher.o MISalgo/ECResultTable.o MISalgo/AnyOption.o 
 			$(CXX) -shared -O $^ -o $@
 
-
+EventClassFactory/ECCrossSectionRescaler:	PXL.o EventClassFactory/ECCrossSectionRescaler.o EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o TConfig/TConfigDict.o TConfig/TConfig.o MISalgo/AnyOption.o 
+						$(CXX) -o EventClassFactory/ECCrossSectionRescaler PXL.o EventClassFactory/ECCrossSectionRescaler.o EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o TConfig/TConfigDict.o TConfig/TConfig.o MISalgo/AnyOption.o $(LDFLAGS) -lz
 #		rm -f *.o */*.o
 #-------------------------------------------------------------------------------
 %.o: %.cc
