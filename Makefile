@@ -1,8 +1,9 @@
 ROOT_LIBS:=$(shell root-config --libs)
 ROOT_GLIBS:=$(shell root-config --glibs)
 ROOT_INCLUDE:=$(shell root-config --incdir)
-CXXFLAGS:=-O3 --ansi -Wall -fpic -g  $(ROOT_GLIBS) $(SYSLIBS) -I$(ROOT_INCLUDE) -fomit-frame-pointer -I.
-LDFLAGS:= -L. $(ROOT_GLIBS) $(SYSLIBS) -I$(ROOT_INCLUDE)
+LHAPDFDIR:=/home/home1/institut_3a/chof/Generators/LHAPDFLIB/lhapdf-5.3.1/
+CXXFLAGS:=-O3 --ansi -Wall -fpic -g  $(ROOT_GLIBS) $(SYSLIBS) -I$(ROOT_INCLUDE) -I/opt/d-cache/dcap/include/ -fomit-frame-pointer -I.
+LDFLAGS:= -L. $(ROOT_GLIBS) $(SYSLIBS) -L/opt/d-cache/dcap/lib -ldcap -I$(ROOT_INCLUDE) -I/opt/d-cache/dcap/include/ -lLHAPDF -L$(LHAPDFDIR)../lhapdf/lib/ 
 
 all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler
         
@@ -11,6 +12,7 @@ clean:
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict*
 	rm -f */*/*Dict*
+
 
 #-------------------------------------------------------------------------------
 
