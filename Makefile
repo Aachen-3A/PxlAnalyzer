@@ -60,7 +60,7 @@ MISalgo/TECResult.so:	lib/MISalgo.a PXL.o ControlPlotFactory/HistoPolisher.o MIS
 
 
 #-----Automatic rules----------------------------------------------------------
-%.o: %.cc
+%.o: %.cc %.hh
 	g++ $(CXXFLAGS) -o $@ $<
 
 
