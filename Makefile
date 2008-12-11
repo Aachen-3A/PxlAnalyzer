@@ -2,7 +2,7 @@
 
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
-ROOT_GLIBS:=$(shell root-config --glibs)
+ROOT_GLIBS:=$(shell root-config --libs)
 LHAPDFDIR:=/home/home1/institut_3a/chof/Generators/LHAPDFLIB/lhapdf-5.3.1/
 CXXFLAGS:=-O2 --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I/opt/d-cache/dcap/include/ -I.
 LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -ldcap -lLHAPDF -L$(LHAPDFDIR)../lhapdf/lib/ -lz
@@ -11,7 +11,9 @@ LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -
 
 #-----Default and cleaning rules-----------------------------------------------
 
-all: lib music EventClassFactory/ECMerger EventClassFactory/ECFileUtil MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger
+.PHONY: all clean
+
+all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
 clean: 
 	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger
@@ -47,6 +49,15 @@ MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o PXL.o MISalgo/TECResultDict.o
 				$(CXX) -o MISalgo/TECResultMerger $(LDFLAGS) $^
 
 
+#-----Rules for shared libraries for interactive root--------------------------
+
+EventClassFactory/TEventClass.so: 	lib/EventClass.a EventClassFactory/ECFileUtil.o PXL.o MISalgo/AnyOption.o lib/TConfig.a
+					$(CXX) -o $@ -shared $(LDFLAGS) -O $^
+
+MISalgo/TECResult.so:	lib/MISalgo.a PXL.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+			$(CXX) -o $@ -shared $(LDFLAGS) -O $^
+
+
 
 #-----Automatic rules----------------------------------------------------------
 %.o: %.cc
@@ -59,19 +70,19 @@ MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o PXL.o MISalgo/TECResultDict.o
 lib:
 	mkdir lib
 
-lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/HistoPolisher.o
+lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/HistoPolisher.o | lib
 				ar rcs $@ $^
 
-lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o
+lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o | lib
 			ar rcs $@ $^
 
-lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o
+lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | lib
 		ar rcs $@ $^
 
-lib/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o
+lib/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o | lib
 			ar rcs $@ $^
 
-lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o
+lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o | lib
 		ar rcs $@ $^
 
 
