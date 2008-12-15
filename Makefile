@@ -1,10 +1,16 @@
 #-----Flags--------------------------------------------------------------------
 
+ifdef DEBUG
+	DEBUG_FLAG:=-g
+else
+	DEBUG_FLAG:=-O2
+endif
+
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_GLIBS:=$(shell root-config --libs)
 LHAPDFDIR:=/home/home1/institut_3a/chof/Generators/LHAPDFLIB/lhapdf-5.3.1/
-CXXFLAGS:=-O2 --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I/opt/d-cache/dcap/include/ -I.
+CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I/opt/d-cache/dcap/include/ -I.
 LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -ldcap -lLHAPDF -L$(LHAPDFDIR)../lhapdf/lib/ -lz
 
 
