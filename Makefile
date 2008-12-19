@@ -9,9 +9,8 @@ endif
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_GLIBS:=$(shell root-config --libs)
-LHAPDFDIR:=/home/home1/institut_3a/chof/Generators/LHAPDFLIB/lhapdf-5.3.1/
 CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I/opt/d-cache/dcap/include/ -I.
-LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -ldcap -lLHAPDF -L$(LHAPDFDIR)../lhapdf/lib/ -lz
+LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -ldcap -lz
 
 
 
@@ -33,7 +32,7 @@ clean:
 
 #-----Rules for executables----------------------------------------------------
 
-music:		music.o PXL.o PXLdCache.o $(LHAPDFDIR)/ccwrap/LHAPDFWrap.o $(LHAPDFDIR)/ccwrap/LHAPDFfw.o MISalgo/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
+music:		music.o PXL.o PXLdCache.o MISalgo/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
 		$(CXX) -o music $(LDFLAGS) $^
 
 EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
