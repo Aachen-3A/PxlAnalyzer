@@ -18,10 +18,10 @@ LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -
 
 .PHONY: all clean
 
-all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger EventClassFactory/TEventClass.so MISalgo/TECResult.so
+all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict*
 	rm -f */*/*Dict*
@@ -40,6 +40,9 @@ EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o PXL.o MISalgo/AnyOption
 
 EventClassFactory/ECFileUtil:	EventClassFactory/ECFileUtil.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o EventClassFactory/ECFileUtil $(LDFLAGS) $^
+
+EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+				$(CXX) -o EventClassFactory/FakeClass $(LDFLAGS) $^
 
 MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o PXL.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a lib/MISalgo.a
 			$(CXX) -o MISalgo/ROI_analysis $(LDFLAGS) $^
