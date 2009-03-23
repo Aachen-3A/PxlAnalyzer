@@ -6,11 +6,17 @@ else
 	DEBUG_FLAG:=-O2
 endif
 
+ifdef CMSSW_RELEASE_BASE
+	DCAP_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/slc4_ia32_gcc345/tools/selected/dcap.xml | grep 'name="DCAP_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
+else
+	DCAP_BASE:=/opt/d-cache/dcap
+endif
+
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_GLIBS:=$(shell root-config --libs)
-CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I/opt/d-cache/dcap/include/ -I.
-LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L/opt/d-cache/dcap/lib -ldcap -lz
+CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I$(DCAP_BASE)/include/ -I.
+LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L$(DCAP_BASE)/lib -ldcap -lz
 
 
 
