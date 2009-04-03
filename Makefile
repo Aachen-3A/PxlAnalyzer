@@ -38,7 +38,7 @@ clean:
 
 #-----Rules for executables----------------------------------------------------
 
-music:		music.o PXL.o PXLdCache.o MISalgo/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
+music:		music.o PXL.o PXLdCache.o MISalgo/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o Tools/Tools.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
 		$(CXX) -o music $(LDFLAGS) $^
 
 EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
@@ -47,7 +47,7 @@ EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o PXL.o MISalgo/AnyOption
 EventClassFactory/ECFileUtil:	EventClassFactory/ECFileUtil.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o EventClassFactory/ECFileUtil $(LDFLAGS) $^
 
-EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o PXL.o MISalgo/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o EventClassFactory/FakeClass $(LDFLAGS) $^
 
 MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o PXL.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a lib/MISalgo.a
@@ -59,7 +59,7 @@ MISalgo/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o PXL.o Control
 EventClassFactory/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
 						$(CXX) -o EventClassFactory/ECCrossSectionRescaler $(LDFLAGS) $^
 
-MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o MISalgo/TECResultMerger $(LDFLAGS) $^
 
 
@@ -87,7 +87,7 @@ lib:
 lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/HistoPolisher.o | lib
 				ar rcs $@ $^
 
-lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o | lib
+lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o Tools/Tools.o | lib
 			ar rcs $@ $^
 
 lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | lib
@@ -96,7 +96,7 @@ lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | lib
 lib/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o | lib
 			ar rcs $@ $^
 
-lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o | lib
+lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o Tools/Tools.o | lib
 		ar rcs $@ $^
 
 
