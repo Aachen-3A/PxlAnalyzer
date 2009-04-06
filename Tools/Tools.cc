@@ -11,7 +11,7 @@ std::string Tools::musicAbsPath( std::string relPath ){
    if( pPath != NULL ){
       output = std::string( pPath ) + "/" + relPath;
    } else {
-      std::cout << "FATAL: MUSIC_PATH not set!" << std::endl;
+      std::cout << "FATAL: MUSIC_BASE not set!" << std::endl;
       output = "";
    }
    return output;
