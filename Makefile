@@ -38,37 +38,37 @@ clean:
 
 #-----Rules for executables----------------------------------------------------
 
-music:		music.o PXL.o PXLdCache.o MISalgo/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o Tools/Tools.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
+music:		music.o PXL.o PXLdCache.o Tools/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o Tools/Tools.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
 		$(CXX) -o music $(LDFLAGS) $^
 
-EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o PXL.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o EventClassFactory/ECMerger $(LDFLAGS) $^
 
-EventClassFactory/ECFileUtil:	EventClassFactory/ECFileUtil.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+EventClassFactory/ECFileUtil:	EventClassFactory/ECFileUtil.o PXL.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o EventClassFactory/ECFileUtil $(LDFLAGS) $^
 
-EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o PXL.o MISalgo/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
+EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o PXL.o Tools/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o EventClassFactory/FakeClass $(LDFLAGS) $^
 
-MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o PXL.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a lib/MISalgo.a
+MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a lib/MISalgo.a
 			$(CXX) -o MISalgo/ROI_analysis $(LDFLAGS) $^
 
-MISalgo/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o PXL.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/MISalgo.a lib/EventClass.a lib/TConfig.a
+MISalgo/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o lib/MISalgo.a lib/EventClass.a lib/TConfig.a
 			$(CXX) -o MISalgo/GlobalStuff $(LDFLAGS) $^
 
-EventClassFactory/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o PXL.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a
+EventClassFactory/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o PXL.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a
 						$(CXX) -o EventClassFactory/ECCrossSectionRescaler $(LDFLAGS) $^
 
-MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
+MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
 				$(CXX) -o MISalgo/TECResultMerger $(LDFLAGS) $^
 
 
 #-----Rules for shared libraries for interactive root--------------------------
 
-EventClassFactory/TEventClass.so: 	lib/EventClass.a EventClassFactory/ECFileUtil.o PXL.o MISalgo/AnyOption.o lib/TConfig.a EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o
+EventClassFactory/TEventClass.so: 	lib/EventClass.a EventClassFactory/ECFileUtil.o PXL.o Tools/AnyOption.o lib/TConfig.a EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o
 					$(CXX) -o $@ -shared $(LDFLAGS) -O $^
 
-MISalgo/TECResult.so:	lib/MISalgo.a PXL.o ControlPlotFactory/HistoPolisher.o MISalgo/AnyOption.o lib/EventClass.a lib/TConfig.a MISalgo/TECResult.o MISalgo/TECResultDict.o EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o
+MISalgo/TECResult.so:	lib/MISalgo.a PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a MISalgo/TECResult.o MISalgo/TECResultDict.o EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o
 			$(CXX) -o $@ -shared $(LDFLAGS) -O $^
 
 
