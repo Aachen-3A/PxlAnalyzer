@@ -121,3 +121,22 @@ MISalgo/TECResultDict.cc:	MISalgo/TECResult.hh MISalgo/TECResultLinkDef.h
 				rootcint -v -f $@ -c $^
 				@sed -e "s@#include \"MISalgo/TECResult.hh\"@#include \"TECResult.hh\"@" MISalgo/TECResultDict.h > MISalgo/TECResultDict.tmp
 				@mv MISalgo/TECResultDict.tmp MISalgo/TECResultDict.h
+
+
+
+#-----Header dependencies-----------------------------------------------------
+music.o: PXL.hh ControlPlotFactory/CcControl.hh EventClassFactory/CcEventClass.hh TConfig/TConfig.h ParticleMatcher/EventSelector.hh PXLdCache.hh Tools/AnyOption.hh Tools/Tools.hh
+
+ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/EleDiffPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/PlotBase.o ControlPlotFactory/VertexDiffPlots.o: ControlPlotFactory/HistoPolisher.hh
+
+EventClassFactory/CcEventClass.o MISalgo/ErrorComputer.o MISalgo/ErrorService.o MISalgo/TECResult.o: Tools/Tools.hh
+
+EventClassFactory/ECCrossSectionRescaler.o EventClassFactory/ECFileUtil.o EventClassFactory/ECMerger.o: Tools/AnyOption.hh EventClassFactory/TEventClass.hh
+
+EventClassFactory/FakeClass.o: PXL.hh EventClassFactory/TEventClass.hh ParticleMatcher/EventSelector.hh Tools/Tools.hh
+
+MISalgo/GlobalStuff.o MISalgo/ROI_analysis.o: MISalgo/RegionScanner.hh MISalgo/ECResultTable.hh EventClassFactory/TEventClass.hh Tools/AnyOption.hh
+
+MISalgo/Signf_analysis.o: MISalgo/ECDicer.hh EventClassFactory/TEventClass.hh
+
+MISalgo/TECResultMerger.o: MISalgo/TECResult.hh Tools/AnyOption.hh
