@@ -29,10 +29,10 @@ DEPDIR=dep
 
 .PHONY: all clean
 
-all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger EventClassFactory/TEventClass.so MISalgo/TECResult.so
+all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
-clean:
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger
+clean: 
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
 	rm -rf $(LIBDIR) $(DEPDIR)
@@ -65,6 +65,11 @@ MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECRe
 				$(CXX) -o $@ $(LDFLAGS) $^
 
 
+
+MISv2/dicePseudoData: 	MISv2/dicePseudoData.o Tools/Tools.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
+			$(CXX) -o MISv2/dicePseudoData $(LDFLAGS) $^
+
+
 #-----Rules for shared libraries for interactive root--------------------------
 
 EventClassFactory/TEventClass.so: 	$(LIBDIR)/EventClass.a EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/TConfig.a EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o TConfig/TConfigDict.o TConfig/TConfig.o Tools/Tools.o
@@ -92,7 +97,7 @@ $(LIBDIR)/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/E
 $(LIBDIR)/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | $(LIBDIR)
 		ar rcs $@ $^
 
-$(LIBDIR)/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o | $(LIBDIR)
+$(LIBDIR)/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o Tools/PXL/PXL.o | $(LIBDIR)
 			ar rcs $@ $^
 
 $(LIBDIR)/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECDicer_add.o MISalgo/ErrorService_add.o MISalgo/ECDicer_multiply.o MISalgo/ErrorService_multiply.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o Tools/Tools.o | $(LIBDIR)
