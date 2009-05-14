@@ -96,7 +96,7 @@ lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | lib
 lib/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o | lib
 			ar rcs $@ $^
 
-lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o Tools/Tools.o | lib
+lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECDicer_add.o MISalgo/ErrorService_add.o MISalgo/ECDicer_multiply.o MISalgo/ErrorService_multiply.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o Tools/Tools.o | lib
 		ar rcs $@ $^
 
 
