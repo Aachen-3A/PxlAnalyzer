@@ -129,7 +129,9 @@ music.o: PXL.hh ControlPlotFactory/CcControl.hh EventClassFactory/CcEventClass.h
 
 ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/EleDiffPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/PlotBase.o ControlPlotFactory/VertexDiffPlots.o: ControlPlotFactory/HistoPolisher.hh
 
-EventClassFactory/CcEventClass.o MISalgo/ErrorComputer.o MISalgo/ErrorService.o MISalgo/TECResult.o: Tools/Tools.hh
+EventClassFactory/CcEventClass.o MISalgo/ErrorComputer.o MISalgo/ErrorService.o: Tools/Tools.hh
+
+MISalgo/TECResult.o: Tools/Tools.hh ControlPlotFactory/HistoPolisher.hh
 
 EventClassFactory/ECCrossSectionRescaler.o EventClassFactory/ECFileUtil.o EventClassFactory/ECMerger.o: Tools/AnyOption.hh EventClassFactory/TEventClass.hh
 
