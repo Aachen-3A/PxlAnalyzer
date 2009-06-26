@@ -142,3 +142,5 @@ MISalgo/GlobalStuff.o MISalgo/ROI_analysis.o: MISalgo/RegionScanner.hh MISalgo/E
 MISalgo/Signf_analysis.o: MISalgo/ECDicer.hh EventClassFactory/TEventClass.hh
 
 MISalgo/TECResultMerger.o: MISalgo/TECResult.hh Tools/AnyOption.hh
+
+ParticleMatcher/EventSelector.o: EventClassFactory/CcEventClass.hh Tools/Tools.hh
