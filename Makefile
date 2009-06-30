@@ -84,7 +84,7 @@ MISalgo/TECResult.so:	lib/MISalgo.a PXL.o ControlPlotFactory/HistoPolisher.o Too
 lib:
 	mkdir lib
 
-lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/HistoPolisher.o | lib
+lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/EventPlots.o ControlPlotFactory/HistoPolisher.o | lib
 				ar rcs $@ $^
 
 lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o Tools/Tools.o | lib
@@ -127,7 +127,9 @@ MISalgo/TECResultDict.cc:	MISalgo/TECResult.hh MISalgo/TECResultLinkDef.h
 #-----Header dependencies-----------------------------------------------------
 music.o: PXL.hh ControlPlotFactory/CcControl.hh EventClassFactory/CcEventClass.hh TConfig/TConfig.h ParticleMatcher/EventSelector.hh PXLdCache.hh Tools/AnyOption.hh Tools/Tools.hh
 
-ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/EleDiffPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/PlotBase.o ControlPlotFactory/VertexDiffPlots.o: ControlPlotFactory/HistoPolisher.hh
+ControlPlotFactory/CcControl.o: PXL.hh ControlPlotFactory/DiffPlotBase.hh ControlPlotFactory/MuonDiffPlots.hh ControlPlotFactory/EleDiffPlots.hh ControlPlotFactory/GammaDiffPlots.hh ControlPlotFactory/METDiffPlots.hh ControlPlotFactory/JetDiffPlots.hh ControlPlotFactory/VertexDiffPlots.hh ControlPlotFactory/TriggerDiffPlots.hh ControlPlotFactory/EventPlots.hh
+
+ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/EleDiffPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/PlotBase.o ControlPlotFactory/VertexDiffPlots.o: PXL.hh ControlPlotFactory/HistoPolisher.hh
 
 EventClassFactory/CcEventClass.o MISalgo/ErrorComputer.o MISalgo/ErrorService.o: Tools/Tools.hh
 
