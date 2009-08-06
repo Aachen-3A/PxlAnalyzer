@@ -104,6 +104,8 @@ $(LIBDIR)/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionS
 		ar rcs $@ $^
 
 
+$(LIBDIR)/MISv2.a: MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o | $(LIBDIR)
+		ar rcs $@ $^
 
 
 #-----Misc rules---------------------------------------------------------------
