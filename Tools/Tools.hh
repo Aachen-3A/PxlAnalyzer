@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 #include <cstdlib>
 
 namespace Tools{
@@ -13,6 +14,13 @@ namespace Tools{
    //splits the input string at each occurence of sep and puts the parts into the result vector
    //if ignore empty is set, the output vector will contain no empty strings
    void splitString( std::vector< std::string > &result, const std::string &input, const std::string sep=",", bool ignoreEmpty = false );
+
+   //return everything you can << into an ostream as a string
+   template< class T > std::string toString( T &input ){
+      std::stringstream out;
+      out << input;
+      return out.str();
+   }
 }
 
 #endif
