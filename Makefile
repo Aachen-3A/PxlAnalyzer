@@ -69,6 +69,9 @@ MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECRe
 MISv2/dicePseudoData: 	MISv2/dicePseudoData.o Tools/Tools.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
 			$(CXX) -o MISv2/dicePseudoData $(LDFLAGS) $^
 
+MISv2/printData: 	MISv2/printData.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
+			$(CXX) -o MISv2/printData $(LDFLAGS) $^
+
 
 #-----Rules for shared libraries for interactive root--------------------------
 
