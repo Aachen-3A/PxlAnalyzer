@@ -69,7 +69,7 @@ MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECRe
 MISv2/dicePseudoData: 	MISv2/dicePseudoData.o Tools/Tools.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
 			$(CXX) -o MISv2/dicePseudoData $(LDFLAGS) $^
 
-MISv2/printData: 	MISv2/printData.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
+MISv2/printData: 	MISv2/printData.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
 			$(CXX) -o MISv2/printData $(LDFLAGS) $^
 
 
@@ -107,7 +107,7 @@ $(LIBDIR)/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionS
 		ar rcs $@ $^
 
 
-$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o | $(LIBDIR)
+$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ECPrinter.o | $(LIBDIR)
 		ar rcs $@ $^
 
 
