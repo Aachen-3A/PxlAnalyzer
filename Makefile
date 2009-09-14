@@ -32,7 +32,7 @@ DEPDIR=dep
 all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printData
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
 	rm -rf $(LIBDIR) $(DEPDIR)
@@ -107,7 +107,7 @@ $(LIBDIR)/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionS
 		ar rcs $@ $^
 
 
-$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ECPrinter.o | $(LIBDIR)
+$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ProcessList.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ECPrinter.o | $(LIBDIR)
 		ar rcs $@ $^
 
 
