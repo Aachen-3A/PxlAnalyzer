@@ -18,6 +18,11 @@ ROOT_GLIBS:=$(shell root-config --libs)
 CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I$(DCAP_BASE)/include/ -I.
 LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L$(DCAP_BASE)/lib -ldcap -lz
 
+#Where to store generated libraries
+LIBDIR=lib
+
+#Where to store the generate dependency files
+DEPDIR=dep
 
 
 #-----Default and cleaning rules-----------------------------------------------
@@ -26,41 +31,38 @@ LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L$(DCAP_BASE)/lib -ldcap
 
 all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
-clean: 
+clean:
 	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger
 	rm -f *.o */*.o */*/*.o
-	rm -f */*Dict*
-	rm -f */*/*Dict*
-	rm -rf lib
-
-
+	rm -f */*Dict* */*/*Dict*
+	rm -rf $(LIBDIR) $(DEPDIR)
 
 
 #-----Rules for executables----------------------------------------------------
 
 music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o Tools/Tools.o Tools/dCache/dCacheBuf.o lib/EventClass.a lib/ParticleMatcher.a lib/TConfig.a lib/ControlPlotFactory.a
-		$(CXX) -o music $(LDFLAGS) $^
+		$(CXX) -o $@ $(LDFLAGS) $^
 
 EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a
-				$(CXX) -o EventClassFactory/ECMerger $(LDFLAGS) $^
+				$(CXX) -o $@ $(LDFLAGS) $^
 
 EventClassFactory/ECFileUtil:	EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a
-				$(CXX) -o EventClassFactory/ECFileUtil $(LDFLAGS) $^
+				$(CXX) -o $@ $(LDFLAGS) $^
 
 EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
-				$(CXX) -o EventClassFactory/FakeClass $(LDFLAGS) $^
+				$(CXX) -o $@ $(LDFLAGS) $^
 
 MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a lib/MISalgo.a
-			$(CXX) -o MISalgo/ROI_analysis $(LDFLAGS) $^
+			$(CXX) -o $@ $(LDFLAGS) $^
 
 MISalgo/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o lib/MISalgo.a lib/EventClass.a lib/TConfig.a
-			$(CXX) -o MISalgo/GlobalStuff $(LDFLAGS) $^
+			$(CXX) -o $@ $(LDFLAGS) $^
 
 EventClassFactory/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o Tools/PXL/PXL.o Tools/AnyOption.o lib/EventClass.a lib/TConfig.a
-						$(CXX) -o EventClassFactory/ECCrossSectionRescaler $(LDFLAGS) $^
+						$(CXX) -o $@ $(LDFLAGS) $^
 
 MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o Tools/Tools.o lib/EventClass.a lib/TConfig.a
-				$(CXX) -o MISalgo/TECResultMerger $(LDFLAGS) $^
+				$(CXX) -o $@ $(LDFLAGS) $^
 
 
 #-----Rules for shared libraries for interactive root--------------------------
@@ -73,30 +75,24 @@ MISalgo/TECResult.so:	lib/MISalgo.a Tools/PXL/PXL.o ControlPlotFactory/HistoPoli
 
 
 
-#-----Automatic rules----------------------------------------------------------
-%.o: %.cc %.hh
-	g++ $(CXXFLAGS) -o $@ $<
-
-
-
 #-----Library rules------------------------------------------------------------
 
-lib:
-	mkdir lib
+$(LIBDIR):
+	mkdir $(LIBDIR)
 
-lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/EventPlots.o ControlPlotFactory/HistoPolisher.o | lib
+lib/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/TriggerDiffPlots.o ControlPlotFactory/EventPlots.o ControlPlotFactory/HistoPolisher.o | $(LIBDIR)
 				ar rcs $@ $^
 
-lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o Tools/Tools.o | lib
+lib/ParticleMatcher.a:	ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o ElectronID/LikelihoodEstimator.o ElectronID/ElectronLikelihood.o ElectronID/GammaLikelihood.o Tools/Tools.o | $(LIBDIR)
 			ar rcs $@ $^
 
-lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | lib
+lib/TConfig.a:	TConfig/TConfigDict.o TConfig/TConfig.o | $(LIBDIR)
 		ar rcs $@ $^
 
-lib/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o | lib
+lib/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o | $(LIBDIR)
 			ar rcs $@ $^
 
-lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECDicer_add.o MISalgo/ErrorService_add.o MISalgo/ECDicer_multiply.o MISalgo/ErrorService_multiply.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o Tools/Tools.o | lib
+lib/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECDicer_add.o MISalgo/ErrorService_add.o MISalgo/ECDicer_multiply.o MISalgo/ErrorService_multiply.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o Tools/Tools.o | $(LIBDIR)
 		ar rcs $@ $^
 
 
@@ -124,30 +120,31 @@ MISalgo/TECResultDict.cc:	MISalgo/TECResult.hh MISalgo/TECResultLinkDef.h
 
 
 
-#-----Header dependencies-----------------------------------------------------
-music.o: Tools/PXL/PXL.hh ControlPlotFactory/CcControl.hh EventClassFactory/CcEventClass.hh TConfig/TConfig.h ParticleMatcher/EventSelector.hh Tools/PXL/PXLdCache.hh Tools/AnyOption.hh Tools/Tools.hh
+#-----Automatic rules----------------------------------------------------------
+#For details on what's happening below, please see: http://make.paulandlesley.org/autodep.html
+#Advantage: Should automatically keep track of all and every dependency.
+#Disadvantage: Makes make slower, because the automatically generated dependency files tend to be huge.
 
-ControlPlotFactory/CcControl.o: Tools/PXL/PXL.hh ControlPlotFactory/DiffPlotBase.hh ControlPlotFactory/MuonDiffPlots.hh ControlPlotFactory/EleDiffPlots.hh ControlPlotFactory/GammaDiffPlots.hh ControlPlotFactory/METDiffPlots.hh ControlPlotFactory/JetDiffPlots.hh ControlPlotFactory/VertexDiffPlots.hh ControlPlotFactory/TriggerDiffPlots.hh ControlPlotFactory/EventPlots.hh
-
-ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/EleDiffPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/PlotBase.o ControlPlotFactory/VertexDiffPlots.o: Tools/PXL/PXL.hh ControlPlotFactory/HistoPolisher.hh
-
-EventClassFactory/CcEventClass.o MISalgo/ErrorComputer.o MISalgo/ErrorService.o: Tools/Tools.hh
-
-MISalgo/TECResult.o: Tools/Tools.hh ControlPlotFactory/HistoPolisher.hh
-
-EventClassFactory/ECCrossSectionRescaler.o EventClassFactory/ECFileUtil.o EventClassFactory/ECMerger.o: Tools/AnyOption.hh EventClassFactory/TEventClass.hh
-
-EventClassFactory/FakeClass.o: Tools/PXL/PXL.hh EventClassFactory/TEventClass.hh ParticleMatcher/EventSelector.hh Tools/Tools.hh
-
-MISalgo/GlobalStuff.o MISalgo/ROI_analysis.o: MISalgo/RegionScanner.hh MISalgo/ECResultTable.hh EventClassFactory/TEventClass.hh Tools/AnyOption.hh
-
-MISalgo/Signf_analysis.o: MISalgo/ECDicer.hh EventClassFactory/TEventClass.hh
-
-MISalgo/TECResultMerger.o: MISalgo/TECResult.hh Tools/AnyOption.hh
-
-ParticleMatcher/EventSelector.o: EventClassFactory/CcEventClass.hh Tools/Tools.hh
+#All .P dependency files are collected in one directory, to avoid cluttering up the source directories.
+#Drawback: We can't have two source files with the same name, even if they are in different directories.
+$(DEPDIR):
+	mkdir $(DEPDIR)
 
 
-Tools/PXL/PXLdCache.hh: Tools/PXL/PXL.hh Tools/dCache/idCacheStream.hh
+df = $(DEPDIR)/$(*F)
 
-Tools/dCache/idCacheStream.hh: Tools/dCache/dCacheBuf.hh
+%.o: %.cc | $(DEPDIR)
+	g++ -MD $(CXXFLAGS) -o $@ $<
+	@cp $*.d $(df).P;
+	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P;
+	@rm -f $*.d
+
+#Notable difference to the system described above: All .P files in the DEPDIR will be included.
+#Even if there is no .cc file for it anymore.
+#Advantage: No need to keep track of all .cc files
+#Disadvantage: Removing a .cc will leave a stale .P file, that might or might not cause problems
+#If that happens (probably causing a make target error):
+# - Delete the offending .P file in dep/
+# - OR do a make clean
+# - Do NOT delete the whole dep/ directory without doing make clean
+-include $(DEPDIR)/*.P
