@@ -29,10 +29,10 @@ DEPDIR=dep
 
 .PHONY: all clean
 
-all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printData MISv2/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so
+all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printData MISv2/scanClass
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/scanClass
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
 	rm -rf $(LIBDIR) $(DEPDIR)
@@ -67,13 +67,13 @@ MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECRe
 
 
 MISv2/dicePseudoData: 	MISv2/dicePseudoData.o Tools/Tools.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
-			$(CXX) -o MISv2/dicePseudoData $(LDFLAGS) $^
+			$(CXX) -o $@ $(LDFLAGS) $^
 
-MISv2/printData: 	MISv2/printData.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
-			$(CXX) -o MISv2/printData $(LDFLAGS) $^
+MISv2/printClass: 	MISv2/printClass.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
+			$(CXX) -o $@ $(LDFLAGS) $^
 
 MISv2/scanClass:        MISv2/scanClass.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
-			$(CXX) -o MISv2/scanClass $(LDFLAGS) $^
+			$(CXX) -o $@ $(LDFLAGS) $^
 
 
 #-----Rules for shared libraries for interactive root--------------------------

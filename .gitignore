@@ -15,5 +15,5 @@ TECResultMerger
 ScaledXSections.txt
 EventClassFactory/FakeClass
 MISv2/dicePseudoData
-MISv2/printData
+MISv2/printClass
 MISv2/scanClass
