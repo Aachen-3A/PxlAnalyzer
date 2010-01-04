@@ -29,10 +29,10 @@ DEPDIR=dep
 
 .PHONY: all clean
 
-all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so
+all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so
 
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/scanClass
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
 	rm -rf $(LIBDIR) $(DEPDIR)
@@ -70,6 +70,9 @@ MISv2/dicePseudoData: 	MISv2/dicePseudoData.o Tools/Tools.o $(LIBDIR)/MISv2.a $(
 			$(CXX) -o $@ $(LDFLAGS) $^
 
 MISv2/printClass: 	MISv2/printClass.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
+			$(CXX) -o $@ $(LDFLAGS) $^
+
+MISv2/printData: 	MISv2/printData.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
 			$(CXX) -o $@ $(LDFLAGS) $^
 
 MISv2/scanClass:        MISv2/scanClass.o Tools/Tools.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a $(LIBDIR)/MISv2.a
@@ -110,7 +113,7 @@ $(LIBDIR)/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionS
 		ar rcs $@ $^
 
 
-$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ProcessList.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ErrorComputer_add.o MISv2/ECPrinter.o MISv2/PoissonCalculator.o MISv2/ConvolutionComputer_add.o MISv2/ECScanner.o | $(LIBDIR)
+$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ProcessList.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ErrorComputer_add.o MISv2/ECPrinter.o MISv2/DataPrinter.o MISv2/PoissonCalculator.o MISv2/ConvolutionComputer_add.o MISv2/ECScanner.o | $(LIBDIR)
 		ar rcs $@ $^
 
 
