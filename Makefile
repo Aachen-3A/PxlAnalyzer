@@ -40,7 +40,7 @@ clean:
 
 #-----Rules for executables----------------------------------------------------
 
-music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o Tools/Tools.o Tools/dCache/dCacheBuf.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a $(LIBDIR)/TConfig.a $(LIBDIR)/ControlPlotFactory.a | EventClassFactory/ECMerger
+music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/RunLumiRanges.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o Tools/Tools.o Tools/dCache/dCacheBuf.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a $(LIBDIR)/TConfig.a $(LIBDIR)/ControlPlotFactory.a | EventClassFactory/ECMerger
 		$(CXX) -o $@ $(LDFLAGS) $^
 
 EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a $(LIBDIR)/TConfig.a
