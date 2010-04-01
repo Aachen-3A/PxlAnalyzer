@@ -7,9 +7,9 @@ else
 endif
 
 ifdef CMSSW_RELEASE_BASE
-	DCAP_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/slc4_ia32_gcc345/tools/selected/dcap.xml | grep 'name="DCAP_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
+DCAP_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/dcap.xml | grep 'name="DCAP_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
 else
-	DCAP_BASE:=/opt/d-cache/dcap
+$(error Error: We need dcap.h, so ready a CMSSW release!)
 endif
 
 ROOT_CFLAGS:=$(shell root-config --cflags)
