@@ -8,15 +8,18 @@ endif
 
 ifdef CMSSW_RELEASE_BASE
 DCAP_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/dcap.xml | grep 'name="DCAP_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
+GSL_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/gsl.xml | grep 'name="GSL_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
 else
-$(error Error: We need dcap.h, so ready a CMSSW release!)
+$(error Error: We need dcap.h and gsl.h, so ready a CMSSW release!)
 endif
 
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_GLIBS:=$(shell root-config --libs)
-CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) -I$(DCAP_BASE)/include/ -I.
-LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. -L$(DCAP_BASE)/lib -ldcap -lz
+EXTRA_CFLAGS:=-I$(DCAP_BASE)/include/ -I$(GSL_BASE)/include/
+EXTRA_LDFLAGS:=-L$(DCAP_BASE)/lib -ldcap -L$(GSL_BASE)/lib -lgsl -lgslcblas -lz
+CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) $(EXTRA_CFLAGS) -I.
+LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 
 #Where to store generated libraries
 LIBDIR=lib
