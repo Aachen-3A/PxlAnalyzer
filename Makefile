@@ -153,7 +153,7 @@ $(DEPDIR):
 	mkdir $(DEPDIR)
 
 
-df = $(DEPDIR)/$(*F)
+df = $(DEPDIR)/$(subst /,_,$(subst $(suffix $@),,$@))
 
 %.o: %.cc | $(DEPDIR)
 	g++ -MD $(CXXFLAGS) -o $@ $<
