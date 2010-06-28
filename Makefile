@@ -122,7 +122,7 @@ $(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorServic
 
 #-----Misc rules---------------------------------------------------------------
 
-TConfig/TConfigDict.cpp:	TConfig/TConfig.h TConfig/TConfigLinkDef.h
+TConfig/TConfigDict.cc:		TConfig/TConfig.h TConfig/TConfigLinkDef.h
 				@echo "Generating TConfig dictionary ..."
 				rootcint -v -f $@ -c $^
 				@sed -e "s@#include \"TConfig/TConfig.h\"@#include \"TConfig.h\"@" TConfig/TConfigDict.h > TConfig/TConfig.tmp
