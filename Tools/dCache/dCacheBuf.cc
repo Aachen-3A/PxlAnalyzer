@@ -9,16 +9,18 @@
 
 using namespace std;
 
-dCacheBuf::dCacheBuf() : streambuf() {
+dCacheBuf::dCacheBuf() :
+   streambuf(),
    //get one megabyte of buffer space
-   bufsize = 1048576;
+   bufsize( 1048576 ),
+   //we don't have a file open yet
+   filename(),
+   file( 0 ),
+   readsize( 0 )
+{
    //take one permille as push back buffer, but at least 10 characters
    pbsize = max( bufsize / 1000, 10 );
    buffer = new char[ bufsize+pbsize ];
-   
-   //we don't have a file open yet
-   file = 0;
-   readsize = 0;
 
    //set all pointer to the start of the buffer, behind the push back area
    setg( buffer+pbsize, buffer+pbsize, buffer+pbsize );
@@ -44,7 +46,9 @@ dCacheBuf * dCacheBuf::open( const char *name ){
    file = dc_open( name, O_RDONLY );
    //check if it worked
    if( file > 0 ){
-      //looks good, so return this
+      //looks good, so store the filename
+      filename = name;
+      //and return this
       return this;
    } else {
       //clean up if we failed
@@ -56,6 +60,7 @@ dCacheBuf * dCacheBuf::open( const char *name ){
 
 dCacheBuf * dCacheBuf::close(){
    //clean up
+   filename.clear();
    readsize = 0;
    //if we have a file open, close it
    if( is_open() ){
@@ -95,8 +100,35 @@ int dCacheBuf::underflow(){
    //try to read data, at max bufSize characters
    //write into the buffer behind the push back area
    streamsize num = dc_read( file, buffer+pbsize, bufsize );
-   //in case we got nothing or something went wront: return EOF
-   if( num <= 0 ){
+   //check for error
+   if( num < 0 ) {
+      cerr << "dCacheBuf: Read failure, error message:" << endl;
+      dc_perror( "dCacheBuf: " );
+      cerr << "dCacheBuf: Closing old connection..." << endl;
+      dc_close2( file );
+      cerr << "dCacheBuf: Closed, trying to reconnect..." << endl;
+      //reset file
+      file = 0;
+      //and try to open it again
+      if( ! open( filename ) ) {
+         throw dCache_error( "Failed to re-open file." );
+      }
+      //jump to where we last tried to read from
+      cerr << "dCacheBuf: Reconnected, seeking old position..." << endl;
+      if( readsize != dc_lseek( file, readsize, SEEK_SET ) ) {
+         throw dCache_error( "Failed to jump to previous file position." );
+      }
+      //looks all fine, so try to read again
+      cerr << "dCacheBuf: Back to old position, reading again..." << endl;
+      num = dc_read( file, buffer+pbsize, bufsize );
+      //and again check if it worked
+      if( num < 0 ) {
+         throw dCache_error( "Failed to read from re-opened file." );
+      }
+      cerr << "dCacheBuf: Read " << num << " bytes, seems we're back in business!" << endl;
+   }
+   //in case we got nothing, return EOF
+   if( num == 0 ){
       return traits_type::eof();
    }
 
@@ -116,7 +148,7 @@ int dCacheBuf::underflow(){
 streamsize dCacheBuf::showmanyc(){
    //jump to the end of the file to get the current file size
    streamsize filesize = dc_lseek( file, 0, SEEK_END );
-   //jumo back to where we came from
+   //jump back to where we came from
    dc_lseek( file, readsize, SEEK_SET );
    //return remaining characters
    return filesize-readsize;
