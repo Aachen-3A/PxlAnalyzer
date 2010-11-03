@@ -1,7 +1,7 @@
 #-----Flags--------------------------------------------------------------------
 
 ifdef DEBUG
-	DEBUG_FLAG:=-g
+	DEBUG_FLAG:=-O0 -g3 -ggdb -fstack-protector-all
 else
 	DEBUG_FLAG:=-O2
 endif
@@ -47,7 +47,7 @@ clean:
 
 #-----Rules for executables----------------------------------------------------
 
-music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/RunLumiRanges.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | EventClassFactory/ECMerger
+music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/RunLumiRanges.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | EventClassFactory/ECMerger
 		$(CXX) -o $@ $(LDFLAGS) $^
 
 EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a

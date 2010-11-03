@@ -1,6 +1,9 @@
+#include <pthread.h>
 #include <streambuf>
 #include <stdexcept>
 #include <string>
+
+#include "Tools/SignalHandler.hh"
 
 class dCache_error : public std::runtime_error {
 public:
@@ -8,8 +11,19 @@ public:
 };
 
 
-class dCacheBuf : public std::streambuf {
+class dCacheBuf : public std::streambuf, public Tools::EventHandler {
 public:
+   struct read_ahead_data {
+      //max bytes to read
+      std::streamsize bufsize;
+      //file to read from
+      int file;
+      //number of bytes read in last read ahead
+      std::streamsize aheadsize;
+      //buffer to write to
+      char *buffer;
+   };
+
    dCacheBuf();
    ~dCacheBuf();
    
@@ -25,6 +39,9 @@ public:
    //(closing a non-opened file is a failure, too
    dCacheBuf * close();
 
+   //how to handle various signals
+   virtual void handle_signal( int signum );
+
 protected:
    //how many chars are left in the file
    std::streamsize showmanyc();
@@ -37,11 +54,31 @@ private:
    //size of push back buffer
    std::streamsize pbsize;
    //buffer to hold data
-   char *buffer;
+   char *active_buffer;
+   char *readahead_buffer;
+   char *canard_front, *canard_center, *canard_rear;
    //name of the last successfully opened file
    std::string filename;
    //file descriptor
    int file;
    //number of characters already read
    std::streamsize readsize;
+
+   //arguments to pass to the thread
+   read_ahead_data rhd;
+
+   //read ahead thread
+   pthread_t thread;
+
+   //true if a thread is busy doing a read-ahead
+   //false if nothing is being read
+   bool read_active;
+
+   //read ahead functions
+   void start_read_ahead( char* buffer );
+   std::streamsize read_ahead_wait();
+
+   //manage signal handling
+   void register_signals();
+   void unregister_signals();
 };
