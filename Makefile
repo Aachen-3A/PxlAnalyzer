@@ -14,11 +14,14 @@ else
 $(error Error: We need dcap.h and gsl.h, so ready a CMSSW release!)
 endif
 
+CMSSW_INC:=-I$(CMSSW_RELEASE_BASE)/src
+CMSSW_LIBS:=-L$(CMSSW_RELEASE_BASE)/lib/$(SCRAM_ARCH) -L$(CMSSW_RELEASE_BASE)/external/$(SCRAM_ARCH)/lib
+
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_GLIBS:=$(shell root-config --libs)
-EXTRA_CFLAGS:=-ffloat-store -I$(DCAP_BASE)/include/ -I$(GSL_BASE)/include/ -I$(BOOST_BASE)/include
-EXTRA_LDFLAGS:=-L$(DCAP_BASE)/lib -ldcap -L$(GSL_BASE)/lib -lgsl -lgslcblas -lz -L$(BOOST_BASE)/lib -lboost_filesystem
+EXTRA_CFLAGS:=-ffloat-store -I$(DCAP_BASE)/include/ -I$(GSL_BASE)/include/ -I$(BOOST_BASE)/include $(CMSSW_INC)
+EXTRA_LDFLAGS:=-L$(DCAP_BASE)/lib -ldcap -L$(GSL_BASE)/lib -lgsl -lgslcblas -lz -L$(BOOST_BASE)/lib -lboost_filesystem $(CMSSW_LIBS) -lCondFormatsJetMETObjects
 CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) $(EXTRA_CFLAGS) -I.
 LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 
