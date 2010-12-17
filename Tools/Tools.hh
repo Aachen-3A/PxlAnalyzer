@@ -11,6 +11,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "TSystem.h" // for ExpandPathName
+
 namespace Tools {
    //returns the abolute path to file given with a path relative to MUSIC_BASE
    //returns the given path if it is already absolute (starts with a /)
@@ -74,6 +76,9 @@ namespace Tools {
          result.push_back( T() );
       }
    }
+
+   // this is just a shortcut to the ROOT function
+   inline std::string ExpandPath( const std::string &path ) { return ( std::string )gSystem->ExpandPathName( path.c_str() ); }
 }
 
 #endif /*MUSIC_TOOLS*/

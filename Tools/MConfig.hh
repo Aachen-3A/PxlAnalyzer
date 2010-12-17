@@ -13,8 +13,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "TSystem.h" // for ExpandPathName
-
 #include "Tools/Tools.hh"
 
 namespace Tools {
@@ -30,8 +28,8 @@ namespace Tools {
          m_commentChar( commentChar ),
          m_delimiterChar( delimiterChar ),
          m_quoteChar( quoteChar ),
-         m_configBasePath( ExpandPath( configBasePath ) ),
-         m_configFilePath( ExpandPath( path ) ),
+         m_configBasePath( Tools::ExpandPath( configBasePath ) ),
+         m_configFilePath( Tools::ExpandPath( path ) ),
          m_configFileName( m_configBasePath.filename() ),
          m_writePath( "." ),
          m_writeFileName( m_configFilePath.filename() ),
@@ -86,7 +84,7 @@ namespace Tools {
 
       // take a path and try to open and read am ASCII file with configuration information
       void ImportFile( const std::string &iPath ) throw ( std::runtime_error ) {
-         Path importPath = boost::trim_copy( ExpandPath( iPath ) );
+         Path importPath = boost::trim_copy( Tools::ExpandPath( iPath ) );
          Path absPath    = Init( importPath );
          std::ifstream configFile( absPath.string().c_str() );
 
@@ -176,7 +174,7 @@ namespace Tools {
 
       void SetWritePathAndName( const std::string &writePath = "", const std::string &writeFileName = "" ) {
          if( writePath.empty() ) m_writePath = ( std::string )gSystem->pwd();
-         else                    m_writePath = ExpandPath( writePath );
+         else                    m_writePath = Tools::ExpandPath( writePath );
 
          if( writeFileName.empty() ) m_writeFileName = m_configFileName;
          else                        m_writeFileName = writeFileName;
@@ -200,7 +198,7 @@ namespace Tools {
       void SetCommentChar( const char commentChar )            { m_commentChar = commentChar; }
       void SetDelimiterChar( const char delimiterChar )        { m_delimiterChar = delimiterChar; }
       void SetQuoteChar( const char quoteChar )                { m_quoteChar = quoteChar; }
-      void SetConfigBasePath( const std::string &path )        { m_configBasePath = ExpandPath( path ); }
+      void SetConfigBasePath( const std::string &path )        { m_configBasePath = Tools::ExpandPath( path ); }
       void SetConfigBasePath( const Path &path )               { m_configBasePath = path; }
       void SetImportIdentifier( const std::string &identfier ) { m_importIdentifier = identfier; }
 
@@ -220,10 +218,6 @@ namespace Tools {
       std::string m_importIdentifier;
 
       std::map< std::string, std::string > m_configMap;
-
-
-      // this is just a shortcut to the ROOT function
-      std::string ExpandPath( const std::string &path ) { return ( std::string )gSystem->ExpandPathName( path.c_str() ); }
 
       // take 'line' and extract the (sub)string between the quotation characters
       // everything beyond the quotation is ignored!
