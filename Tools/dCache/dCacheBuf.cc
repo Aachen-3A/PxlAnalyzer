@@ -33,7 +33,7 @@ dCacheBuf::dCacheBuf() :
    read_active( false )
 {
    //take one permille as push back buffer, but at least 10 characters
-   pbsize = max( bufsize / 1000, 10 );
+   pbsize = max( bufsize / 1000, (long int) 10 );
    //get two buffer of appropriate size
    //one satisfy the consumers and one to read into at the same time
    active_buffer = new char[ bufsize+pbsize ];
