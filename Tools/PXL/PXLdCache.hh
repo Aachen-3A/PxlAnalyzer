@@ -2,6 +2,7 @@
 #define PXLdCache_hh
 
 #include <string>
+#include <iostream>
 
 #include "Tools/PXL/PXL.hh"
 #include "Tools/dCache/idCacheStream.hh"
@@ -22,6 +23,10 @@ namespace pxl {
          //reset and close everything that might be open
          close();
          stream.open( filename.c_str() );
+         if( !stream.good() ) {
+            if( stream.eof() ) std::cerr << "dCache file opened, but EOF! File empty? File: " << filename << std::endl;
+            else throw dCache_error( "Failed to open file: "+filename );
+         }
       }
       virtual void close(){
          stream.close();

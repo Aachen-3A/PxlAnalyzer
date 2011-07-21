@@ -64,6 +64,7 @@ dCacheBuf * dCacheBuf::open( const char *name ){
    //first register the signals
    register_signals();
    //open a file read only
+   dc_setOpenTimeout( 3600 );
    file = dc_open( name, O_RDONLY );
    //check if it worked
    if( file > 0 ){
@@ -158,6 +159,7 @@ int dCacheBuf::underflow(){
       //reset the file descriptor
       file = 0;
       //re-open the file read only
+      dc_setOpenTimeout( 3600 );
       file = dc_open( filename.c_str(), O_RDONLY );
       dc_noBuffering( file );
       //check that it worked
