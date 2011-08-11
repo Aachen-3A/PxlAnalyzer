@@ -11,17 +11,16 @@ DCAP_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/
 BOOST_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/boost.xml | grep 'name="BOOST_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
 CMSSW_INC:=-I$(CMSSW_RELEASE_BASE)/src
 CMSSW_LIBS:=-L$(CMSSW_RELEASE_BASE)/lib/$(SCRAM_ARCH) -L$(CMSSW_RELEASE_BASE)/external/$(SCRAM_ARCH)/lib
+GSL_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/gsl.xml | grep 'name="GSL_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
 else
-$(error Error: We need dcap.h, so ready a CMSSW release!)
+$(error Error: CMSSW libraries not found!)
 endif
 
 ROOT_CFLAGS:=$(shell root-config --cflags)
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_GLIBS:=$(shell root-config --libs)
-GSL_CFLAGS:=$(shell gsl-config --cflags)
-GSL_LIBS:=$(shell gsl-config --libs)
-EXTRA_CFLAGS:=-ffloat-store -I$(DCAP_BASE)/include/ $(GSL_CFLAGS) -I$(BOOST_BASE)/include $(CMSSW_INC)
-EXTRA_LDFLAGS:=-L$(DCAP_BASE)/lib -ldcap $(GSL_LIBS) -lz -L$(BOOST_BASE)/lib -lboost_filesystem $(CMSSW_LIBS) -lCondFormatsJetMETObjects
+EXTRA_CFLAGS:=-ffloat-store -I$(DCAP_BASE)/include/ -I$(GSL_BASE)/include/ -I$(BOOST_BASE)/include $(CMSSW_INC)
+EXTRA_LDFLAGS:=-L$(DCAP_BASE)/lib -ldcap -L$(GSL_BASE)/lib -lgsl -lgslcblas -lz -L$(BOOST_BASE)/lib -lboost_filesystem $(CMSSW_LIBS) -lCondFormatsJetMETObjects
 CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) $(EXTRA_CFLAGS) -I.
 LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 
