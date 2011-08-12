@@ -35,58 +35,73 @@ LIBDIR=lib
 #Where to store the generate dependency files
 DEPDIR=dep
 
+#Where to copy binaries
+BINDIR=bin
 
 #-----Default and cleaning rules-----------------------------------------------
 
-.PHONY: all clean
+.PHONY: all clean install-python
 
-all: music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass MISalgo/ROI_analysis EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so
+all: $(BINDIR)/music $(BINDIR)/ECMerger $(BINDIR)/ECFileUtil $(BINDIR)/FakeClass $(BINDIR)/ROI_analysis $(BINDIR)/ECCrossSectionRescaler $(BINDIR)/GlobalStuff $(BINDIR)/TECResultMerger $(BINDIR)/dicePseudoData $(BINDIR)/printClass $(BINDIR)/printData $(BINDIR)/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so install-python
 
 clean: 
 	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
-	rm -rf $(LIBDIR) $(DEPDIR)
+	rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
+
+install-python: | $(BINDIR)
+	ln -sf ../MISv2/MISMaster/MISMaster.py $(BINDIR)/MISMaster
+	ln -sf ../EventClassFactory/rebinEventClasses $(BINDIR)/rebinEventClasses
+	ln -sf ../EventClassFactory/renameProcess $(BINDIR)/renameProcess
+	ln -sf ../Tools/listFiles.py $(BINDIR)/listFiles
+	ln -sf ../Tools/musicEnv.py $(BINDIR)/musicEnv
+	ln -sf ../Tools/radio.py $(BINDIR)/radio
+	ln -sf ../Tools/jukebox $(BINDIR)/jukebox
 
 
 #-----Rules for executables----------------------------------------------------
 
-music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/RunLumiRanges.o Tools/ReWeighter.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | EventClassFactory/ECMerger
+#Create the bin directory if needed.
+$(BINDIR):
+	mkdir $(BINDIR)
+
+$(BINDIR)/music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/RunLumiRanges.o Tools/ReWeighter.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | $(BINDIR)/ECMerger $(BINDIR)
 		$(CXX) -o $@ $(LDFLAGS) $^
 
-EventClassFactory/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a
+$(BINDIR)/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
 				$(CXX) -o $@ $(LDFLAGS) $^
 
-EventClassFactory/ECFileUtil:	EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a
+$(BINDIR)/ECFileUtil:	EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
 				$(CXX) -o $@ $(LDFLAGS) $^
 
-EventClassFactory/FakeClass:	EventClassFactory/FakeClass.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a
+$(BINDIR)/FakeClass:	EventClassFactory/FakeClass.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
 				$(CXX) -o $@ $(LDFLAGS) $^
 
-MISalgo/ROI_analysis:	MISalgo/ROI_analysis.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/EventClass.a $(LIBDIR)/MISalgo.a $(LIBDIR)/Tools.a
+$(BINDIR)/ROI_analysis:	MISalgo/ROI_analysis.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/EventClass.a $(LIBDIR)/MISalgo.a $(LIBDIR)/Tools.a | $(BINDIR)
 			$(CXX) -o $@ $(LDFLAGS) $^
 
-MISalgo/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/MISalgo.a $(LIBDIR)/EventClass.a
+$(BINDIR)/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/MISalgo.a $(LIBDIR)/EventClass.a | $(BINDIR)
 			$(CXX) -o $@ $(LDFLAGS) $^
 
-EventClassFactory/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a
+$(BINDIR)/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
 						$(CXX) -o $@ $(LDFLAGS) $^
 
-MISalgo/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a
+$(BINDIR)/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
 				$(CXX) -o $@ $(LDFLAGS) $^
 
 
 
-MISv2/dicePseudoData: 	MISv2/dicePseudoData.o $(LIBDIR)/Tools.a $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a
+$(BINDIR)/dicePseudoData: 	MISv2/dicePseudoData.o $(LIBDIR)/Tools.a $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a | $(BINDIR)
 			$(CXX) -o $@ $(LDFLAGS) $^
 
-MISv2/printClass: 	MISv2/printClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a  $(LIBDIR)/MISv2.a
+$(BINDIR)/printClass: 	MISv2/printClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a  $(LIBDIR)/MISv2.a | $(BINDIR)
 			$(CXX) -o $@ $(LDFLAGS) $^
 
-MISv2/printData: 	MISv2/printData.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a $(LIBDIR)/MISv2.a
+$(BINDIR)/printData: 	MISv2/printData.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a $(LIBDIR)/MISv2.a | $(BINDIR)
 			$(CXX) -o $@ $(LDFLAGS) $^
 
-MISv2/scanClass:        MISv2/scanClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a $(LIBDIR)/MISv2.a
+$(BINDIR)/scanClass:        MISv2/scanClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a $(LIBDIR)/MISv2.a | $(BINDIR)
 			$(CXX) -o $@ $(LDFLAGS) $^
 
 
