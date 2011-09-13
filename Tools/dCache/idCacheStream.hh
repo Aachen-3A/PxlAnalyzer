@@ -19,9 +19,9 @@ public:
    bool is_open(){ return buf.is_open(); }
    //open the file denoted by name
    //name must something that's understood by dCache (precisely by dc_open() )
-   void open( const char *filename ){
+   void open( const char *filename, unsigned int timeout=3600 ){
       //try to open the file
-      if( buf.open( filename ) ){
+      if( buf.open( filename, timeout ) ){
          //ok, clear residual error states
          clear();
       } else {

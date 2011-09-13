@@ -32,8 +32,8 @@ public:
    //open the file denoted by name
    //name must something that's understood by dCache (precisely by dc_open() )
    //returns the this pointer if successful, 0 otherwise
-   dCacheBuf * open( const char *name );
-   dCacheBuf * open( const std::string &name ) { return open( name.c_str() ); }
+   dCacheBuf * open( const char *name, unsigned int timeout=3600 );
+   dCacheBuf * open( const std::string &name, unsigned int timeout=3600 ) { return open( name.c_str(), timeout ); }
    //close file, if there is one
    //returns the this pointer, if the file was successfully closed, 0 otherwise
    //(closing a non-opened file is a failure, too
@@ -49,6 +49,8 @@ protected:
    int underflow();
 
 private:
+   //open timeout
+   unsigned int m_timeout;
    //size of the buffer
    std::streamsize bufsize;
    //size of push back buffer

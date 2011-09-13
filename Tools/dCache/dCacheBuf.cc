@@ -24,6 +24,7 @@ void * read_ahead( void *data ) {
 
 dCacheBuf::dCacheBuf() :
    streambuf(),
+   m_timeout( 3600 ),
    //get one megabyte of buffer space
    bufsize( 1048576 ),
    //we don't have a file open yet
@@ -54,17 +55,19 @@ dCacheBuf::~dCacheBuf(){
 
 
 
-dCacheBuf * dCacheBuf::open( const char *name ){
+dCacheBuf * dCacheBuf::open( const char *name, unsigned int timeout ){
    //fail if we already got a file open
    if( is_open() ){
       return 0;
    }
 
+   //reset timeout value
+   m_timeout = timeout;
 
    //first register the signals
    register_signals();
    //open a file read only
-   dc_setOpenTimeout( 36000 );
+   dc_setOpenTimeout( m_timeout );
    file = dc_open( name, O_RDONLY );
    //check if it worked
    if( file > 0 ){
@@ -159,7 +162,7 @@ int dCacheBuf::underflow(){
       //reset the file descriptor
       file = 0;
       //re-open the file read only
-      dc_setOpenTimeout( 36000 );
+      dc_setOpenTimeout( m_timeout );
       file = dc_open( filename.c_str(), O_RDONLY );
       dc_noBuffering( file );
       //check that it worked

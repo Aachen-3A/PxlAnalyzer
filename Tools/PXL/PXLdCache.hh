@@ -19,10 +19,10 @@ namespace pxl {
          stream( filename ),
          reader( stream, ChunkReader::nonSeekable ) {}
 
-      virtual void open(const string &filename){
+      virtual void open( const std::string &filename, unsigned int timeout=3600 ){
          //reset and close everything that might be open
          close();
-         stream.open( filename.c_str() );
+         stream.open( filename.c_str(), timeout );
          if( !stream.good() ) {
             if( stream.eof() ) std::cerr << "dCache file opened, but EOF! File empty? File: " << filename << std::endl;
             else throw dCache_error( "Failed to open file: "+filename );
