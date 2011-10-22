@@ -145,7 +145,7 @@ $(LIBDIR)/Tools.a: Tools/Tools.o Tools/MConfig.o | $(LIBDIR)
 
 #-----Misc rules---------------------------------------------------------------
 
-EventClassFactory/TEventClassDict.cc: EventClassFactory/TEventClass.hh
+EventClassFactory/TEventClassDict.cc: EventClassFactory/TEventClass.hh EventClassFactory/TEventClassLinkDef.h
 					@echo "Generating TEventClass dictionary ..."
 					rootcint -v -f $@ -c $^
 					@sed -e "s@#include \"EventClassFactory/TEventClass.hh\"@#include \"TEventClass.hh\"@" EventClassFactory/TEventClassDict.h > EventClassFactory/TEventClassDict.tmp
