@@ -58,6 +58,7 @@ install-python: | $(BINDIR)
 	ln -sf ../Tools/musicEnv.py $(BINDIR)/musicEnv
 	ln -sf ../Tools/radio.py $(BINDIR)/radio
 	ln -sf ../Tools/jukebox $(BINDIR)/jukebox
+	ln -sf ../Tools/Condor/submit_music.py $(BINDIR)/submit_music
 
 
 #-----Rules for executables----------------------------------------------------
