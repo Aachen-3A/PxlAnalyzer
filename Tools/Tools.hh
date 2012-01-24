@@ -14,6 +14,12 @@
 #include "TSystem.h" // for ExpandPathName
 
 namespace Tools {
+
+   class value_error: public std::runtime_error {
+      public:
+         value_error( std::string const &msg ): std::runtime_error( msg ) {}
+   };
+
    //returns the abolute path to file given with a path relative to MUSIC_BASE
    //returns the given path if it is already absolute (starts with a /)
    std::string musicAbsPath( std::string relPath );
