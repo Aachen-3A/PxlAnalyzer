@@ -42,6 +42,7 @@ public:
    //requested number of objects for accepted events
    int getMinNumMuons() const { return m_muo_num_min; }
    int getMinNumEle()   const { return m_ele_num_min; }
+   int getMinNumTau()   const { return m_tau_num_min; }
    int getMinNumGamma() const { return m_gam_num_min; }
    int getMinNumJet()   const { return m_jet_num_min; }
    int getMinNumMET()   const { return m_met_num_min; }
@@ -49,7 +50,8 @@ public:
    //value of the b-jet discriminator cut
    double getBcut() const { return m_jet_bJets_discr_min; }
 
-   bool checkTopology( int muons, int eles, int gammas, int jets, int METs );
+   bool checkTopology( const int muons, const int eles, const int taus, const int gammas, const int jets, const int METs );
+
    void adaptMuons( const pxl::EventView *EvtView );
 
 
@@ -59,11 +61,12 @@ private:
    // check if EventView passes Trigger Selection
    bool passTriggerSelection( pxl::EventView *EvtView,
                               bool const isRec,
-                              std::vector< pxl::Particle* > &muons,
-                              std::vector< pxl::Particle* > &eles,
-                              std::vector< pxl::Particle* > &gammas,
-                              std::vector< pxl::Particle* > &jets,
-                              std::vector< pxl::Particle* > &mets
+                              std::vector< pxl::Particle* > const &muons,
+                              std::vector< pxl::Particle* > const &eles,
+                              std::vector< pxl::Particle* > const &taus,
+                              std::vector< pxl::Particle* > const &gammas,
+                              std::vector< pxl::Particle* > const &jets,
+                              std::vector< pxl::Particle* > const &mets
                               );
    bool passL1Trigger( pxl::EventView *EvtView, const bool isRec );
    bool passHLTrigger( pxl::EventView *EvtView, const bool isRec );
@@ -72,11 +75,12 @@ private:
    bool passFilterSelection( pxl::EventView *EvtView, const bool isRec );
    bool checkVeto( pxl::EventView *EvtView, const bool isRec );
    bool passTriggerParticles( const bool isRec,
-                              std::vector< pxl::Particle* > &muons,
-                              std::vector< pxl::Particle* > &eles,
-                              std::vector< pxl::Particle* > &gammas,
-                              std::vector< pxl::Particle* > &jets,
-                              std::vector< pxl::Particle* > &mets
+                              const std::vector< pxl::Particle* > &muons,
+                              const std::vector< pxl::Particle* > &eles,
+                              const std::vector< pxl::Particle* > &taus,
+                              const std::vector< pxl::Particle* > &gammas,
+                              const std::vector< pxl::Particle* > &jets,
+                              const std::vector< pxl::Particle* > &mets
                               ) const;
    // perform cuts on Particle Level
    //ATTENTION: changes particle vector!
@@ -84,6 +88,8 @@ private:
    bool passMuon( pxl::Particle *muon, const bool& isRec );
    void applyCutsOnEle( pxl::EventView *EvtView, std::vector< pxl::Particle* > &eles, const bool &isRec );
    bool passEle( pxl::Particle *ele, const bool& isRec );
+   void applyCutsOnTau( pxl::EventView *EvtView, std::vector< pxl::Particle* > &taus, const bool& isRec );
+   bool passTau( pxl::Particle *tau, const bool& isRec );
    bool passGamma( pxl::Particle *gam, const bool& isRec );
    void applyCutsOnGamma( pxl::EventView *EvtView, std::vector< pxl::Particle* > &gammas, const bool &isRec );
    void applyCutsOnJet( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
@@ -99,10 +105,10 @@ private:
                               std::vector< pxl::Particle* > &eles,
                               std::vector< pxl::Particle* > &mets
                               );
-   // perform "cuts" on Topology
-   bool applyCutsOnTopology( pxl::EventView* EvtView,
-                             std::vector< pxl::Particle* > const &muons,
+   // Perform "cuts" on topology.
+   bool applyCutsOnTopology( std::vector< pxl::Particle* > const &muons,
                              std::vector< pxl::Particle* > const &eles,
+                             std::vector< pxl::Particle* > const &taus,
                              std::vector< pxl::Particle* > const &gammas,
                              std::vector< pxl::Particle* > const &jets,
                              std::vector< pxl::Particle* > const &mets
@@ -221,6 +227,13 @@ private:
    int const         m_muo_NTrackerLayersWithMeas_min;
    double const      m_muo_XYImpactParameter_max;
    double const      m_muo_globalChi2_max;
+
+   // Taus:
+   const int    m_tau_num_min;
+   const double m_tau_pt_min;
+   const double m_tau_eta_max;
+   // Discriminators:
+   const std::vector< std::string > m_tau_discriminators;
 
    // Photons:
    int const    m_gam_num_min;

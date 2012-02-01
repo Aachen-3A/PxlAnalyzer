@@ -16,10 +16,11 @@ void ParticleMatcher::matchObjects(EventView* GenView,
    // match all particles of each Particle types without regarding b-jets:
    // FIXME: Make code more generic! Generate a list of all Particle types
    std::vector<std::string> typeList;
-   typeList.push_back("Muon");
-   typeList.push_back("Ele");
-   typeList.push_back("Gamma");
-   typeList.push_back(_METType);
+   typeList.push_back( "Muon" );
+   typeList.push_back( "Ele" );
+   typeList.push_back( "Tau" );
+   typeList.push_back( "Gamma" );
+   typeList.push_back( _METType );
    int count_label = 0;
    for (std::vector<std::string>::const_iterator jet_label = _JetAlgos.begin(); jet_label != _JetAlgos.end(); ++jet_label) {
       typeList.push_back(_JetAlgos[count_label]);

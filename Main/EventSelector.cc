@@ -98,6 +98,13 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_XYImpactParameter_max(      cfg.GetItem< double >( "Muon.XYImpactParameter.max" ) ),
    m_muo_globalChi2_max(             cfg.GetItem< double >( "Muon.GlobalChi2.max" ) ),
 
+   // Taus:
+   m_tau_num_min( cfg.GetItem< int    >( "Tau.Nmin" ) ),
+   m_tau_pt_min(  cfg.GetItem< double >( "Tau.pt.min" ) ),
+   m_tau_eta_max( cfg.GetItem< double >( "Tau.Eta.max" ) ),
+   //Get Tau-Discriminators and save them
+   m_tau_discriminators( Tools::splitString< string >( cfg.GetItem< string >( "Tau.Discriminators" ), true ) ),
+
    // Photons:
    m_gam_num_min(                  cfg.GetItem< int    >( "Gamma.N.min" ) ),
    m_gam_trigger_pt_min(           cfg.GetItem< double >( "Gamma.Trigger.pt.min" ) ),
@@ -257,11 +264,12 @@ std::vector< trigger_info > EventSelector::getTriggerGroups( const Tools::MConfi
 
 bool EventSelector::passTriggerSelection( EventView *EvtView,
                                           bool const isRec,
-                                          std::vector< pxl::Particle* > &muons,
-                                          std::vector< pxl::Particle* > &eles,
-                                          std::vector< pxl::Particle* > &gammas,
-                                          std::vector< pxl::Particle* > &jets,
-                                          std::vector< pxl::Particle* > &mets
+                                          std::vector< pxl::Particle* > const &muons,
+                                          std::vector< pxl::Particle* > const &eles,
+                                          std::vector< pxl::Particle* > const &taus,
+                                          std::vector< pxl::Particle* > const &gammas,
+                                          std::vector< pxl::Particle* > const &jets,
+                                          std::vector< pxl::Particle* > const &mets
                                           ) {
    //check HLT
    bool HLTaccept = passHLTrigger( EvtView, isRec );
@@ -271,7 +279,7 @@ bool EventSelector::passTriggerSelection( EventView *EvtView,
    bool L1_accept = passL1Trigger( EvtView, isRec );
    EvtView->setUserRecord< bool >( "L1_accept", L1_accept );
 
-   bool trigger_particle_accept = passTriggerParticles( isRec, muons, eles, gammas, jets, mets );
+   bool trigger_particle_accept = passTriggerParticles( isRec, muons, eles, taus, gammas, jets, mets );
    EvtView->setUserRecord< bool >( "trigger_particle_accept", trigger_particle_accept );
 
    //global trigger accept
@@ -350,14 +358,21 @@ bool EventSelector::passHLTrigger( EventView *EvtView, const bool isRec ){
 
 
 bool EventSelector::passTriggerParticles( const bool isRec,
-                                          std::vector< pxl::Particle* > &muons,
-                                          std::vector< pxl::Particle* > &eles,
-                                          std::vector< pxl::Particle* > &gammas,
-                                          std::vector< pxl::Particle* > &jets,
-                                          std::vector< pxl::Particle* > &mets
+                                          const std::vector< pxl::Particle* > &muons,
+                                          const std::vector< pxl::Particle* > &eles,
+                                          const std::vector< pxl::Particle* > &taus,
+                                          const std::vector< pxl::Particle* > &gammas,
+                                          const std::vector< pxl::Particle* > &jets,
+                                          const std::vector< pxl::Particle* > &mets
                                           ) const {
    //no need to check this on gen level
    if( !isRec ) return true;
+
+   for( vector< Particle* >::const_iterator tau = taus.begin(); tau != taus.end(); ++tau ) {
+      if( ( m_no_topo_cut || m_tau_num_min >= 0 )
+          && (*tau)->getPt() > m_tau_pt_min
+          ) return true;
+   }
 
    for( vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon ) {
       if( ( m_no_topo_cut || m_muo_num_min >= 0 )
@@ -839,6 +854,49 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
 }
 
 
+//--------------------Apply cuts on Particles-----------------------------------------------------------------
+//ATTENTION: tau-vector is changed!
+void EventSelector::applyCutsOnTau( pxl::EventView* EvtView, std::vector< pxl::Particle* > &taus, const bool &isRec ) {
+   int numTau = 0;
+
+   vector< pxl::Particle* > tausAfterCut;
+
+   for( vector< Particle* >::const_iterator tau = taus.begin(); tau != taus.end(); ++tau ) {
+      Particle* thisTau = *tau;
+      if( passTau( thisTau, isRec ) ) {
+         ++numTau;
+         tausAfterCut.push_back( thisTau );
+      } else {
+         thisTau->owner()->remove( thisTau );
+      }
+   }
+
+   //ATTENTION: changing tau-vector!
+   taus = tausAfterCut;
+}
+
+
+bool EventSelector::passTau( pxl::Particle *tau, const bool &isRec ) {
+   //pt cut
+   if( tau->getPt() < m_tau_pt_min ) return false;
+
+   //eta cut
+   if( fabs( tau->getEta() ) > m_tau_eta_max )
+      return false;
+   if( isRec ) {
+      for( std::vector< std::string >::const_iterator discr = m_tau_discriminators.begin(); discr != m_tau_discriminators.end(); ++discr ) {
+         // In theory all tau discriminators have a value between 0 and 1.
+         // Thus, they are saved as a float and the cut value is 0.5.
+         // In practice most (or all) discriminators are boolean.
+         // See also:
+         // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID#Discriminators
+         if( tau->findUserRecord< float >( *discr ) < 0.5 ) {
+            return false;
+         }
+      }
+   }
+   return true;
+}
 
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
@@ -1178,29 +1236,30 @@ bool EventSelector::applyGlobalEventCuts( pxl::EventView* EvtView,
 
 
 //--------------------Apply cuts on Topology-----------------------------------------------------------------
-bool EventSelector::applyCutsOnTopology( pxl::EventView* EvtView,
-                                         std::vector< pxl::Particle* > const &muons,
+bool EventSelector::applyCutsOnTopology( std::vector< pxl::Particle* > const &muons,
                                          std::vector< pxl::Particle* > const &eles,
+                                         std::vector< pxl::Particle* > const &taus,
                                          std::vector< pxl::Particle* > const &gammas,
                                          std::vector< pxl::Particle* > const &jets,
                                          std::vector< pxl::Particle* > const &mets
                                          ) {
    int numMuon = muons.size();
    int numEle = eles.size();
+   int numTau = taus.size();
    int numGamma = gammas.size();
    int numJet = jets.size();
    int numMET = mets.size();
 
-   return checkTopology( numMuon, numEle, numGamma, numJet, numMET );
+   return checkTopology( numMuon, numEle, numTau, numGamma, numJet, numMET );
 }
 
 
-
-bool EventSelector::checkTopology( int muons, int eles, int gammas, int jets, int METs ) {
+bool EventSelector::checkTopology( const int muons, const int eles, const int taus, const int gammas, const int jets, const int METs ) {
    if( m_no_topo_cut ) return true;
 
    if( m_muo_num_min >= 0 && muons  >= m_muo_num_min ) return true;
    if( m_ele_num_min >= 0 && eles   >= m_ele_num_min ) return true;
+   if( m_tau_num_min >= 0 && taus   >= m_tau_num_min ) return true;
    if( m_gam_num_min >= 0 && gammas >= m_gam_num_min ) return true;
    if( m_jet_num_min >= 0 && jets   >= m_jet_num_min ) return true;
    if( m_met_num_min >= 0 && METs   >= m_met_num_min ) return true;
@@ -1296,11 +1355,12 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    EvtView->getObjectsOfType<pxl::Particle>(allparticles);
    pxl::sortParticles( allparticles );
 
-   vector<pxl::Particle*> muons, eles, gammas, jets, mets, doc_particles;     // no 'bJets' because jets is only filled into varyJESMET, where all jets are treated exactly the same way
+   vector< pxl::Particle* > muons, eles, taus, gammas, jets, mets, doc_particles;     // no 'bJets' because jets is only filled into varyJESMET, where all jets are treated exactly the same way
    for (vector<pxl::Particle*>::const_iterator part = allparticles.begin(); part != allparticles.end(); ++part) {
       string name = (*part)->getName();
       if( name == "Muon") muons.push_back(*part);
       else if( name == "Ele") eles.push_back(*part);
+      else if( name == "Tau" ) taus.push_back( *part );
       else if( name == "Gamma") gammas.push_back(*part);
       else if( name == m_jet_algo ) jets.push_back( *part );
       else if( name == m_met_type ) mets.push_back( *part );
@@ -1318,6 +1378,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    }
 
    //check that the particles are ordered by Pt
+   checkOrder( taus );
    checkOrder(muons);
    checkOrder(eles);
    checkOrder(gammas);
@@ -1330,12 +1391,13 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
 
    applyCutsOnMuon( EvtView, muons, isRec );
    applyCutsOnEle( EvtView, eles, isRec );
+   applyCutsOnTau( EvtView, taus, isRec );
    applyCutsOnGamma( EvtView, gammas, isRec );
    //first vary JES and then check corrected jets to pass cuts
    varyJES(jets, JES, isRec);
    applyCutsOnJet( EvtView, jets, isRec );     //distribution into jets and b-jets
    //consistently check GenView for duplicates, important especially for GenJets and efficiency-normalization
-   if( !m_ignoreOverlaps ) m_duplicate.removeOverlap( muons, eles, gammas, jets, isRec );
+   if( !m_ignoreOverlaps ) m_duplicate.removeOverlap( muons, eles, taus, gammas, jets, isRec );
 
    //now vary also MET using ONLY selected and JES-modified jets. Maybe use dedicated jet cuts here?
    varyJESMET(jets, mets, JES, isRec);
@@ -1343,6 +1405,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    applyCutsOnMET( EvtView, mets, isRec );
 
    //now store the number of particles of each type
+   EvtView->setUserRecord< int >( "NumTau", taus.size() );
    EvtView->setUserRecord< int >( "NumMuon", muons.size() );
    EvtView->setUserRecord< int >( "NumEle" , eles.size() );
    EvtView->setUserRecord< int >( "NumGamma", gammas.size() );
@@ -1351,7 +1414,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
 
    applyCutsOnVertex( EvtView, vertices, isRec );
 
-   bool topo_accept = applyCutsOnTopology( EvtView, muons, eles, gammas, jets, mets );
+   bool topo_accept = applyCutsOnTopology( muons, eles, taus, gammas, jets, mets );
    EvtView->setUserRecord< bool >( "topo_accept", topo_accept );
 
    //for gen: check the binning value
@@ -1364,7 +1427,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
 
    // check for Trigger
    // this record steers if event is globally accepted by trigger, depending on "OR" of the HLT-path selected
-   bool triggerAccept = passTriggerSelection( EvtView, isRec, muons, eles, gammas, jets, mets );
+   bool triggerAccept = passTriggerSelection( EvtView, isRec, muons, eles, taus, gammas, jets, mets );
 
    //check if the events must be vetoed
    bool vetoed = checkVeto( EvtView, isRec );
