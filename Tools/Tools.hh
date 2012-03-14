@@ -5,19 +5,43 @@
 #include <vector>
 #include <sstream>
 #include <cstdlib>
+#include <exception>
 #include <stdexcept>
 #include <typeinfo>
 
+#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "TSystem.h" // for ExpandPathName
 
 namespace Tools {
+   typedef boost::filesystem::path Path;
 
    class value_error: public std::runtime_error {
       public:
          value_error( std::string const &msg ): std::runtime_error( msg ) {}
+   };
+
+   class config_error: public std::runtime_error {
+      public:
+         config_error( std::string const &msg ): std::runtime_error( msg ) {}
+   };
+
+   class file_not_found: public std::exception {
+      public:
+         file_not_found( std::string const &filename, std::string const &filetype = "" ) : m_filename( filename ), m_filetype( filetype ) {}
+         ~file_not_found() throw() {}
+         virtual const char* what() const throw() {
+            std::stringstream error;
+            if( m_filetype.empty() ) error << "File '" << m_filename << "' not found!";
+            else                     error << m_filetype << " '" << m_filename << "' not found!";
+            return error.str().c_str();
+         }
+
+      private:
+         std::string m_filename;
+         std::string m_filetype;
    };
 
    //returns the abolute path to file given with a path relative to MUSIC_BASE
@@ -85,6 +109,7 @@ namespace Tools {
 
    // this is just a shortcut to the ROOT function
    inline std::string ExpandPath( const std::string &path ) { return ( std::string )gSystem->ExpandPathName( path.c_str() ); }
+   inline std::string AbsolutePath( const std::string &path ) { Path AbsPath( ExpandPath( path ) ); return complete( AbsPath ).string(); }
 }
 
 #endif /*MUSIC_TOOLS*/
