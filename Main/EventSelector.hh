@@ -56,7 +56,6 @@ public:
 
 
 private:
-   std::vector< trigger_info > getTriggerGroups( const Tools::MConfig &config ) const;
    // Methods;
    // check if EventView passes Trigger Selection
    bool passTriggerSelection( pxl::EventView *EvtView,
@@ -69,7 +68,16 @@ private:
                               std::vector< pxl::Particle* > const &mets
                               );
    bool passL1Trigger( pxl::EventView *EvtView, const bool isRec );
-   bool passHLTrigger( pxl::EventView *EvtView, const bool isRec );
+   bool checkTriggerParticles( pxl::EventView *EvtView, const std::vector< double > &cuts, const std::vector< pxl::Particle* > &particles );
+   bool passHLTrigger( pxl::EventView *EvtView,
+                       const std::vector< pxl::Particle* > &muons,
+                       const std::vector< pxl::Particle* > &eles,
+                       const std::vector< pxl::Particle* > &taus,
+                       const std::vector< pxl::Particle* > &gammas,
+                       const std::vector< pxl::Particle* > &jets,
+                       const std::vector< pxl::Particle* > &mets,
+                       const bool isRec
+                       );
    //check if any particles after selection passes the trigger thresholds
 
    bool passFilterSelection( pxl::EventView *EvtView, const bool isRec );
@@ -168,7 +176,8 @@ private:
    bool const        m_ignoreL1;
    bool const        m_ignoreHLT;
    std::string const m_trigger_prefix;
-   std::vector< trigger_info > const m_trigger_groups;
+   std::vector< trigger_info > m_trigger_groups;
+   std::vector< trigger_info > m_topology_cuts;
 
    // Electrons:
    int const    m_ele_num_min;
@@ -230,6 +239,7 @@ private:
 
    // Taus:
    const int    m_tau_num_min;
+   const double m_tau_trigger_pt_min;
    const double m_tau_pt_min;
    const double m_tau_eta_max;
    // Discriminators:

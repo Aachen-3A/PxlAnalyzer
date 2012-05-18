@@ -39,7 +39,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ignoreL1(       cfg.GetItem< bool   >( "Trigger.IgnoreL1" ) ),
    m_ignoreHLT(      cfg.GetItem< bool   >( "Trigger.IgnoreHL" ) ),
    m_trigger_prefix( cfg.GetItem< string >( "Trigger.Name" ) + "_" ),
-   m_trigger_groups( getTriggerGroups( cfg ) ),
 
    // Electrons:
    m_ele_num_min(                        cfg.GetItem< int    >( "Ele.N.min" ) ),
@@ -99,9 +98,11 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_globalChi2_max(             cfg.GetItem< double >( "Muon.GlobalChi2.max" ) ),
 
    // Taus:
-   m_tau_num_min( cfg.GetItem< int    >( "Tau.Nmin" ) ),
-   m_tau_pt_min(  cfg.GetItem< double >( "Tau.pt.min" ) ),
-   m_tau_eta_max( cfg.GetItem< double >( "Tau.Eta.max" ) ),
+   m_tau_num_min(        cfg.GetItem< int    >( "Tau.Nmin" ) ),
+   m_tau_trigger_pt_min( cfg.GetItem< double >( "Tau.trigger.pt.min" ) ),
+
+   m_tau_pt_min(         cfg.GetItem< double >( "Tau.pt.min" ) ),
+   m_tau_eta_max(        cfg.GetItem< double >( "Tau.Eta.max" ) ),
    //Get Tau-Discriminators and save them
    m_tau_discriminators( Tools::splitString< string >( cfg.GetItem< string >( "Tau.Discriminators" ), true ) ),
 
@@ -182,7 +183,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_hcal_noise_ID_name( cfg.GetItem< string >( "HCAL.Noise.ID.name" ) ),
 
    // If all cuts are disabled, we don't need to cut.
-   m_no_topo_cut( m_muo_num_min < 0 and m_ele_num_min < 0 and m_gam_num_min < 0 and m_jet_num_min < 0 and m_met_num_min < 0 ),
+   m_no_topo_cut( m_muo_num_min < 0 and m_ele_num_min < 0 and m_tau_num_min < 0 and m_gam_num_min < 0 and m_jet_num_min < 0 and m_met_num_min < 0 ),
 
    // To access the JEC uncertainties from file.
    m_jecUnc( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESFile" ) ) ),
@@ -193,6 +194,58 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    m_rho25( 0.0 )
 {
+   // Trigger
+   int num_groups      = cfg.GetItem< int >( "Trigger.Groups" );
+   int num_topo_groups = cfg.GetItem< int >( "Nmin.Groups" );
+
+   if ( !m_ignoreHLT) {
+	  //this variable is needed in order to check whether at least one trigger is required without looping over all triggers again
+      bool global_accept = false;
+	  //reading the config for triggering
+	  for (int i = 1; i <= num_groups; ++i) {
+         std::string prefix = "Trigger." + Tools::toString(i) + ".";
+         trigger_info one_group;
+         one_group.name = cfg.GetItem<string> (prefix + "Name");
+         one_group.require = cfg.GetItem<bool> (prefix + "Require");
+         //it's enough, if one trigger is required
+         if ( !global_accept ){
+             global_accept = cfg.GetItem<bool> (prefix + "Require");
+         }
+         one_group.reject = cfg.GetItem<bool> (prefix + "Reject");
+         if (one_group.require && one_group.reject) {
+            cout << "One trigger group is both required and rejected - please adjust the config file"<< endl;
+            exit(0);
+            }
+         one_group.trigger = cfg.GetItem<string> (prefix + "Trigger");
+         //Getting the trigger values which are a comma separated list for each object inside a trigger group
+         Tools::splitString(one_group.cuts_e, cfg.GetItem<string> (prefix	+ "Cuts.E", ""), ",", true);
+         Tools::splitString(one_group.cuts_mu, cfg.GetItem<string> ( prefix + "Cuts.Mu", ""), ",", true);
+         Tools::splitString(one_group.cuts_tau, cfg.GetItem<string> ( prefix + "Cuts.Tau", ""), ",", true);
+         Tools::splitString(one_group.cuts_jet, cfg.GetItem<string> ( prefix + "Cuts.Jet", ""), ",", true);
+         Tools::splitString(one_group.cuts_gamma, cfg.GetItem<string> ( prefix + "Cuts.Gamma", ""), ",", true);
+         Tools::splitString(one_group.cuts_met, cfg.GetItem<string> ( prefix + "Cuts.MET", ""), ",", true);
+         m_trigger_groups.push_back(one_group);
+         }
+	   if ( !global_accept ){
+		  cout << "No trigger is required - exiting" << endl;
+		  exit(0);
+	   }
+     }
+
+	   //reading the config for the topology cuts
+   for (int i = 1; i <= num_topo_groups; ++i) {
+      std::string prefix = "Nmin." + Tools::toString(i) + ".";
+      //use the trigger_info as a container for topology cuts
+      trigger_info topo_cuts;
+      //Getting the trigger values which are a comma separated list for each object inside a trigger group
+      topo_cuts.topo_e     = cfg.GetItem< Int_t >( prefix + "E", -1 );
+      topo_cuts.topo_mu    = cfg.GetItem< Int_t >( prefix + "Mu", -1 );
+      topo_cuts.topo_tau   = cfg.GetItem< Int_t >( prefix + "Tau", -1 );
+      topo_cuts.topo_met   = cfg.GetItem< Int_t >( prefix + "MET", -1 );
+      topo_cuts.topo_jet   = cfg.GetItem< Int_t >( prefix + "Jet", -1 );
+      topo_cuts.topo_gamma = cfg.GetItem< Int_t >( prefix + "Gamma", -1 );
+      m_topology_cuts.push_back(topo_cuts);
+   }
 }
 
 //--------------------Destructor-----------------------------------------------------------------
@@ -241,25 +294,6 @@ void EventSelector::synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventVie
 }
 
 
-std::vector< trigger_info > EventSelector::getTriggerGroups( const Tools::MConfig &config ) const {
-   vector< trigger_info > trigger_groups;
-
-   const int num_trigger_groups = config.GetItem< int >( "Trigger.Groups" );
-   for( int i = 1; i <= num_trigger_groups; ++i ) {
-      const string prefix = "Trigger." + Tools::toString( i ) + ".";
-      trigger_info one_group;
-      one_group.name    = config.GetItem< string >( prefix + "Name" );
-      one_group.require = config.GetItem< bool   >( prefix + "Require" );
-      one_group.reject  = config.GetItem< bool   >( prefix + "Reject" );
-
-      Tools::splitString( one_group.triggers, config.GetItem< string >( prefix + "Triggers"  ), ",", true );
-      trigger_groups.push_back( one_group );
-   }
-
-   return trigger_groups;
-}
-
-
 //--------------------Function that checks for trigger is called witin applyCutOnParticles !!!-----------------------------------------------------------------
 
 bool EventSelector::passTriggerSelection( EventView *EvtView,
@@ -272,8 +306,8 @@ bool EventSelector::passTriggerSelection( EventView *EvtView,
                                           std::vector< pxl::Particle* > const &mets
                                           ) {
    //check HLT
-   bool HLTaccept = passHLTrigger( EvtView, isRec );
-   EvtView->setUserRecord< bool >( "HLT_accept", HLTaccept );
+   bool HLTaccept = passHLTrigger( EvtView, muons, eles, taus, gammas, jets, mets, isRec );
+   EvtView->setUserRecord< bool > ( "HLT_accept", HLTaccept );
 
    //check L1 technical bits
    bool L1_accept = passL1Trigger( EvtView, isRec );
@@ -283,8 +317,8 @@ bool EventSelector::passTriggerSelection( EventView *EvtView,
    EvtView->setUserRecord< bool >( "trigger_particle_accept", trigger_particle_accept );
 
    //global trigger accept
-   bool triggerAccept = HLTaccept && L1_accept && trigger_particle_accept;
-   EvtView->setUserRecord< bool >( "trigger_accept", triggerAccept );
+   bool triggerAccept = HLTaccept && L1_accept;// && trigger_particle_accept;
+   EvtView->setUserRecord< bool > ( "trigger_accept", triggerAccept );
 
    return triggerAccept;
 }
@@ -306,48 +340,66 @@ bool EventSelector::passL1Trigger( pxl::EventView* EvtView, const bool isRec ) {
    return b0;
 }
 
+bool EventSelector::checkTriggerParticles( EventView *EvtView, const std::vector< double > &cuts, const std::vector< pxl::Particle* > &particles ){
+	if( cuts.empty()){
+		return true;
+	}
+	if( cuts.size() > particles.size() ){
+		return false;
+	}
+	std::vector< pxl::Particle* >::const_iterator particle = particles.begin();
+	for( std::vector< double >::const_iterator cut = cuts.begin(); cut != cuts.end(); cut++, particle++){
+		if( (*cut) > (*particle)->getPt() ){
+			return false;
+		}
+	}
+	return true;
+}
 
-
-
-bool EventSelector::passHLTrigger( EventView *EvtView, const bool isRec ){
+bool EventSelector::passHLTrigger( EventView *EvtView,
+                                   const std::vector< pxl::Particle* > &muons,
+                                   const std::vector< pxl::Particle* > &eles,
+                                   const std::vector< pxl::Particle* > &taus,
+                                   const std::vector< pxl::Particle* > &gammas,
+                                   const std::vector< pxl::Particle* > &jets,
+                                   const std::vector< pxl::Particle* > &mets,
+                                   const bool isRec
+                                   ) {
    if( m_ignoreHLT ) {
       //accept all
       return true;
    } else if( isRec ) {
       //accept all events if no triggers are configured
-      if( m_trigger_groups.size() == 0 ) return true;
+      if( m_trigger_groups.size() == 0 ){
+         return true;
+      }
 
       //stores if all required triggers fired
       bool required_accept = true;
       bool any_accept = false;
 
       //loop trigger groups
-      for( std::vector< trigger_info >::const_iterator group = m_trigger_groups.begin();
-           group != m_trigger_groups.end();
-           ++group ) {
-         bool accepted = false;
-         //loop over trigger names
-         for( std::vector< std::string >::const_iterator trigger = group->triggers.begin();
-              trigger != group->triggers.end();
-              ++trigger ) {
-            //check this trigger
-            if( EvtView->findUserRecord<bool>( m_trigger_prefix+*trigger ) ){
-               accepted = true;
-               break; //if we found one fired trigger, we don't care for the rest
-            }
+      for( std::vector< trigger_info >::const_iterator group = m_trigger_groups.begin(); group != m_trigger_groups.end(); ++group ) {
+    	  if( EvtView->findUserRecord< bool > ( m_trigger_prefix + group->trigger )
+    			  && checkTriggerParticles( EvtView, group->cuts_mu, muons )
+        	      && checkTriggerParticles( EvtView, group->cuts_e, eles )
+    			  && checkTriggerParticles( EvtView, group->cuts_tau, taus )
+   	              && checkTriggerParticles( EvtView, group->cuts_jet, jets )
+        	      && checkTriggerParticles( EvtView, group->cuts_gamma, gammas )
+        	      && checkTriggerParticles( EvtView, group->cuts_met, mets ) ) {
+    		  if ( group->require ){
+    			 any_accept = true;
+    		     } else if( group->reject ){
+                      any_accept = false;
+    		     }
+              EvtView->setUserRecord< bool > ( "HLTAccept_" + group->name, EvtView->findUserRecord< bool > ( m_trigger_prefix + group->trigger ) );
+              } else {
+    		      EvtView->setUserRecord< bool > ( "HLTAccept_" + group->name,  EvtView->findUserRecord< bool > ( m_trigger_prefix + group->trigger ) );
+	         }
          }
-         //store the result
-         EvtView->setUserRecord< bool >( "HLTAccept_"+group->name, accepted );
-         //check what we found
-         if( accepted ) {
-            any_accept = true;
-         } else if( group->require ) {
-            //a required trigger group was false
-            required_accept = false;
-         }
-      }
-
       //we're good if any trigger fired and no required group is missing
+      //do we need required_accept at all????
+	     EvtView->setUserRecord< bool > ( "trigger_particle_accept", any_accept );
       return any_accept && required_accept;
    } else {
       // in case of Gen HLT is true by definition
@@ -370,7 +422,7 @@ bool EventSelector::passTriggerParticles( const bool isRec,
 
    for( vector< Particle* >::const_iterator tau = taus.begin(); tau != taus.end(); ++tau ) {
       if( ( m_no_topo_cut || m_tau_num_min >= 0 )
-          && (*tau)->getPt() > m_tau_pt_min
+          && ( *tau )->getPt() > m_tau_trigger_pt_min
           ) return true;
    }
 
@@ -1257,15 +1309,42 @@ bool EventSelector::applyCutsOnTopology( std::vector< pxl::Particle* > const &mu
 bool EventSelector::checkTopology( const int muons, const int eles, const int taus, const int gammas, const int jets, const int METs ) {
    if( m_no_topo_cut ) return true;
 
-   if( m_muo_num_min >= 0 && muons  >= m_muo_num_min ) return true;
-   if( m_ele_num_min >= 0 && eles   >= m_ele_num_min ) return true;
-   if( m_tau_num_min >= 0 && taus   >= m_tau_num_min ) return true;
-   if( m_gam_num_min >= 0 && gammas >= m_gam_num_min ) return true;
-   if( m_jet_num_min >= 0 && jets   >= m_jet_num_min ) return true;
-   if( m_met_num_min >= 0 && METs   >= m_met_num_min ) return true;
+   //Check whether there are enough particles as required by the Nmin; return true, if so
+   for( std::vector< trigger_info >::const_iterator group = m_topology_cuts.begin(); group != m_topology_cuts.end(); ++group ) {
+	   if(
+		    (group->topo_e<=eles)
+	     && (group->topo_mu<=muons)
+	     && (group->topo_tau<=taus)
+	     && (group->topo_jet<=jets)
+	     && (group->topo_gamma<=gammas)
+	     && (group->topo_met<=METs) ){
+		   //if all of the topology cuts is  satisfied, the method returns true
+		   return true;
+	   }
+   }
+   //all cuts are satisfied, returning true
+   return false;
+//   for( std::vector< double >::const_iterator nmin = m_topology_cuts->cuts cuts.begin(); cut != cuts.end(); cut++, particle++){group->cuts_mu
+//   if(m_topology_cuts->cuts.mu)
+
+/*
+   if( m_muon_num_min >= 0 && muons >= m_muon_num_min )
+      return true;
+   if( m_ele_num_min >= 0 && eles >= m_ele_num_min )
+      return true;
+   if( m_gamma_num_min >= 0 && gammas >= m_gamma_num_min )
+      return true;
+   if( m_jet_num_min >= 0 && jets >= m_jet_num_min )
+      return true;
+   if( m_met_num_min >= 0 && METs >= m_met_num_min )
+      return true;
+   if( m_tau_num_min >= 0 && taus >= m_tau_num_min )
+      return true;
+>>>>>>> 3a41437... Eventselector: Added Gen Topology Selection
+>>>>>>> 55ff3ee... Switched to the new Triggering scheme and added TauTrigger for Data
 
    //no cut passed, so return failure
-   return false;
+   return false;*/
 }
 
 
@@ -1480,14 +1559,6 @@ void EventSelector::dumpEventView(const EventView* EvtView) {
            ++group ) {
          if( EvtView->findUserRecord< bool >( "HLTAccept_"+group->name ) ) {
             cout << "Group: " << group->name << endl;
-            for( std::vector< std::string >::const_iterator trigger = group->triggers.begin();
-                 trigger != group->triggers.end();
-                 ++trigger ) {
-               //check this trigger
-               if( EvtView->findUserRecord<bool>( m_trigger_prefix+*trigger ) ){
-                  cout << *trigger << "";
-               }
-            }
          }
       }
 
