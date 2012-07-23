@@ -62,6 +62,7 @@ install-python: | $(BINDIR)
 	ln -sf ../Tools/makePlot.py $(BINDIR)/makePlot
 	ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger2
 	ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger.py
+	ln -sf ../Tools/makeSubmitFile.py $(BINDIR)/makeSubmitFile
 
 
 #-----Rules for executables----------------------------------------------------
