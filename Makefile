@@ -52,6 +52,7 @@ clean:
 
 install-python: | $(BINDIR)
 	ln -sf ../MISv2/MISMaster/MISMaster.py $(BINDIR)/MISMaster
+	ln -sf ../MISv2/MISMaster/MISPrinter.py $(BINDIR)/MISPrinter
 	ln -sf ../EventClassFactory/rebinEventClasses $(BINDIR)/rebinEventClasses
 	ln -sf ../EventClassFactory/renameProcess $(BINDIR)/renameProcess
 	ln -sf ../Tools/listFiles.py $(BINDIR)/listFiles
