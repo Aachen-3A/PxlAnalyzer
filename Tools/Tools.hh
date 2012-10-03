@@ -107,6 +107,13 @@ namespace Tools {
       }
    }
 
+   template< class T >
+   std::vector< T > splitString( const std::string &input, const bool ignoreEmpty = false, const std::string sep = "," ) {
+      std::vector< T > result;
+      splitString( result, input, sep, ignoreEmpty );
+      return result;
+   }
+
    // this is just a shortcut to the ROOT function
    inline std::string ExpandPath( const std::string &path ) { return ( std::string )gSystem->ExpandPathName( path.c_str() ); }
    inline std::string AbsolutePath( const std::string &path ) { Path AbsPath( ExpandPath( path ) ); return complete( AbsPath ).string(); }
