@@ -76,17 +76,18 @@ $(BINDIR):
 $(BINDIR)/music: music.o $(LIBDIR)/Main.a Tools/PXL/PXL.o Tools/AnyOption.o EventClassFactory/CcEventClass.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | $(BINDIR)/ECMerger $(BINDIR)
 		$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
-				$(CXX) -o $@ $(LDFLAGS) $^
+PROGSDIR := Progs
+$(BINDIR)/ECMerger: $(PROGSDIR)/ECMerger.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/ECFileUtil:	EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
-				$(CXX) -o $@ $(LDFLAGS) $^
+$(BINDIR)/ECFileUtil: $(PROGSDIR)/ECFileUtil.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/FakeClass:	EventClassFactory/FakeClass.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
-				$(CXX) -o $@ $(LDFLAGS) $^
+$(BINDIR)/FakeClass:	$(PROGSDIR)/FakeClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
-						$(CXX) -o $@ $(LDFLAGS) $^
+$(BINDIR)/ECCrossSectionRescaler: $(PROGSDIR)/ECCrossSectionRescaler.o $(LIBDIR)/Tools.a Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
 
 
@@ -105,7 +106,7 @@ $(BINDIR)/scanClass:        MISv2/scanClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventC
 
 #-----Rules for shared libraries for interactive root--------------------------
 
-EventClassFactory/TEventClass.so: 	$(LIBDIR)/EventClass.a EventClassFactory/Resolutions.o EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o  EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o $(LIBDIR)/Tools.a
+EventClassFactory/TEventClass.so: 	$(LIBDIR)/EventClass.a EventClassFactory/Resolutions.o $(PROGSDIR)/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o  EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o $(LIBDIR)/Tools.a
 					$(CXX) -o $@ -shared $(LDFLAGS) -O $^
 
 
