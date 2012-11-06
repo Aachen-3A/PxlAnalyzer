@@ -42,10 +42,10 @@ BINDIR=bin
 
 .PHONY: all clean install-python
 
-all: $(BINDIR)/music $(BINDIR)/ECMerger $(BINDIR)/ECFileUtil $(BINDIR)/FakeClass $(BINDIR)/ECCrossSectionRescaler $(BINDIR)/dicePseudoData $(BINDIR)/printClass $(BINDIR)/printData $(BINDIR)/scanClass EventClassFactory/TEventClass.so install-python
+all: $(BINDIR)/music $(BINDIR)/ECMerger $(BINDIR)/ECFileUtil $(BINDIR)/FakeClass $(BINDIR)/ECCrossSectionRescaler $(BINDIR)/dicePseudoData $(BINDIR)/printClass $(BINDIR)/printData $(BINDIR)/scanClass $(LIBDIR)/TEventClass.so install-python
 
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so EventClassFactory/ECCrossSectionRescaler MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass $(LIBDIR)/TEventClass.so EventClassFactory/ECCrossSectionRescaler MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
 	rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
@@ -89,25 +89,24 @@ $(BINDIR)/FakeClass:	$(PROGSDIR)/FakeClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventCl
 $(BINDIR)/ECCrossSectionRescaler: $(PROGSDIR)/ECCrossSectionRescaler.o $(LIBDIR)/Tools.a Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
 	@$(CXX) -o $@ $(LDFLAGS) $^
 
+MISDIR := MISv2
+$(BINDIR)/dicePseudoData: $(MISDIR)/dicePseudoData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
+$(BINDIR)/printClass: $(MISDIR)/printClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/dicePseudoData: 	MISv2/dicePseudoData.o $(LIBDIR)/Tools.a $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a | $(BINDIR)
-			$(CXX) -o $@ $(LDFLAGS) $^
+$(BINDIR)/printData: $(MISDIR)/printData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/printClass: 	MISv2/printClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a  $(LIBDIR)/MISv2.a | $(BINDIR)
-			$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/printData: 	MISv2/printData.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a $(LIBDIR)/MISv2.a | $(BINDIR)
-			$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/scanClass:        MISv2/scanClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a $(LIBDIR)/MISv2.a | $(BINDIR)
-			$(CXX) -o $@ $(LDFLAGS) $^
+$(BINDIR)/scanClass: $(MISDIR)/scanClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+	@$(CXX) -o $@ $(LDFLAGS) $^
 
 
 #-----Rules for shared libraries for interactive root--------------------------
 
-EventClassFactory/TEventClass.so: 	$(LIBDIR)/EventClass.a EventClassFactory/Resolutions.o $(PROGSDIR)/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o  EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o $(LIBDIR)/Tools.a
-					$(CXX) -o $@ -shared $(LDFLAGS) -O $^
+$(LIBDIR)/TEventClass.so: EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/Resolutions.o Tools/PXL/PXL.o $(LIBDIR)/Tools.a
+	@$(CXX) -o $@ -shared $(LDFLAGS) -O $^
 
 
 #-----Library rules------------------------------------------------------------
