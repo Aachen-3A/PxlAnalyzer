@@ -73,7 +73,7 @@ install-python: | $(BINDIR)
 $(BINDIR):
 	mkdir $(BINDIR)
 
-$(BINDIR)/music:		music.o Tools/PXL/PXL.o Tools/AnyOption.o Tools/RunLumiRanges.o Tools/ReWeighter.o EventClassFactory/CcEventClass.o DuplicateObjects/DuplicateObjects.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a $(LIBDIR)/ParticleMatcher.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | $(BINDIR)/ECMerger $(BINDIR)
+$(BINDIR)/music: music.o $(LIBDIR)/Main.a Tools/PXL/PXL.o Tools/AnyOption.o EventClassFactory/CcEventClass.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | $(BINDIR)/ECMerger $(BINDIR)
 		$(CXX) -o $@ $(LDFLAGS) $^
 
 $(BINDIR)/ECMerger:	EventClassFactory/ECMerger.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
@@ -114,15 +114,18 @@ EventClassFactory/TEventClass.so: 	$(LIBDIR)/EventClass.a EventClassFactory/Reso
 $(LIBDIR):
 	mkdir $(LIBDIR)
 
+DIR  := Main
+SRCS := $(wildcard $(DIR)/*.cc)
+OBJS := $(patsubst %.cc,%.o,$(SRCS))
+
+$(LIBDIR)/$(DIR).a: $(OBJS) $(LIBDIR)/Tools.a | $(LIBDIR)
+	ar rcs $@ $^
+
 $(LIBDIR)/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/bTagDiffPlotsAllJets.o ControlPlotFactory/bTagDiffPlotsTaggedJets.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/EventPlots.o ControlPlotFactory/HistoPolisher.o | $(LIBDIR)
 				ar rcs $@ $^
 
 $(LIBDIR)/ControlPlots2.a: 	ControlPlotFactory/HistoPolisher.o ControlPlots2/PlotBase.o ControlPlots2/MultiParticlePlots.o ControlPlots2/ParticlePlots.o ControlPlots2/RecControl.o ControlPlots2/RecGammaPlots.o ControlPlots2/RecJetPlots.o ControlPlots2/RecHltPlots.o ControlPlots2/RecL1Plots.o ControlPlots2/RecElePlots.o | $(LIBDIR)
 			ar rcs $@ $^
-
-$(LIBDIR)/ParticleMatcher.a: ParticleMatcher/ParticleMatcher.o ParticleMatcher/EventSelector.o $(LIBDIR)/Tools.a | $(LIBDIR)
-			ar rcs $@ $^
-
 
 $(LIBDIR)/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o Tools/PXL/PXL.o EventClassFactory/Resolutions.o | $(LIBDIR)
 			ar rcs $@ $^
