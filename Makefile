@@ -42,10 +42,10 @@ BINDIR=bin
 
 .PHONY: all clean install-python
 
-all: $(BINDIR)/music $(BINDIR)/ECMerger $(BINDIR)/ECFileUtil $(BINDIR)/FakeClass $(BINDIR)/ROI_analysis $(BINDIR)/ECCrossSectionRescaler $(BINDIR)/GlobalStuff $(BINDIR)/TECResultMerger $(BINDIR)/dicePseudoData $(BINDIR)/printClass $(BINDIR)/printData $(BINDIR)/scanClass EventClassFactory/TEventClass.so MISalgo/TECResult.so install-python
+all: $(BINDIR)/music $(BINDIR)/ECMerger $(BINDIR)/ECFileUtil $(BINDIR)/FakeClass $(BINDIR)/ECCrossSectionRescaler $(BINDIR)/dicePseudoData $(BINDIR)/printClass $(BINDIR)/printData $(BINDIR)/scanClass EventClassFactory/TEventClass.so install-python
 
 clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so MISalgo/ROI_analysis MISalgo/TECResult.so EventClassFactory/ECCrossSectionRescaler MISalgo/GlobalStuff MISalgo/TECResultMerger MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
+	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass EventClassFactory/TEventClass.so EventClassFactory/ECCrossSectionRescaler MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
 	rm -f *.o */*.o */*/*.o
 	rm -f */*Dict* */*/*Dict*
 	rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
@@ -85,17 +85,8 @@ $(BINDIR)/ECFileUtil:	EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOp
 $(BINDIR)/FakeClass:	EventClassFactory/FakeClass.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
 				$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/ROI_analysis:	MISalgo/ROI_analysis.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/EventClass.a $(LIBDIR)/MISalgo.a $(LIBDIR)/Tools.a | $(BINDIR)
-			$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/GlobalStuff:	MISalgo/GlobalStuff.o MISalgo/GlobalPicture.o Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/MISalgo.a $(LIBDIR)/EventClass.a | $(BINDIR)
-			$(CXX) -o $@ $(LDFLAGS) $^
-
 $(BINDIR)/ECCrossSectionRescaler:	EventClassFactory/ECCrossSectionRescaler.o Tools/PXL/PXL.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
 						$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/TECResultMerger:	MISalgo/TECResultMerger.o Tools/PXL/PXL.o MISalgo/TECResultDict.o MISalgo/TECResult.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
-				$(CXX) -o $@ $(LDFLAGS) $^
 
 
 
@@ -117,10 +108,6 @@ $(BINDIR)/scanClass:        MISv2/scanClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventC
 EventClassFactory/TEventClass.so: 	$(LIBDIR)/EventClass.a EventClassFactory/Resolutions.o EventClassFactory/ECFileUtil.o Tools/PXL/PXL.o Tools/AnyOption.o  EventClassFactory/TEventClassDict.o EventClassFactory/TEventClass.o $(LIBDIR)/Tools.a
 					$(CXX) -o $@ -shared $(LDFLAGS) -O $^
 
-MISalgo/TECResult.so:	$(LIBDIR)/MISalgo.a Tools/PXL/PXL.o ControlPlotFactory/HistoPolisher.o Tools/AnyOption.o $(LIBDIR)/EventClass.a  MISalgo/TECResult.o MISalgo/TECResultDict.o EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o $(LIBDIR)/Tools.a
-			$(CXX) -o $@ -shared $(LDFLAGS) -O $^
-
-
 
 #-----Library rules------------------------------------------------------------
 
@@ -140,10 +127,6 @@ $(LIBDIR)/ParticleMatcher.a: ParticleMatcher/ParticleMatcher.o ParticleMatcher/E
 $(LIBDIR)/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o Tools/PXL/PXL.o EventClassFactory/Resolutions.o | $(LIBDIR)
 			ar rcs $@ $^
 
-$(LIBDIR)/MISalgo.a:	MISalgo/TECResult.o MISalgo/TECResultDict.o MISalgo/RegionScanner.o MISalgo/PoissonCalculator.o MISalgo/ErrorComputer.o MISalgo/ConvolutionComputer.o MISalgo/ECDicer.o MISalgo/ErrorService.o MISalgo/ECDicer_add.o MISalgo/ErrorService_add.o MISalgo/ECDicer_multiply.o MISalgo/ErrorService_multiply.o MISalgo/ECUpDownError.o MISalgo/ECResultTable.o $(LIBDIR)/Tools.a | $(LIBDIR)
-		ar rcs $@ $^
-
-
 $(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ProcessList.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ErrorComputer_add.o MISv2/ECPrinter.o MISv2/DataPrinter.o MISv2/PoissonCalculator.o MISv2/ConvolutionComputer_add.o MISv2/ECScanner.o | $(LIBDIR)
 		ar rcs $@ $^
 
@@ -157,13 +140,6 @@ EventClassFactory/TEventClassDict.cc: EventClassFactory/TEventClass.hh EventClas
 					rootcint -v -f $@ -c $^
 					@sed -e "s@#include \"EventClassFactory/TEventClass.hh\"@#include \"TEventClass.hh\"@" EventClassFactory/TEventClassDict.h > EventClassFactory/TEventClassDict.tmp
 					@mv EventClassFactory/TEventClassDict.tmp EventClassFactory/TEventClassDict.h
-
-MISalgo/TECResultDict.cc:	MISalgo/TECResult.hh MISalgo/TECResultLinkDef.h
-				@echo "Generating TECResult dictionary ..."
-				rootcint -v -f $@ -c $^
-				@sed -e "s@#include \"MISalgo/TECResult.hh\"@#include \"TECResult.hh\"@" MISalgo/TECResultDict.h > MISalgo/TECResultDict.tmp
-				@mv MISalgo/TECResultDict.tmp MISalgo/TECResultDict.h
-
 
 
 #-----Automatic rules----------------------------------------------------------
