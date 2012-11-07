@@ -89,17 +89,16 @@ $(BINDIR)/FakeClass:	$(PROGSDIR)/FakeClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventCl
 $(BINDIR)/ECCrossSectionRescaler: $(PROGSDIR)/ECCrossSectionRescaler.o $(LIBDIR)/Tools.a Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
 	@$(CXX) -o $@ $(LDFLAGS) $^
 
-MISDIR := MISv2
-$(BINDIR)/dicePseudoData: $(MISDIR)/dicePseudoData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+$(BINDIR)/dicePseudoData: $(PROGSDIR)/dicePseudoData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
 	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/printClass: $(MISDIR)/printClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+$(BINDIR)/printClass: $(PROGSDIR)/printClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
 	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/printData: $(MISDIR)/printData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+$(BINDIR)/printData: $(PROGSDIR)/printData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
 	@$(CXX) -o $@ $(LDFLAGS) $^
 
-$(BINDIR)/scanClass: $(MISDIR)/scanClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
+$(BINDIR)/scanClass: $(PROGSDIR)/scanClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
 	@$(CXX) -o $@ $(LDFLAGS) $^
 
 
