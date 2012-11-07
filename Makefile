@@ -1,167 +1,296 @@
-#-----Flags--------------------------------------------------------------------
+# If you want to learn more about makefiles read this:
+# https://sites.google.com/site/michaelsafyan/software-engineering/how-to-write-a-makefile
+# In general we try to stick to the recipes shown there as far as possible.
 
+# If you want to compile with debug flags call:
+#    DEBUG=1 make
+#
+# If you want verbose output call:
+#    VERBOSE=1 make
+
+# Just for fun:
+NO_COLOR  = \e[0m
+GREEN     = \e[0;32m
+BOLDGREEN = \e[1;32m
+RED       = \e[0;31m
+YELLOW    = \e[0;33m
+
+# Prepare the compiler/linker flags.
+
+# Debug flags?
 ifdef DEBUG
-	DEBUG_FLAG:=-O0 -g3 -ggdb -fstack-protector-all
+   CXXFLAGS += -O0 -g3 -ggdb -fstack-protector-all -Wfatal-errors
 else
-	DEBUG_FLAG:=-O2
+   CXXFLAGS := -O2
 endif
 
-ifdef CMSSW_RELEASE_BASE
-DCAP_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/dcap.xml | grep 'name="DCAP_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
-BOOST_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/boost.xml | grep 'name="BOOST_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
-GSL_BASE:=$(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/gsl.xml | grep 'name="GSL_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
-else
-$(error Error: CMSSW libraries not found!)
+# ROOT libraries:
+ROOT_CFLAGS  := $(shell root-config --cflags)
+ROOT_LDFLAGS := $(shell root-config --ldflags)
+ROOT_GLIBS   := $(shell root-config --libs)
+
+ifndef CMSSW_RELEASE_BASE
+   $(error Error: CMSSW libraries not found!)
 endif
 
-# if you're using a patched CMSSW release, some of the libs are still in the base release, so you also have to look there
-CMSSW_RELEASE_BASE_NOPATCH:=$(shell echo $(CMSSW_RELEASE_BASE) | sed -e 's/-patch//' -e 's/_patch.//')
+# Paths for CMSSW libraries:
+CMSSW_DCAP_BASE  := $(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/dcap.xml | grep 'name="DCAP_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
+CMSSW_BOOST_BASE := $(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/boost.xml | grep 'name="BOOST_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
+CMSSW_GSL_BASE   := $(shell cat $(CMSSW_RELEASE_BASE)/config/toolbox/$(SCRAM_ARCH)/tools/selected/gsl.xml | grep 'name="GSL_BASE"' | sed -e 's/.*default="//' | sed -e 's/"\/>//')
 
-# for the headers there are symlinks
-CMSSW_INC:=-I$(CMSSW_BASE)/src -I$(CMSSW_RELEASE_BASE)/src
-CMSSW_LIBS:=-L$(CMSSW_BASE)/lib/$(SCRAM_ARCH) -L$(CMSSW_RELEASE_BASE)/lib/$(SCRAM_ARCH) -L$(CMSSW_RELEASE_BASE_NOPATCH)/lib/$(SCRAM_ARCH)
+# If you're using a patched CMSSW release, some of the libs are still in the base release, so you also have to look there.
+CMSSW_RELEASE_BASE_NOPATCH := $(shell echo $(CMSSW_RELEASE_BASE) | sed -e 's/-patch//' -e 's/_patch.//')
 
-ROOT_CFLAGS:=$(shell root-config --cflags)
-ROOT_LDFLAGS:=$(shell root-config --ldflags)
-ROOT_GLIBS:=$(shell root-config --libs)
-EXTRA_CFLAGS:=-ffloat-store -I$(DCAP_BASE)/include/ -I$(GSL_BASE)/include/ -I$(BOOST_BASE)/include $(CMSSW_INC)
-EXTRA_LDFLAGS:=-L$(DCAP_BASE)/lib -ldcap -L$(GSL_BASE)/lib -lgsl -lgslcblas -lz -L$(BOOST_BASE)/lib -lboost_filesystem $(CMSSW_LIBS) -lCondFormatsJetMETObjects -lPhysicsToolsUtilities
-CXXFLAGS:=$(DEBUG_FLAG) --ansi -Wall -fpic -c $(ROOT_CFLAGS) $(EXTRA_CFLAGS) -I.
-LDFLAGS:= $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
+CMSSW_LIB_PATHS := -L$(CMSSW_BASE)/lib/$(SCRAM_ARCH)
+CMSSW_LIB_PATHS += -L$(CMSSW_RELEASE_BASE)/lib/$(SCRAM_ARCH)
+CMSSW_LIB_PATHS += -L$(CMSSW_RELEASE_BASE_NOPATCH)/lib/$(SCRAM_ARCH)
+CMSSW_LIB_PATHS += -L$(CMSSW_DCAP_BASE)/lib
+CMSSW_LIB_PATHS += -L$(CMSSW_GSL_BASE)/lib
+CMSSW_LIB_PATHS += -L$(CMSSW_BOOST_BASE)/lib
 
-#Where to store generated libraries
-LIBDIR=lib
+CMSSW_LIBS += -lCondFormatsJetMETObjects
+CMSSW_LIBS += -lPhysicsToolsUtilities
+CMSSW_LIBS += -ldcap
+CMSSW_LIBS += -lgsl
+CMSSW_LIBS += -lgslcblas
+CMSSW_LIBS += -lboost_filesystem
+CMSSW_LIBS += -lz
 
-#Where to store the generate dependency files
-DEPDIR=dep
+# For the headers there are symlinks.
+CMSSW_INC_PATHS := -I$(CMSSW_BASE)/src
+CMSSW_INC_PATHS += -I$(CMSSW_RELEASE_BASE)/src
+CMSSW_INC_PATHS += -I$(CMSSW_DCAP_BASE)/include
+CMSSW_INC_PATHS += -I$(CMSSW_BOOST_BASE)/include
+CMSSW_INC_PATHS += -I$(CMSSW_GSL_BASE)/include
 
-#Where to copy binaries
-BINDIR=bin
+EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS)
+EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS)
 
-#-----Default and cleaning rules-----------------------------------------------
+CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
+LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
+
+ECHO = @echo -e "$(BOLDGREEN)Building$(NO_COLOR) $@ ..."
+
+BUILDBIN    = $(CXX) -o $@ $(LDFLAGS) $^
+BUILDSHARED = $(CXX) -o $@ -shared $(LDFLAGS) -O $^
+
+# Set directories:
+# Where to store generated libraries?
+LIBDIR = lib
+# Where to store the generate dependency files?
+DEPDIR = dep
+# Where to copy binaries?
+BINDIR = bin
+# Where are the .cc files for the executables?
+PROGSDIR = Progs
+
+# Define all targets:
+# List all executables and .so's here.
+TARGETS := $(BINDIR)/music
+TARGETS += $(BINDIR)/ECMerger
+TARGETS += $(BINDIR)/ECFileUtil
+TARGETS += $(BINDIR)/FakeClass
+TARGETS += $(BINDIR)/ECCrossSectionRescaler
+TARGETS += $(BINDIR)/dicePseudoData
+TARGETS += $(BINDIR)/printClass
+TARGETS += $(BINDIR)/printData
+TARGETS += $(BINDIR)/scanClass
+TARGETS += $(LIBDIR)/TEventClass.so
+
+# Sources and objects for ControlPlotFactory:
+SRCS := $(wildcard ControlPlotFactory/*.cc)
+CPF  := $(patsubst %.cc,%.o,$(SRCS))
+
+# Sources and objects for ControlPlots2:
+SRCS := $(wildcard ControlPlots2/*.cc)
+CP2  := $(patsubst %.cc,%.o,$(SRCS))
+
+# Sources and objects for the main program:
+SRCS := $(wildcard Main/*.cc)
+MAIN := $(patsubst %.cc,%.o,$(SRCS))
+
+# Sources and objects for MISv2:
+SRCS  := $(wildcard MISv2/*.cc)
+MISV2 := $(patsubst %.cc,%.o,$(SRCS))
+
+# Tools obejcts:
+TOOLS := Tools/Tools.o Tools/MConfig.o Tools/SignalHandler.o Tools/dCache/dCacheBuf.o
+
+# PXL stuff:
+PXL := Tools/PXL/PXL.o
+
+# Objects for EventClass(Factory):
+SRCS := $(wildcard EventClassFactory/*.cc)
+TEC  := $(patsubst %.cc,%.o,$(SRCS))
+TEVENTCLASS        := EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/Resolutions.o $(TOOLS) $(PXL)
+TEVENTCLASSFACTORY := $(TEVENTCLASS) $(TEC)
+
+# Define rules:
 
 .PHONY: all clean install-python
 
-all: $(BINDIR)/music $(BINDIR)/ECMerger $(BINDIR)/ECFileUtil $(BINDIR)/FakeClass $(BINDIR)/ECCrossSectionRescaler $(BINDIR)/dicePseudoData $(BINDIR)/printClass $(BINDIR)/printData $(BINDIR)/scanClass $(LIBDIR)/TEventClass.so install-python
+all: $(TARGETS) install-python
 
-clean: 
-	rm -f music EventClassFactory/ECMerger EventClassFactory/ECFileUtil EventClassFactory/FakeClass $(LIBDIR)/TEventClass.so EventClassFactory/ECCrossSectionRescaler MISv2/dicePseudoData MISv2/printClass MISv2/printData MISv2/scanClass
-	rm -f *.o */*.o */*/*.o
-	rm -f */*Dict* */*/*Dict*
+clean:
+ifndef VERBOSE
+	@echo -e "$(RED)Removing all targets...$(NO_COLOR)"
+	@rm -f $(TARGETS)
+	@echo -e "$(RED)Removing all objects...$(NO_COLOR)"
+	@find . -name '*.o' -exec rm {} \;
+	@echo -e "$(RED)Removing all ROOT dictionaries...$(NO_COLOR)"
+	@find . -name '*Dict*' -exec rm {} \;
+	@echo -e "$(RED)Removing $(LIBDIR) $(DEPDIR) $(BINDIR)...$(NO_COLOR)"
+	@rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
+else
+	@echo -e "$(RED)Removing all targets...$(NO_COLOR)"
+	rm -f $(TARGETS)
+	@echo -e "$(RED)Removing all objects...$(NO_COLOR)"
+	find . -name '*.o' -exec rm {} \;
+	@echo -e "$(RED)Removing all ROOT dictionaries...$(NO_COLOR)"
+	find . -name '*Dict*' -exec rm {} \;
+	@echo -e "$(RED)Removing $(LIBDIR) $(DEPDIR) $(BINDIR)...$(NO_COLOR)"
 	rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
+endif
 
 install-python: | $(BINDIR)
-	ln -sf ../MISv2/MISMaster/MISMaster.py $(BINDIR)/MISMaster
-	ln -sf ../MISv2/MISMaster/MISPrinter.py $(BINDIR)/MISPrinter
-	ln -sf ../EventClassFactory/rebinEventClasses $(BINDIR)/rebinEventClasses
-	ln -sf ../EventClassFactory/renameProcess $(BINDIR)/renameProcess
-	ln -sf ../Tools/listFiles.py $(BINDIR)/listFiles
-	ln -sf ../Tools/musicEnv.py $(BINDIR)/musicEnv
-	ln -sf ../Tools/radio.py $(BINDIR)/radio
-	ln -sf ../Tools/jukebox $(BINDIR)/jukebox
-	ln -sf ../Tools/Condor/submit_music.py $(BINDIR)/submit_music
-	ln -sf ../Tools/makePlot.py $(BINDIR)/makePlot
-	ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger2
-	ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger.py
-	ln -sf ../Tools/makeSubmitFile.py $(BINDIR)/makeSubmitFile
-	ln -sf ../Tools/mergePileupHistograms.py $(BINDIR)/mergePileupHistograms
+	@ln -sf ../MISv2/MISMaster/MISMaster.py $(BINDIR)/MISMaster
+	@ln -sf ../MISv2/MISMaster/MISPrinter.py $(BINDIR)/MISPrinter
+	@ln -sf ../EventClassFactory/rebinEventClasses $(BINDIR)/rebinEventClasses
+	@ln -sf ../EventClassFactory/renameProcess $(BINDIR)/renameProcess
+	@ln -sf ../Tools/listFiles.py $(BINDIR)/listFiles
+	@ln -sf ../Tools/musicEnv.py $(BINDIR)/musicEnv
+	@ln -sf ../Tools/radio.py $(BINDIR)/radio
+	@ln -sf ../Tools/jukebox $(BINDIR)/jukebox
+	@ln -sf ../Tools/makePlot.py $(BINDIR)/makePlot
+	@ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger2
+	@ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger.py
+	@ln -sf ../Tools/makeSubmitFile.py $(BINDIR)/makeSubmitFile
+	@ln -sf ../Tools/makePileupHistograms.py $(BINDIR)/makePileupHistograms
 
-
-#-----Rules for executables----------------------------------------------------
-
-#Create the bin directory if needed.
+# Directory rules:
 $(BINDIR):
-	mkdir $(BINDIR)
-
-$(BINDIR)/music: music.o $(LIBDIR)/Main.a Tools/PXL/PXL.o Tools/AnyOption.o EventClassFactory/CcEventClass.o $(LIBDIR)/Tools.a Tools/dCache/dCacheBuf.o Tools/SignalHandler.o $(LIBDIR)/EventClass.a  $(LIBDIR)/ControlPlotFactory.a $(LIBDIR)/ControlPlots2.a | $(BINDIR)/ECMerger $(BINDIR)
-		$(CXX) -o $@ $(LDFLAGS) $^
-
-PROGSDIR := Progs
-$(BINDIR)/ECMerger: $(PROGSDIR)/ECMerger.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/ECFileUtil: $(PROGSDIR)/ECFileUtil.o Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/FakeClass:	$(PROGSDIR)/FakeClass.o $(LIBDIR)/Tools.a $(LIBDIR)/EventClass.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/ECCrossSectionRescaler: $(PROGSDIR)/ECCrossSectionRescaler.o $(LIBDIR)/Tools.a Tools/AnyOption.o $(LIBDIR)/EventClass.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/dicePseudoData: $(PROGSDIR)/dicePseudoData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/printClass: $(PROGSDIR)/printClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/printData: $(PROGSDIR)/printData.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-$(BINDIR)/scanClass: $(PROGSDIR)/scanClass.o $(LIBDIR)/MISv2.a $(LIBDIR)/EventClass.a $(LIBDIR)/Tools.a | $(BINDIR)
-	@$(CXX) -o $@ $(LDFLAGS) $^
-
-
-#-----Rules for shared libraries for interactive root--------------------------
-
-$(LIBDIR)/TEventClass.so: EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/Resolutions.o Tools/PXL/PXL.o $(LIBDIR)/Tools.a
-	@$(CXX) -o $@ -shared $(LDFLAGS) -O $^
-
-
-#-----Library rules------------------------------------------------------------
+	@mkdir $(BINDIR)
 
 $(LIBDIR):
-	mkdir $(LIBDIR)
+	@mkdir $(LIBDIR)
 
-DIR  := Main
-SRCS := $(wildcard $(DIR)/*.cc)
-OBJS := $(patsubst %.cc,%.o,$(SRCS))
+$(DEPDIR):
+	@mkdir $(DEPDIR)
 
-$(LIBDIR)/$(DIR).a: $(OBJS) $(LIBDIR)/Tools.a | $(LIBDIR)
-	ar rcs $@ $^
+# Main music build:
+$(BINDIR)/music: music.o $(MAIN) $(TEVENTCLASSFACTORY) $(PXL) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
 
-$(LIBDIR)/ControlPlotFactory.a: 	ControlPlotFactory/CcControl.o ControlPlotFactory/PlotBase.o ControlPlotFactory/DiffPlotBase.o ControlPlotFactory/MuonPlots.o ControlPlotFactory/MuonDiffPlots.o ControlPlotFactory/ElePlots.o ControlPlotFactory/EleDiffPlots.o  ControlPlotFactory/GammaPlots.o ControlPlotFactory/GammaDiffPlots.o ControlPlotFactory/METPlots.o ControlPlotFactory/METDiffPlots.o ControlPlotFactory/JetPlots.o ControlPlotFactory/JetDiffPlots.o ControlPlotFactory/bTagDiffPlotsAllJets.o ControlPlotFactory/bTagDiffPlotsTaggedJets.o ControlPlotFactory/VertexDiffPlots.o ControlPlotFactory/EventPlots.o ControlPlotFactory/HistoPolisher.o | $(LIBDIR)
-				ar rcs $@ $^
+# Rules to build the standalone helper programs:
+$(BINDIR)/ECMerger: $(PROGSDIR)/ECMerger.o Tools/AnyOption.o $(TEVENTCLASS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
 
-$(LIBDIR)/ControlPlots2.a: 	ControlPlotFactory/HistoPolisher.o ControlPlots2/PlotBase.o ControlPlots2/MultiParticlePlots.o ControlPlots2/ParticlePlots.o ControlPlots2/RecControl.o ControlPlots2/RecGammaPlots.o ControlPlots2/RecJetPlots.o ControlPlots2/RecHltPlots.o ControlPlots2/RecL1Plots.o ControlPlots2/RecElePlots.o | $(LIBDIR)
-			ar rcs $@ $^
+$(BINDIR)/ECFileUtil: $(PROGSDIR)/ECFileUtil.o Tools/AnyOption.o $(TEVENTCLASS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
 
-$(LIBDIR)/EventClass.a:	EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o Tools/PXL/PXL.o EventClassFactory/Resolutions.o | $(LIBDIR)
-			ar rcs $@ $^
+$(BINDIR)/FakeClass: $(PROGSDIR)/FakeClass.o $(TOOLS) $(TEVENTCLASS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
 
-$(LIBDIR)/MISv2.a: MISv2/ErrorContainer.o MISv2/ErrorService.o MISv2/ErrorService_add.o MISv2/ErrorService_multiply.o MISv2/ECUpDownError.o MISv2/MCBin.o MISv2/ProcessList.o MISv2/ECReader.o MISv2/ECDicer_add.o MISv2/ECDicer_multiply.o MISv2/ErrorComputer_add.o MISv2/ECPrinter.o MISv2/DataPrinter.o MISv2/PoissonCalculator.o MISv2/ConvolutionComputer_add.o MISv2/ECScanner.o | $(LIBDIR)
-		ar rcs $@ $^
+$(BINDIR)/ECCrossSectionRescaler: $(PROGSDIR)/ECCrossSectionRescaler.o $(TOOLS) Tools/AnyOption.o $(TEVENTCLASS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
 
-$(LIBDIR)/Tools.a: Tools/Tools.o Tools/MConfig.o | $(LIBDIR)
-		ar rcs $@ $^
+# Rules to build the MISv2 programs:
+$(BINDIR)/dicePseudoData: $(PROGSDIR)/dicePseudoData.o $(MISV2) $(TEVENTCLASS) $(TOOLS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
 
-#-----Misc rules---------------------------------------------------------------
+$(BINDIR)/printClass: $(PROGSDIR)/printClass.o $(MISV2) $(TEVENTCLASS) $(TOOLS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
+
+$(BINDIR)/printData: $(PROGSDIR)/printData.o $(MISV2) $(TEVENTCLASS) $(TOOLS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
+
+$(BINDIR)/scanClass: $(PROGSDIR)/scanClass.o $(MISV2) $(TEVENTCLASS) $(TOOLS) | $(BINDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+else
+	$(BUILDBIN)
+endif
+
+# Rules for shared libraries for interactive (py)ROOT:
+$(LIBDIR)/TEventClass.so: $(TEVENTCLASS) | $(LIBDIR)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDSHARED)
+else
+	$(BUILDSHARED)
+endif
 
 EventClassFactory/TEventClassDict.cc: EventClassFactory/TEventClass.hh EventClassFactory/TEventClassLinkDef.h
-					@echo "Generating TEventClass dictionary ..."
-					rootcint -v -f $@ -c $^
-					@sed -e "s@#include \"EventClassFactory/TEventClass.hh\"@#include \"TEventClass.hh\"@" EventClassFactory/TEventClassDict.h > EventClassFactory/TEventClassDict.tmp
-					@mv EventClassFactory/TEventClassDict.tmp EventClassFactory/TEventClassDict.h
+	@echo "Generating TEventClass dictionary ..."
+	@rootcint -v -f $@ -c $^
+	@sed -e "s@#include \"EventClassFactory/TEventClass.hh\"@#include \"TEventClass.hh\"@" EventClassFactory/TEventClassDict.h > EventClassFactory/TEventClassDict.tmp
+	@mv EventClassFactory/TEventClassDict.tmp EventClassFactory/TEventClassDict.h
 
 
 #-----Automatic rules----------------------------------------------------------
+
 #For details on what's happening below, please see: http://make.paulandlesley.org/autodep.html
 #Advantage: Should automatically keep track of all and every dependency.
 #Disadvantage: Makes make slower, because the automatically generated dependency files tend to be huge.
 
 #All .P dependency files are collected in one directory, to avoid cluttering up the source directories.
-#Drawback: We can't have two source files with the same name, even if they are in different directories.
-$(DEPDIR):
-	mkdir $(DEPDIR)
 
-
+# Take the relative path to the file and replace '/' by '_'.
+# Thus we will have two different dependency files even if the files have the
+# same name.
 df = $(DEPDIR)/$(subst /,_,$(subst $(suffix $@),,$@))
 
 %.o: %.cc | $(DEPDIR)
-	g++ -MD $(CXXFLAGS) -o $@ $<
+ifndef VERBOSE
+	@echo -e "$(GREEN)Compiling$(NO_COLOR) $< ..."
+	@$(CXX) -MD $(CXXFLAGS) -o $@ $<
+else
+	$(CXX) -MD $(CXXFLAGS) -o $@ $<
+endif
 	@cp $*.d $(df).P;
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P;
-	@rm -f $*.d
+	@$(RM) $*.d
 
 #Notable difference to the system described above: All .P files in the DEPDIR will be included.
 #Even if there is no .cc file for it anymore.
