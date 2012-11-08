@@ -141,6 +141,8 @@ ifndef VERBOSE
 	@find . -name '*Dict*' -exec rm {} \;
 	@echo -e "$(RED)Removing $(LIBDIR) $(DEPDIR) $(BINDIR)...$(NO_COLOR)"
 	@rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
+	@echo -e "$(RED)Removing python relics...$(NO_COLOR)"
+	@find ./ -name '*.pyc' -exec rm {} \;
 else
 	@echo -e "$(RED)Removing all targets...$(NO_COLOR)"
 	rm -f $(TARGETS)
@@ -150,22 +152,24 @@ else
 	find . -name '*Dict*' -exec rm {} \;
 	@echo -e "$(RED)Removing $(LIBDIR) $(DEPDIR) $(BINDIR)...$(NO_COLOR)"
 	rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
+	@echo -e "$(RED)Removing python relics...$(NO_COLOR)"
+	find ./ -name '*.pyc' -exec rm {} \;
 endif
 
 install-python: | $(BINDIR)
 	@ln -sf ../MISv2/MISMaster/MISMaster.py $(BINDIR)/MISMaster
 	@ln -sf ../MISv2/MISMaster/MISPrinter.py $(BINDIR)/MISPrinter
-	@ln -sf ../EventClassFactory/rebinEventClasses $(BINDIR)/rebinEventClasses
-	@ln -sf ../EventClassFactory/renameProcess $(BINDIR)/renameProcess
-	@ln -sf ../Tools/listFiles.py $(BINDIR)/listFiles
-	@ln -sf ../Tools/musicEnv.py $(BINDIR)/musicEnv
-	@ln -sf ../Tools/radio.py $(BINDIR)/radio
-	@ln -sf ../Tools/jukebox $(BINDIR)/jukebox
-	@ln -sf ../Tools/makePlot.py $(BINDIR)/makePlot
-	@ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger2
-	@ln -sf ../Tools/ECMerger.py $(BINDIR)/ECMerger.py
-	@ln -sf ../Tools/makeSubmitFile.py $(BINDIR)/makeSubmitFile
-	@ln -sf ../Tools/makePileupHistograms.py $(BINDIR)/makePileupHistograms
+	@ln -sf ../scripts/ECMerger.py $(BINDIR)/ECMerger2
+	@ln -sf ../scripts/ECMerger.py $(BINDIR)/ECMerger.py
+	@ln -sf ../scripts/jukebox.py $(BINDIR)/jukebox
+	@ln -sf ../scripts/mkPileupHistograms.py $(BINDIR)/mkPileupHistograms
+	@ln -sf ../scripts/mkSubmitFile.py $(BINDIR)/mkSubmitFile
+	@ln -sf ../scripts/mkPlot.py $(BINDIR)/mkPlot
+	@ln -sf ../scripts/remix.py $(BINDIR)/remix
+	@ln -sf ../scripts/rebinEventClasses.py $(BINDIR)/rebinEventClasses
+	@ln -sf ../scripts/renameProcess.py $(BINDIR)/renameProcess
+	@ln -sf ../python/listFiles.py $(BINDIR)/listFiles
+	@ln -sf ../python/radio.py $(BINDIR)/radio
 
 # Directory rules:
 $(BINDIR):
