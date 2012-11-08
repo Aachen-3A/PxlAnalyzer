@@ -182,7 +182,7 @@ $(DEPDIR):
 	@mkdir $(DEPDIR)
 
 # Main music build:
-$(BINDIR)/music: music.o $(MAIN) $(TEVENTCLASSFACTORY) $(PXL) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR)
+$(BINDIR)/music: $(PROGSDIR)/music.o $(MAIN) $(TEVENTCLASSFACTORY) $(PXL) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR)
 ifndef VERBOSE
 	$(ECHO)
 	@$(BUILDBIN)
