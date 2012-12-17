@@ -11,7 +11,7 @@ Decision.
 #include "Tools/PXL/PXL.hh"
 #include "Tools/MConfig.hh"
 #include "ParticleMatcher.hh"
-#include "TriggerInfo.hh"
+#include "TriggerSelection.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
@@ -40,56 +40,31 @@ public:
    //what JetAlgo to use
    std::string getJetAlgo() const { return m_jet_algo; }
    //requested number of objects for accepted events
-   int getMinNumMuons() const { return m_muo_num_min; }
-   int getMinNumEle()   const { return m_ele_num_min; }
-   int getMinNumTau()   const { return m_tau_num_min; }
-   int getMinNumGamma() const { return m_gam_num_min; }
-   int getMinNumJet()   const { return m_jet_num_min; }
-   int getMinNumMET()   const { return m_met_num_min; }
 
    //value of the b-jet discriminator cut
    double getBcut() const { return m_jet_bJets_discr_min; }
 
-   bool checkTopology( const int muons, const int eles, const int taus, const int gammas, const int jets, const int METs );
-
+   bool passEventTopology( int const numMuo,
+                           int const numEle,
+                           int const numTau,
+                           int const numGam,
+                           int const numJet,
+                           int const numMET
+                           ) const;
    void adaptMuons( const pxl::EventView *EvtView );
+   TriggerSelection const &getTriggerSelection() const { return m_triggerSelection; }
 
 
 private:
    // Methods;
-   // check if EventView passes Trigger Selection
-   bool passTriggerSelection( pxl::EventView *EvtView,
-                              bool const isRec,
-                              std::vector< pxl::Particle* > const &muons,
-                              std::vector< pxl::Particle* > const &eles,
-                              std::vector< pxl::Particle* > const &taus,
-                              std::vector< pxl::Particle* > const &gammas,
-                              std::vector< pxl::Particle* > const &jets,
-                              std::vector< pxl::Particle* > const &mets
-                              );
-   bool passL1Trigger( pxl::EventView *EvtView, const bool isRec );
-   bool checkTriggerParticles( pxl::EventView *EvtView, const std::vector< double > &cuts, const std::vector< pxl::Particle* > &particles );
-   bool passHLTrigger( pxl::EventView *EvtView,
-                       const std::vector< pxl::Particle* > &muons,
-                       const std::vector< pxl::Particle* > &eles,
-                       const std::vector< pxl::Particle* > &taus,
-                       const std::vector< pxl::Particle* > &gammas,
-                       const std::vector< pxl::Particle* > &jets,
-                       const std::vector< pxl::Particle* > &mets,
-                       const bool isRec
-                       );
-   //check if any particles after selection passes the trigger thresholds
-
+   bool passEventTopology( std::vector< pxl::Particle* > const &muos,
+                           std::vector< pxl::Particle* > const &eles,
+                           std::vector< pxl::Particle* > const &taus,
+                           std::vector< pxl::Particle* > const &gams,
+                           std::vector< pxl::Particle* > const &jets,
+                           std::vector< pxl::Particle* > const &mets
+                           ) const;
    bool passFilterSelection( pxl::EventView *EvtView, const bool isRec );
-   bool checkVeto( pxl::EventView *EvtView, const bool isRec );
-   bool passTriggerParticles( const bool isRec,
-                              const std::vector< pxl::Particle* > &muons,
-                              const std::vector< pxl::Particle* > &eles,
-                              const std::vector< pxl::Particle* > &taus,
-                              const std::vector< pxl::Particle* > &gammas,
-                              const std::vector< pxl::Particle* > &jets,
-                              const std::vector< pxl::Particle* > &mets
-                              ) const;
    // perform cuts on Particle Level
    //ATTENTION: changes particle vector!
    void applyCutsOnMuon( pxl::EventView *EvtView, std::vector< pxl::Particle* > &muons, const bool& isRec );
@@ -172,16 +147,7 @@ private:
    double const m_PV_rho_max;
    double const m_PV_ndof_min;
 
-   // Triggers:
-   bool const        m_ignoreL1;
-   bool const        m_ignoreHLT;
-   std::string const m_trigger_prefix;
-   std::vector< trigger_info > m_trigger_groups;
-   std::vector< trigger_info > m_topology_cuts;
-
    // Electrons:
-   int const    m_ele_num_min;
-   double const m_ele_trigger_pt_min;
    double const m_ele_pt_min;
    double const m_ele_eta_barrel_max;
    double const m_ele_eta_endcap_min;
@@ -219,8 +185,6 @@ private:
    std::string const m_ele_ID_name;
 
    // Muons:
-   int const         m_muo_num_min;
-   double const      m_muo_trigger_pt_min;
    double const      m_muo_pt_min;
    double const      m_muo_eta_max;
    bool const        m_muo_invertIso;
@@ -238,16 +202,12 @@ private:
    double const      m_muo_globalChi2_max;
 
    // Taus:
-   const int    m_tau_num_min;
-   const double m_tau_trigger_pt_min;
    const double m_tau_pt_min;
    const double m_tau_eta_max;
    // Discriminators:
    const std::vector< std::string > m_tau_discriminators;
 
    // Photons:
-   int const    m_gam_num_min;
-   double const m_gam_trigger_pt_min;
    double const m_gam_pt_min;
    double const m_gam_eta_barrel_max;
    double const m_gam_eta_endcap_min;
@@ -291,8 +251,6 @@ private:
    double const      m_gam_r29_max;
 
    // Jets:
-   int const         m_jet_num_min;
-   double const      m_jet_trigger_pt_min;
    std::string const m_jet_algo;
    double const      m_jet_pt_min;
    double const      m_jet_eta_max;
@@ -307,8 +265,6 @@ private:
    std::string const m_jet_bJets_genFlavourAlgo;
 
    // MET:
-   int const         m_met_num_min;
-   double const      m_met_trigger_pt_min;
    std::string const m_met_type;
    double const      m_met_pt_min;
    double const      m_met_dphi_ele_min;
@@ -316,9 +272,6 @@ private:
    //HCAL noise ID
    bool const        m_hcal_noise_ID_use;
    std::string const m_hcal_noise_ID_name;
-
-   // Do no opology cuts when not needed.
-   bool const m_no_topo_cut;
 
    /////////////////////////////////////////////////////////////////////////////
    ////////////////////////////// Other variables: /////////////////////////////
@@ -329,6 +282,8 @@ private:
 
    ParticleMatcher m_matcher;
    DuplicateObjects m_duplicate;
+
+   TriggerSelection const m_triggerSelection;
 
    // Event variables:
    double m_rho25;
