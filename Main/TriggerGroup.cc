@@ -1,7 +1,9 @@
 #include "TriggerGroup.hh"
 
 #include <sstream>
+#include <stdexcept>
 
+#include "Tools/Tools.hh"
 #include "Tools/PXL/PXL.hh"
 
 using std::string;
@@ -12,7 +14,16 @@ TriggerGroup::TriggerGroup( Tools::MConfig const &cfg, unsigned int const group_
    m_trigger( cfg.GetItem< string >( m_prefix + "Trigger" ) ),
    m_require( cfg.GetItem< bool   >( m_prefix + "Require" ) ),
    m_reject(  cfg.GetItem< bool   >( m_prefix + "Reject" ) ),
-   m_cuts_map( initCuts( cfg ) )
+   m_cuts_map( initCuts( cfg ) ),
+
+   // Store the cut values at the initialisation, so they don't have to
+   // be read from the config everytime.
+   m_muoPtMin( cfg.GetItem< double >( "Muon.pt.min" ) ),
+   m_elePtMin( cfg.GetItem< double >( "Ele.pt.min" ) ),
+   m_tauPtMin( cfg.GetItem< double >( "Tau.pt.min" ) ),
+   m_gamPtMin( cfg.GetItem< double >( "Gamma.pt.min" ) ),
+   m_jetPtMin( cfg.GetItem< double >( "Jet.pt.min" ) ),
+   m_metPtMin( cfg.GetItem< double >( "MET.pt.min" ) )
 {
    if( m_require and m_reject ) {
       std::stringstream err;
@@ -110,4 +121,97 @@ bool TriggerGroup::checkTopology( int const numMuo,
         ) return true;
 
     return false;
+}
+
+
+double TriggerGroup::computeSumptMin( int numMuo,
+                                      int numEle,
+                                      int numTau,
+                                      int numGam,
+                                      int numJet,
+                                      int numMET,
+                                      bool const inclusive
+                                      ) const {
+   double sumptMin = 0.0;
+
+   TriggerCuts::const_iterator cut;
+   if( numMuo > 0 and not inclusive ) {
+      for( cut = getCuts( "Muo" ).begin(); cut != getCuts( "Muo" ).end(); ++cut ) {
+         sumptMin += *cut;
+         numMuo--;
+      }
+   }
+   if( numMuo < 0 ) {
+      string const err = "In TriggerGroup::computeSumptMin(...): number of muons smaller than expected. Something is wrong with your EventClass!";
+      throw std::underflow_error( err );
+   }
+
+   sumptMin += numMuo * m_muoPtMin;
+
+   if( numEle > 0 and not inclusive ) {
+      for( cut = getCuts( "Ele" ).begin(); cut != getCuts( "Ele" ).end(); ++cut ) {
+         sumptMin += *cut;
+         numEle--;
+      }
+   }
+   if( numEle < 0 ) {
+      string const err = "In TriggerGroup::computeSumptMin(...): number of electrons smaller than expected. Something is wrong with your EventClass!";
+      throw std::underflow_error( err );
+   }
+
+   sumptMin += numEle * m_elePtMin;
+
+   if( numTau > 0 and not inclusive ) {
+      for( cut = getCuts( "Tau" ).begin(); cut != getCuts( "Tau" ).end(); ++cut ) {
+         sumptMin += *cut;
+         numTau--;
+      }
+   }
+   if( numTau < 0 ) {
+      string const err = "In TriggerGroup::computeSumptMin(...): number of taus smaller than expected. Something is wrong with your EventClass!";
+      throw std::underflow_error( err );
+   }
+
+   sumptMin += numTau * m_tauPtMin;
+
+   if( numGam > 0 and not inclusive ) {
+      for( cut = getCuts( "Gam" ).begin(); cut != getCuts( "Gam" ).end(); ++cut ) {
+         sumptMin += *cut;
+         numGam--;
+      }
+   }
+   if( numGam < 0 ) {
+      string const err = "In TriggerGroup::computeSumptMin(...): number of gammas smaller than expected. Something is wrong with your EventClass!";
+      throw std::underflow_error( err );
+   }
+
+   sumptMin += numGam * m_gamPtMin;
+
+   if( numJet > 0 and not inclusive ) {
+      for( cut = getCuts( "Jet" ).begin(); cut != getCuts( "Jet" ).end(); ++cut ) {
+         sumptMin += *cut;
+         numJet--;
+      }
+   }
+   if( numJet < 0 ) {
+      string const err = "In TriggerGroup::computeSumptMin(...): number of jets smaller than expected. Something is wrong with your EventClass!";
+      throw std::underflow_error( err );
+   }
+
+   sumptMin += numJet * m_jetPtMin;
+
+   if( numMET > 0 and not inclusive ) {
+      for( cut = getCuts( "MET" ).begin(); cut != getCuts( "MET" ).end(); ++cut ) {
+         sumptMin += *cut;
+         numMET--;
+      }
+   }
+   if( numMET < 0 ) {
+      string const err = "In TriggerGroup::computeSumptMin(...): number of METs smaller than expected. Something is wrong with your EventClass!";
+      throw std::underflow_error( err );
+   }
+
+   sumptMin += numMET * m_metPtMin;
+
+   return sumptMin;
 }

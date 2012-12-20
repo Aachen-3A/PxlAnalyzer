@@ -52,6 +52,16 @@ class TriggerGroup {
                                  std::vector< pxl::Particle* > const &jets,
                                  std::vector< pxl::Particle* > const &mets
                                  ) const;
+      // Compute the minimal possible sumpt in each trigger group for
+      // the given set of particles.
+      double computeSumptMin( int numMuo,
+                              int numEle,
+                              int numTau,
+                              int numGam,
+                              int numJet,
+                              int numMET,
+                              bool const inclusive
+                              ) const;
 
    private:
       // There are six types of particles that are considered at the moment. For each
@@ -76,6 +86,13 @@ class TriggerGroup {
       bool const m_require;
       bool const m_reject;
       std::map< std::string, TriggerCuts > m_cuts_map;
+
+      double const m_muoPtMin;
+      double const m_elePtMin;
+      double const m_tauPtMin;
+      double const m_gamPtMin;
+      double const m_jetPtMin;
+      double const m_metPtMin;
 };
 
 #endif /*TRIGGERGROUP*/
