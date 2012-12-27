@@ -1,5 +1,6 @@
 #include "TriggerGroup.hh"
 
+#include <exception>
 #include <sstream>
 #include <stdexcept>
 
@@ -8,22 +9,18 @@
 
 using std::string;
 
-TriggerGroup::TriggerGroup( Tools::MConfig const &cfg, unsigned int const group_num ) :
-   m_prefix( "Trigger." + Tools::toString( group_num ) + "." ),
-   m_name(    cfg.GetItem< string >( m_prefix + "Name" ) ),
-   m_trigger( cfg.GetItem< string >( m_prefix + "Trigger" ) ),
-   m_require( cfg.GetItem< bool   >( m_prefix + "Require" ) ),
-   m_reject(  cfg.GetItem< bool   >( m_prefix + "Reject" ) ),
+TriggerGroup::TriggerGroup( Tools::MConfig const &cfg,
+                            string const &triggerPrefix,
+                            string const &groupName
+                            ) :
+   m_triggerPrefix( triggerPrefix ),
+   m_prefix( "Trigger." + groupName + "." ),
+   m_name( cfg.GetItem< string >( m_prefix + "Name" ) ),
+   m_triggers( initTriggers( cfg ) ),
+   m_require( cfg.GetItem< bool >( m_prefix + "Require" ) ),
+   m_reject(  cfg.GetItem< bool >( m_prefix + "Reject" ) ),
    m_cuts_map( initCuts( cfg ) ),
-
-   // Store the cut values at the initialisation, so they don't have to
-   // be read from the config everytime.
-   m_muoPtMin( cfg.GetItem< double >( "Muon.pt.min" ) ),
-   m_elePtMin( cfg.GetItem< double >( "Ele.pt.min" ) ),
-   m_tauPtMin( cfg.GetItem< double >( "Tau.pt.min" ) ),
-   m_gamPtMin( cfg.GetItem< double >( "Gamma.pt.min" ) ),
-   m_jetPtMin( cfg.GetItem< double >( "Jet.pt.min" ) ),
-   m_metPtMin( cfg.GetItem< double >( "MET.pt.min" ) )
+   m_ptMin_map( initPtMin( cfg ) )
 {
    if( m_require and m_reject ) {
       std::stringstream err;
@@ -35,8 +32,17 @@ TriggerGroup::TriggerGroup( Tools::MConfig const &cfg, unsigned int const group_
 }
 
 
-std::map< string, TriggerGroup::TriggerCuts > TriggerGroup::initCuts( Tools::MConfig const &cfg ) const {
-   std::map< string, TriggerCuts > cuts_map;
+std::set< string > TriggerGroup::initTriggers( Tools::MConfig const &cfg ) const {
+   std::vector< string > const trig_vec = Tools::splitString< string >( cfg.GetItem< string >( m_prefix + "Triggers" ) );
+
+   std::set< string > const triggers( trig_vec.begin(), trig_vec.end() );
+
+   return triggers;
+}
+
+
+TriggerGroup::TriggerCutsCollection TriggerGroup::initCuts( Tools::MConfig const &cfg ) const {
+   TriggerCutsCollection cuts_map;
 
    TriggerCuts muoCuts = Tools::splitString< double >( cfg.GetItem< string >( m_prefix + "Cuts.Mu",    "" ), true );
    TriggerCuts eleCuts = Tools::splitString< double >( cfg.GetItem< string >( m_prefix + "Cuts.E",     "" ), true );
@@ -45,21 +51,53 @@ std::map< string, TriggerGroup::TriggerCuts > TriggerGroup::initCuts( Tools::MCo
    TriggerCuts jetCuts = Tools::splitString< double >( cfg.GetItem< string >( m_prefix + "Cuts.Jet",   "" ), true );
    TriggerCuts metCuts = Tools::splitString< double >( cfg.GetItem< string >( m_prefix + "Cuts.MET",   "" ), true );
 
-   std::sort( muoCuts.begin(), muoCuts.end() );
-   std::sort( eleCuts.begin(), eleCuts.end() );
-   std::sort( tauCuts.begin(), tauCuts.end() );
-   std::sort( gamCuts.begin(), gamCuts.end() );
-   std::sort( jetCuts.begin(), jetCuts.end() );
-   std::sort( metCuts.begin(), metCuts.end() );
+   if( not muoCuts.empty() ) {
+      std::sort( muoCuts.begin(), muoCuts.end() );
+      cuts_map[ "Muo" ] = muoCuts;
+   }
 
-   cuts_map[ "Muo" ] = muoCuts;
-   cuts_map[ "Ele" ] = eleCuts;
-   cuts_map[ "Tau" ] = tauCuts;
-   cuts_map[ "Gam" ] = gamCuts;
-   cuts_map[ "Jet" ] = jetCuts;
-   cuts_map[ "MET" ] = metCuts;
+   if( not eleCuts.empty() ) {
+      std::sort( eleCuts.begin(), eleCuts.end() );
+      cuts_map[ "Ele" ] = eleCuts;
+   }
+
+   if( not tauCuts.empty() ) {
+      std::sort( tauCuts.begin(), tauCuts.end() );
+      cuts_map[ "Tau" ] = tauCuts;
+   }
+
+   if( not gamCuts.empty() ) {
+      std::sort( gamCuts.begin(), gamCuts.end() );
+      cuts_map[ "Gam" ] = gamCuts;
+   }
+
+   if( not jetCuts.empty() ) {
+      std::sort( jetCuts.begin(), jetCuts.end() );
+      cuts_map[ "Jet" ] = jetCuts;
+   }
+
+   if( not metCuts.empty() ) {
+      std::sort( metCuts.begin(), metCuts.end() );
+      cuts_map[ "MET" ] = metCuts;
+   }
 
    return cuts_map;
+}
+
+
+// Store the cut values at the initialisation, so they don't have to
+// be read from the config everytime.
+TriggerGroup::PtMap TriggerGroup::initPtMin( Tools::MConfig const &cfg ) const {
+   PtMap ptMinMap;
+
+   ptMinMap[ "Muo" ] = cfg.GetItem< double >( "Muon.pt.min" );
+   ptMinMap[ "Ele" ] = cfg.GetItem< double >( "Ele.pt.min" );
+   ptMinMap[ "Tau" ] = cfg.GetItem< double >( "Tau.pt.min" );
+   ptMinMap[ "Gam" ] = cfg.GetItem< double >( "Gamma.pt.min" );
+   ptMinMap[ "Jet" ] = cfg.GetItem< double >( "Jet.pt.min" );
+   ptMinMap[ "MET" ] = cfg.GetItem< double >( "MET.pt.min" );
+
+   return ptMinMap;
 }
 
 
@@ -74,24 +112,27 @@ bool TriggerGroup::passTriggerParticles( bool const isRec,
    // No trigger on "Gen" level.
    if( not isRec ) return true;
 
-   bool const particles_accepted = checkTriggerParticles( getCuts( "Muo" ), muos ) and
-                                   checkTriggerParticles( getCuts( "Ele" ), eles ) and
-                                   checkTriggerParticles( getCuts( "Tau" ), taus ) and
-                                   checkTriggerParticles( getCuts( "Jet" ), jets ) and
-                                   checkTriggerParticles( getCuts( "Gam" ), gams ) and
-                                   checkTriggerParticles( getCuts( "MET" ), mets );
+   bool const particles_accepted = checkTriggerParticles( "Muo", muos ) and
+                                   checkTriggerParticles( "Ele", eles ) and
+                                   checkTriggerParticles( "Tau", taus ) and
+                                   checkTriggerParticles( "Jet", jets ) and
+                                   checkTriggerParticles( "Gam", gams ) and
+                                   checkTriggerParticles( "MET", mets );
    return particles_accepted;
 }
 
 
-bool TriggerGroup::checkTriggerParticles( TriggerCuts const &cuts,
+bool TriggerGroup::checkTriggerParticles( string const &particleType,
                                           std::vector< pxl::Particle* > const &particles
                                           ) const {
+   TriggerCuts cuts;
+   bool const cutsSet = getCuts( particleType, cuts );
+
    // Do we have anything to do?
-   if( cuts.empty() ) return true;
+   if( not cutsSet ) return true;
 
    // Do we have enough partices of the given type in this event?
-   if( cuts.size() > particles.size() ) return false;
+   if( particles.size() < cuts.size()  ) return false;
 
    std::vector< pxl::Particle* >::const_iterator particle = particles.begin();
    for( TriggerCuts::const_iterator cut = cuts.begin(); cut != cuts.end(); cut++, particle++ ) {
@@ -111,107 +152,109 @@ bool TriggerGroup::checkTopology( int const numMuo,
                                   int const numJet,
                                   int const numMET
                                   ) const {
-    // The number of cuts defines the triggertopology for each particle type!
-    if( numMuo >= getNCuts( "Muo" ) and
-        numEle >= getNCuts( "Ele" ) and
-        numTau >= getNCuts( "Tau" ) and
-        numGam >= getNCuts( "Gam" ) and
-        numJet >= getNCuts( "Jet" ) and
-        numMET >= getNCuts( "MET" )
-        ) return true;
+   // Check if we demand any cuts on each particle and then check if there are
+   // enough particles in the given topology.
+   bool all_accept = true;
+   if( all_accept and getNCuts( "Muo" ) >= 0 ) all_accept = numMuo >= getNCuts( "Muo" );
+   if( all_accept and getNCuts( "Ele" ) >= 0 ) all_accept = numEle >= getNCuts( "Ele" );
+   if( all_accept and getNCuts( "Tau" ) >= 0 ) all_accept = numTau >= getNCuts( "Tau" );
+   if( all_accept and getNCuts( "Gam" ) >= 0 ) all_accept = numGam >= getNCuts( "Gam" );
+   if( all_accept and getNCuts( "Jet" ) >= 0 ) all_accept = numJet >= getNCuts( "Jet" );
+   if( all_accept and getNCuts( "MET" ) >= 0 ) all_accept = numMET >= getNCuts( "MET" );
 
-    return false;
+   return all_accept;
 }
 
 
-double TriggerGroup::computeSumptMin( int numMuo,
-                                      int numEle,
-                                      int numTau,
-                                      int numGam,
-                                      int numJet,
-                                      int numMET,
-                                      bool const inclusive
-                                      ) const {
+double TriggerGroup::sumPtMinForParticles( string const &particleType,
+                                           bool const &inclusive,
+                                           int numParticles
+                                           ) const {
    double sumptMin = 0.0;
-
-   TriggerCuts::const_iterator cut;
-   if( numMuo > 0 and not inclusive ) {
-      for( cut = getCuts( "Muo" ).begin(); cut != getCuts( "Muo" ).end(); ++cut ) {
-         sumptMin += *cut;
-         numMuo--;
+   // For inclusive EventClasses the trigger cuts are not relevant.
+   if( numParticles > 0 and not inclusive ) {
+      TriggerCuts cuts;
+      bool const cutsSet = getCuts( particleType, cuts );
+      if( cutsSet ) {
+         // The given pt-cuts are added and for each given cut one particle is
+         // removed.
+         for( TriggerCuts::const_iterator cut = cuts.begin(); cut != cuts.end(); ++cut ) {
+            sumptMin += *cut;
+            numParticles--;
+         }
       }
    }
-   if( numMuo < 0 ) {
-      string const err = "In TriggerGroup::computeSumptMin(...): number of muons smaller than expected. Something is wrong with your EventClass!";
+
+   // If there were less particles than cuts, something went really wrong!
+   if( numParticles < 0 ) {
+      string err = "In TriggerGroup::sumPtMinForParticles(...): number of particles '";
+      err += particleType;
+      err += "' smaller than expected. Something is wrong with your EventClass!";
       throw std::underflow_error( err );
    }
 
-   sumptMin += numMuo * m_muoPtMin;
-
-   if( numEle > 0 and not inclusive ) {
-      for( cut = getCuts( "Ele" ).begin(); cut != getCuts( "Ele" ).end(); ++cut ) {
-         sumptMin += *cut;
-         numEle--;
-      }
-   }
-   if( numEle < 0 ) {
-      string const err = "In TriggerGroup::computeSumptMin(...): number of electrons smaller than expected. Something is wrong with your EventClass!";
-      throw std::underflow_error( err );
-   }
-
-   sumptMin += numEle * m_elePtMin;
-
-   if( numTau > 0 and not inclusive ) {
-      for( cut = getCuts( "Tau" ).begin(); cut != getCuts( "Tau" ).end(); ++cut ) {
-         sumptMin += *cut;
-         numTau--;
-      }
-   }
-   if( numTau < 0 ) {
-      string const err = "In TriggerGroup::computeSumptMin(...): number of taus smaller than expected. Something is wrong with your EventClass!";
-      throw std::underflow_error( err );
-   }
-
-   sumptMin += numTau * m_tauPtMin;
-
-   if( numGam > 0 and not inclusive ) {
-      for( cut = getCuts( "Gam" ).begin(); cut != getCuts( "Gam" ).end(); ++cut ) {
-         sumptMin += *cut;
-         numGam--;
-      }
-   }
-   if( numGam < 0 ) {
-      string const err = "In TriggerGroup::computeSumptMin(...): number of gammas smaller than expected. Something is wrong with your EventClass!";
-      throw std::underflow_error( err );
-   }
-
-   sumptMin += numGam * m_gamPtMin;
-
-   if( numJet > 0 and not inclusive ) {
-      for( cut = getCuts( "Jet" ).begin(); cut != getCuts( "Jet" ).end(); ++cut ) {
-         sumptMin += *cut;
-         numJet--;
-      }
-   }
-   if( numJet < 0 ) {
-      string const err = "In TriggerGroup::computeSumptMin(...): number of jets smaller than expected. Something is wrong with your EventClass!";
-      throw std::underflow_error( err );
-   }
-
-   sumptMin += numJet * m_jetPtMin;
-
-   if( numMET > 0 and not inclusive ) {
-      for( cut = getCuts( "MET" ).begin(); cut != getCuts( "MET" ).end(); ++cut ) {
-         sumptMin += *cut;
-         numMET--;
-      }
-   }
-   if( numMET < 0 ) {
-      string const err = "In TriggerGroup::computeSumptMin(...): number of METs smaller than expected. Something is wrong with your EventClass!";
-      throw std::underflow_error( err );
-   }
-
-   sumptMin += numMET * m_metPtMin;
+   // For non-triggering particles the minimum sum(pt) is simply the pt-cut
+   // times the number of particles of that type.
+   sumptMin += numParticles * (*m_ptMin_map.find( particleType )).second;
 
    return sumptMin;
+}
+
+
+double TriggerGroup::getSumptMin( int const numMuo,
+                                  int const numEle,
+                                  int const numTau,
+                                  int const numGam,
+                                  int const numJet,
+                                  int const numMET,
+                                  bool const inclusive
+                                  ) const {
+   double sumptMin = 0.0;
+
+   sumptMin += sumPtMinForParticles( "Muo", inclusive, numMuo );
+   sumptMin += sumPtMinForParticles( "Ele", inclusive, numEle );
+   sumptMin += sumPtMinForParticles( "Tau", inclusive, numTau );
+   sumptMin += sumPtMinForParticles( "Gam", inclusive, numGam );
+   sumptMin += sumPtMinForParticles( "Jet", inclusive, numJet );
+   sumptMin += sumPtMinForParticles( "MET", inclusive, numMET );
+
+   return sumptMin;
+}
+
+
+double TriggerGroup::getMETMin() {
+   TriggerCuts cuts;
+   bool const cutsSet = getCuts( "MET", cuts );
+
+   if( cutsSet ) return cuts.at( 0 );
+   else          return 0.0;
+}
+
+
+TriggerGroup::TriggerResults TriggerGroup::getTriggerResults( pxl::EventView const *evtView ) const {
+   TriggerResults triggerResults;
+
+   bool any_trigger_found = false;
+
+   for( Triggers::const_iterator trigger = m_triggers.begin(); trigger != m_triggers.end(); ++trigger ) {
+      string const triggerName = m_triggerPrefix + *trigger;
+
+      try{
+         triggerResults[ triggerName ] = evtView->findUserRecord< bool >( triggerName );
+         any_trigger_found = true;
+      } catch( std::runtime_error &exc ) {
+         continue;
+      }
+   }
+
+   if( not any_trigger_found ) {
+      std::stringstream err;
+      err << "In TriggerSelection::passHLTrigger(...): ";
+      err << "None of the specified triggers in trigger group '";
+      err << m_name;
+      err << "' found!";
+      throw std::runtime_error( err.str() );
+   }
+
+   return triggerResults;
 }
