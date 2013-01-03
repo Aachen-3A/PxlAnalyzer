@@ -934,12 +934,22 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
                      + m_gam_endcap_HcalIso_rhoSlope * m_rho25;
       }
 
-      //Jurrasic ECAL Isolation
-      if( gam->findUserRecord< double >( "ID_ECALIso" ) > maxEcalIso ) return false;
-      //Tower-based HCAL Isolation
-      if( gam->findUserRecord< double >( "ID_HCALIso" ) > maxHcalIso ) return false;
-      //hollow cone track isolation
-      if( gam->findUserRecord< double >( "ID_TrkIso" ) > maxTrackIso ) return false;
+      // New (uniform) naming convention in Skimmer.
+      try {
+         //Jurrasic ECAL Isolation
+         if( gam->findUserRecord< double >( "ID_ECALIso" ) > maxEcalIso ) return false;
+         //Tower-based HCAL Isolation
+         if( gam->findUserRecord< double >( "ID_HCALIso" ) > maxHcalIso ) return false;
+         //hollow cone track isolation
+         if( gam->findUserRecord< double >( "ID_TrkIso" ) > maxTrackIso ) return false;
+      } catch( std::runtime_error ) {
+         // Jurrasic ECAL Isolation.
+         if( gam->findUserRecord< double >( "ECALIso" ) > maxEcalIso ) return false;
+         // Tower-based HCAL Isolation.
+         if( gam->findUserRecord< double >( "HCALIso" ) > maxHcalIso ) return false;
+         // Hollow cone track isolation.
+         if( gam->findUserRecord< double >( "TrkIso" ) > maxTrackIso ) return false;
+      }
 
       //Hadronic / electromagnetic energy fraction
       if( gam->findUserRecord< double >( "HoEm" ) > m_gam_HoEm_max ) return false;
