@@ -168,10 +168,10 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // To access the JEC uncertainties from file.
    m_jecUnc( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESFile" ) ) ),
 
-   // Particle Matcher and Duplicate Remover.
+   // Particle Matcher.
    m_matcher(),
-   m_duplicate(),
 
+   m_eventCleaning( cfg ),
    m_triggerSelector( cfg ),
 
    m_rho25( 0.0 )
@@ -1165,7 +1165,13 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    varyJES(jets, JES, isRec);
    applyCutsOnJet( EvtView, jets, isRec );     //distribution into jets and b-jets
    //consistently check GenView for duplicates, important especially for GenJets and efficiency-normalization
-   if( !m_ignoreOverlaps ) m_duplicate.removeOverlap( muons, eles, taus, gammas, jets, isRec );
+   if( not m_ignoreOverlaps ) m_eventCleaning.cleanEvent( muons,
+                                                          eles,
+                                                          taus,
+                                                          gammas,
+                                                          jets,
+                                                          isRec
+                                                          );
 
    //now vary also MET using ONLY selected and JES-modified jets. Maybe use dedicated jet cuts here?
    varyJESMET(jets, mets, JES, isRec);

@@ -15,7 +15,7 @@ Decision.
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
-#include "Main/DuplicateObjects.hh"
+#include "Main/EventCleaning.hh"
 
 class EventSelector {
 public:
@@ -287,7 +287,8 @@ private:
    JetCorrectionUncertainty m_jecUnc;
 
    ParticleMatcher m_matcher;
-   DuplicateObjects m_duplicate;
+
+   EventCleaning const m_eventCleaning;
 
    TriggerSelector const m_triggerSelector;
 
