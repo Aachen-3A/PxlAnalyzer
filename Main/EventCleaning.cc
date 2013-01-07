@@ -101,18 +101,7 @@ void EventCleaning::cleanEles( std::vector< pxl::Particle* > &eles,
    // photon. This should be updated if the algorithms change.
 
    // Remove eles in proximity to muons.
-   std::vector< pxl::Particle* >::iterator ele;
-   for( ele = eles.begin(); ele != eles.end(); ++ele ) {
-      std::vector< pxl::Particle* >::const_iterator muo;
-      for( muo = muos.begin(); muo != muos.end(); ++muo ) {
-         if( checkParticleOverlap( *ele, *muo, m_muo_DeltaR_max ) ) {
-            removeParticle( eles, ele );
-
-            // No use to continue inner loop once ele is removed.
-            break;
-         }
-      }
-   }
+   removeOverlappingParticles( eles, muos, m_muo_DeltaR_max );
 }
 
 
@@ -160,13 +149,22 @@ void EventCleaning::cleanGams( std::vector< pxl::Particle* > &gams,
    // are close to a muon. This should be updated if the algorithms change.
 
    // Remove gammas in proximity to muons.
-   for( gam = gams.begin(); gam != gams.end(); ++gam ) {
-      std::vector< pxl::Particle* >::const_iterator muo;
-      for( muo = muos.begin(); muo != muos.end(); ++muo ) {
-         if( checkParticleOverlap( *gam, *muo, m_muo_DeltaR_max ) ) {
-            removeParticle( gams, gam );
+   removeOverlappingParticles( gams, muos, m_muo_DeltaR_max );
+}
 
-            // No use to continue inner loop once gamma is removed.
+
+void EventCleaning::removeOverlappingParticles( std::vector< pxl::Particle* > &toBeCleanedCollection,
+                                                std::vector< pxl::Particle* > const &inputCollection,
+                                                double const DeltaR_max
+                                                ) const {
+   std::vector< pxl::Particle* >::iterator toBeCleaned;
+   for( toBeCleaned = toBeCleanedCollection.begin(); toBeCleaned != toBeCleanedCollection.end(); ++toBeCleaned ) {
+      std::vector< pxl::Particle* >::const_iterator inputParticle;
+      for( inputParticle = inputCollection.begin(); inputParticle != inputCollection.end(); ++inputParticle ) {
+         if( checkParticleOverlap( *toBeCleaned, *inputParticle, DeltaR_max ) ) {
+            removeParticle( toBeCleanedCollection, toBeCleaned );
+
+            // No use to continue inner loop once outer particle is removed.
             break;
          }
       }
@@ -180,54 +178,10 @@ void EventCleaning::cleanJets( std::vector< pxl::Particle* > &jets,
                                std::vector< pxl::Particle* > const &muos,
                                std::vector< pxl::Particle* > const &taus
                                ) const {
-   std::vector< pxl::Particle* >::iterator jet;
-   for( jet = jets.begin(); jet != jets.end(); ++jet ) {
-      std::vector< pxl::Particle* >::const_iterator muo;
-      for( muo = muos.begin(); muo != muos.end(); ++muo ) {
-         if( checkParticleOverlap( *jet, *muo, m_muo_DeltaR_max ) ) {
-            removeParticle( jets, jet );
-
-            // No use to continue inner loop once jet is removed.
-            break;
-         }
-      }
-   }
-
-   for( jet = jets.begin(); jet != jets.end(); ++jet ) {
-      std::vector< pxl::Particle* >::const_iterator ele;
-      for( ele = eles.begin(); ele != eles.end(); ++ele ) {
-         if( checkParticleOverlap( *jet, *ele, m_ele_DeltaR_max ) ) {
-            removeParticle( jets, jet );
-
-            // No use to continue inner loop once jet is removed.
-            break;
-         }
-      }
-   }
-
-   for( jet = jets.begin(); jet != jets.end(); ++jet ) {
-      std::vector< pxl::Particle* >::const_iterator gam;
-      for( gam = gams.begin(); gam != gams.end(); ++gam ) {
-         if( checkParticleOverlap( *jet, *gam, m_gam_DeltaR_max ) ) {
-            removeParticle( jets, jet );
-
-            // No use to continue inner loop once jet is removed.
-            break;
-         }
-      }
-   }
-
-   for( jet = jets.begin(); jet != jets.end(); ++jet ) {
-      std::vector< pxl::Particle* >::const_iterator tau;
-      for( tau = taus.begin(); tau != taus.end(); ++tau ) {
-         if( checkParticleOverlap( *jet, *tau, m_tau_DeltaR_max ) ) {
-            removeParticle( jets, jet );
-
-            // No use to continue inner loop once jet is removed.
-            break;
-         }
-      }
-   }
+   removeOverlappingParticles( jets, gams, m_gam_DeltaR_max );
+   removeOverlappingParticles( jets, eles, m_ele_DeltaR_max );
+   removeOverlappingParticles( jets, muos, m_muo_DeltaR_max );
+   removeOverlappingParticles( jets, taus, m_tau_DeltaR_max );
 }
 
 

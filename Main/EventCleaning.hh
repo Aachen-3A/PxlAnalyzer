@@ -37,6 +37,12 @@ private:
    void removeParticle( std::vector< pxl::Particle* > &particles,
                         std::vector< pxl::Particle* >::iterator &particle ) const;
 
+   // Take two particle collections and remove "duplicates" from the first one.
+   void removeOverlappingParticles( std::vector< pxl::Particle* > &toBeCleanedCollection,
+                                    std::vector< pxl::Particle* > const &inputCollection,
+                                    double const DeltaR_max
+                                    ) const;
+
    // Remove duplicate muons (ghosts).
    void cleanMuos( std::vector< pxl::Particle* > &muons, bool const isRec ) const;
 
