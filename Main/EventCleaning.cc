@@ -1,10 +1,14 @@
 #include "EventCleaning.hh"
 
+#include "TMath.h"
+
 #include "Tools/PXL/PXL.hh"
 #include "Tools/MConfig.hh"
 
 
 EventCleaning::EventCleaning( Tools::MConfig const &cfg ) :
+   m_muo_cleanDuplicates( cfg.GetItem< bool >( "Muon.cleanDuplicates" ) ),
+
    m_muo_DeltaR_max( cfg.GetItem< double >( "Muon.DeltaR.max" ) ),
    m_ele_DeltaR_max( cfg.GetItem< double >( "Ele.DeltaR.max" ) ),
    m_tau_DeltaR_max( cfg.GetItem< double >( "Tau.DeltaR.max" ) ),
@@ -46,17 +50,23 @@ void EventCleaning::cleanMuos( std::vector< pxl::Particle* > &muos,
    std::vector< pxl::Particle* >::iterator part1;
    std::vector< pxl::Particle* >::iterator part2;
 
-   for( part1 = muos.begin(); part1 != muos.end(); ++part1 ) {
-      // Start inner loop with "next" particle.
-      for( part2 = part1 + 1; part2 != muos.end(); ++part2 ) {
-         int const ret = checkMuonOverlap( *part1, *part2, isRec );
-         if( ret == -1 ) {
-            removeParticle( muos, part1 );
+   // It is not perfectly clear, if we really want to clean muons against muons.
+   // In general, there can be ambiguities in the reconstruction, but e.g. for
+   // high-pt Z candidates you expect two muons to be very close in Delta R.
+   // TODO: We need a study/reference here.
+   if( m_muo_cleanDuplicates ) {
+      for( part1 = muos.begin(); part1 != muos.end(); ++part1 ) {
+         // Start inner loop with "next" particle.
+         for( part2 = part1 + 1; part2 != muos.end(); ++part2 ) {
+            int const ret = checkMuonOverlap( *part1, *part2, isRec );
+            if( ret == -1 ) {
+               removeParticle( muos, part1 );
 
-            // No use to continue inner loop once part1 is removed.
-            break;
-         } else if( ret == 1 ) {
-            removeParticle( muos, part2 );
+               // No use to continue inner loop once part1 is removed.
+               break;
+            } else if( ret == 1 ) {
+               removeParticle( muos, part2 );
+            }
          }
       }
    }
@@ -228,8 +238,13 @@ int EventCleaning::checkMuonOverlap( pxl::Particle const *paI,
    // Check particle DeltaR.
    if( checkParticleOverlap( paI, paJ, m_muo_DeltaR_max ) ) {
       if( isRec ) {
-         // So far decide using smallest chi2/ndf, probably not the best choice...
-         return checkNormChi2( paI, paJ );
+         try {
+            // In future, get the track prbability from chi2 and ndf.
+            return checkProbability( paI, paJ );
+         } catch( std::runtime_error ) {
+            // So far decide using smallest chi2/ndf, probably not the best choice...
+            return checkNormChi2( paI, paJ );
+         }
       } else {
          //for gen: take the harder one
          double const ptI = paI->getPt();
@@ -284,10 +299,27 @@ int EventCleaning::checkGammaOverlap( pxl::Particle const *paI,
 int EventCleaning::checkNormChi2( pxl::Particle const *p1,
                                   pxl::Particle const *p2
                                   ) const {
-   double const NormChi2_1 = p1->findUserRecord< double >( "NormChi2" );
-   double const NormChi2_2 = p2->findUserRecord< double >( "NormChi2" );
+   double const normChi2_1 = p1->findUserRecord< double >( "NormChi2" );
+   double const normChi2_2 = p2->findUserRecord< double >( "NormChi2" );
 
-   return NormChi2_1 >= NormChi2_2 ? -1 : 1;
+   return normChi2_1 >= normChi2_2 ? -1 : 1;
+}
+
+
+int EventCleaning::checkProbability( pxl::Particle const *p1,
+                                     pxl::Particle const *p2
+                                     ) const {
+   double const chi2_1 = p1->findUserRecord< double >( "chi2" );
+   double const ndof_1 = p1->findUserRecord< double >( "ndof" );
+
+   double const chi2_2 = p2->findUserRecord< double >( "chi2" );
+   double const ndof_2 = p2->findUserRecord< double >( "ndof" );
+
+   double const prob_1 = TMath::Prob( chi2_1, ndof_1 );
+   double const prob_2 = TMath::Prob( chi2_2, ndof_2 );
+
+   // Higher probability wins.
+   return prob_1 < prob_2 ? -1 : 1;
 }
 
 

@@ -97,6 +97,11 @@ private:
                       pxl::Particle const *p2
                       ) const;
 
+   // Alternative to simply checking for smallest chi2/ndof.
+   int checkProbability( pxl::Particle const *p1,
+                         pxl::Particle const *p2
+                         ) const;
+
    // Returns true if particle2 is within DeltaR_max of particle1.
    bool checkParticleOverlap( pxl::Particle const *p1,
                               pxl::Particle const *p2,
@@ -114,6 +119,8 @@ private:
                     ) const;
 
    // Parameters controlling overlaps.
+   bool const m_muo_cleanDuplicates;
+
    double const m_muo_DeltaR_max;
    double const m_ele_DeltaR_max;
    double const m_tau_DeltaR_max;
