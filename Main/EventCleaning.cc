@@ -28,6 +28,7 @@ void EventCleaning::cleanEvent( std::vector< pxl::Particle* > &muos,
    cleanMuos( muos, isRec );
    cleanEles( eles, muos, isRec );
    cleanGams( gams, eles, muos, isRec );
+   cleanTaus( taus, gams, eles, muos );
    cleanJets( jets, gams, eles, muos, taus );
 }
 
@@ -169,6 +170,17 @@ void EventCleaning::removeOverlappingParticles( std::vector< pxl::Particle* > &t
          }
       }
    }
+}
+
+
+void EventCleaning::cleanTaus( std::vector< pxl::Particle* > &taus,
+                               std::vector< pxl::Particle* > const &gams,
+                               std::vector< pxl::Particle* > const &eles,
+                               std::vector< pxl::Particle* > const &muos
+                               ) const {
+   removeOverlappingParticles( taus, gams, m_gam_DeltaR_max );
+   removeOverlappingParticles( taus, eles, m_ele_DeltaR_max );
+   removeOverlappingParticles( taus, muos, m_muo_DeltaR_max );
 }
 
 

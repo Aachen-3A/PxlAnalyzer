@@ -59,6 +59,14 @@ private:
                    bool const isRec
                    ) const;
 
+   // Clean electrons, muons and gammas from taus.
+   // Since taus are treated similarly to jets, no tau-tau cleaning atm.
+   void cleanTaus( std::vector< pxl::Particle* > &taus,
+                   std::vector< pxl::Particle* > const &gams,
+                   std::vector< pxl::Particle* > const &eles,
+                   std::vector< pxl::Particle* > const &muos
+                   ) const;
+
    // In Particle Flow "everything" is potentially a jet, so check against all
    // objects and remove every jet that is in close proximity to anything.
    // ATTENTION: jet-jet not checked atm., jets should be non-overlapping by
