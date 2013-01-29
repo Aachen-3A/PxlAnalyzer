@@ -19,7 +19,11 @@ YELLOW    = \e[0;33m
 
 # Debug flags?
 ifdef DEBUG
-   CXXFLAGS += -O0 -g3 -ggdb -fstack-protector-all -Wfatal-errors
+   CXXFLAGS += -O0 -fstack-protector-all -Wfatal-errors
+   # NOTE: For some ominous reasons, these DEBUG flags cause the linker to need
+   # 20 min to link everything when linking on NFS. Perhaps this will be better
+   # with a newer version?!
+   #CXXFLAGS += -g3 -ggdb
 else
    CXXFLAGS := -O2
 endif
