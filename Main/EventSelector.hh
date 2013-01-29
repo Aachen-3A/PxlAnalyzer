@@ -267,6 +267,7 @@ private:
    bool const        m_muo_invertIso;
    bool const        m_muo_requireIsGlobal;
    bool const        m_muo_requireIsTracker;
+   bool const        m_muo_requireIsPF;
    double const      m_muo_dPtRelTrack_max;
    std::string const m_muo_iso_type;
    double const      m_muo_iso_max;
@@ -275,6 +276,7 @@ private:
    int const         m_muo_NMatchedStations_min;
    int const         m_muo_NTrackerLayersWithMeas_min;
    double const      m_muo_XYImpactParameter_max;
+   double const      m_muo_ZImpactParameter_max;
    double const      m_muo_globalChi2_max;
 
    // Taus:

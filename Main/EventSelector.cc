@@ -121,6 +121,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_invertIso(                  cfg.GetItem< bool   >( "Muon.InvertIsolation" ) ),
    m_muo_requireIsGlobal(            cfg.GetItem< bool   >( "Muon.RequireIsGlobal" ) ),
    m_muo_requireIsTracker(           cfg.GetItem< bool   >( "Muon.RequireIsTracker" ) ),
+   m_muo_requireIsPF(                cfg.GetItem< bool   >( "Muon.RequireIsPF" ) ),
    m_muo_dPtRelTrack_max(            cfg.GetItem< double >( "Muon.dPtRelTrack.max" ) ),
    m_muo_iso_type(                   cfg.GetItem< string >( "Muon.Iso.Type" ) ),
    m_muo_iso_max(                    cfg.GetItem< double >( "Muon.Iso.max" ) ),
@@ -129,6 +130,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_NMatchedStations_min(       cfg.GetItem< int    >( "Muon.NMatchedStations.min" ) ),
    m_muo_NTrackerLayersWithMeas_min( cfg.GetItem< int    >( "Muon.NTrackerLayersWithMeas.min" ) ),
    m_muo_XYImpactParameter_max(      cfg.GetItem< double >( "Muon.XYImpactParameter.max" ) ),
+   m_muo_ZImpactParameter_max(       cfg.GetItem< double >( "Muon.ZImpactParameter.max" ) ),
    m_muo_globalChi2_max(             cfg.GetItem< double >( "Muon.GlobalChi2.max" ) ),
 
    // Taus:
@@ -493,6 +495,9 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
       //is it a Tracker muon? do we care ?
       if( m_muo_requireIsTracker && !muon->findUserRecord< bool >( "isTrackerMuon" ) ) return false;
 
+      //is it a PF muon? do we care ?
+      if( m_muo_requireIsPF && !muon->findUserRecord< bool >( "isPFMuon" ) ) return false;
+
       // Muon isolation.
       double muon_iso;
       if( m_muo_iso_type == "Combined" ) {
@@ -526,6 +531,9 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
 
       // Mouns tracker track has a transverse impact parameter dxy < 2 mm w.r.t. the primary vertex.
       if( muon->findUserRecord< double >( "dB" ) > m_muo_XYImpactParameter_max ) return false;
+
+      // Mouns tracker track has a longitudinal impact parameter dz < 5 mm w.r.t. the primary vertex.
+      if( muon->findUserRecord< double >( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
 
       //normalised chisquare of the global track
       if( muon->findUserRecord< double >( "NormChi2" ) > m_muo_globalChi2_max ) return false;
