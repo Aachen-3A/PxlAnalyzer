@@ -13,6 +13,7 @@ Decision.
 #include "TriggerSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 
 #include "Main/EventCleaning.hh"
 #include "Main/GenRecNameMap.hh"
@@ -391,6 +392,9 @@ private:
    /////////////////////////////////////////////////////////////////////////////
 
    // To access the JEC uncertainties from file.
+   // New recipe:
+   // https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources?rev=19#Code_example
+   JetCorrectorParameters const m_jecPara;
    JetCorrectionUncertainty m_jecUnc;
 
    // Class mapping Gen and Rec particle names.

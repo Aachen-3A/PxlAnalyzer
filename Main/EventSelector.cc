@@ -244,7 +244,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_hcal_noise_ID_name( cfg.GetItem< string >( "HCAL.Noise.ID.name" ) ),
 
    // To access the JEC uncertainties from file.
-   m_jecUnc( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESFile" ) ) ),
+   m_jecPara( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESFile" ) ), "Total" ),
+   m_jecUnc( m_jecPara ),
 
    m_gen_rec_map( cfg ),
 
