@@ -1,5 +1,7 @@
 #include "TriggerSelector.hh"
 
+#include <iostream>
+
 #include "Tools/PXL/PXL.hh"
 
 using std::string;
@@ -174,6 +176,35 @@ bool TriggerSelector::checkVeto( bool const isRec,
    }
 
    return any_veto;
+}
+
+
+bool TriggerSelector::checkHLTMuEle( pxl::EventView const *evtView,
+                                     bool const isRec
+                                     ) const {
+   if( isRec ) {
+      // Check if the event contains any unprescaled muon or electron triggers.
+      bool validTriggers = false;
+      pxl::UserRecord::const_iterator it = evtView->getUserRecord().begin();
+      for( ; it != evtView->getUserRecord().end(); ++it ) {
+         size_t const foundMu  = (*it).first.find( "HLT_HLT_IsoMu" );
+         size_t const foundEle = (*it).first.find( "HLT_HLT_Ele" );
+
+         if( foundMu == 0 or foundEle == 0 ) {
+            validTriggers = true;
+            // If either muon or electron triggers exist take the event.
+            break;
+         }
+      }
+
+      if( not validTriggers) {
+         std::cout << "No unprescaled muon or electron triggers in the event!" << std::endl;
+      }
+
+      return validTriggers;
+   }
+
+   return true;
 }
 
 

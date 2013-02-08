@@ -1723,50 +1723,61 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
 
    applyCutsOnVertex( EvtView, vertices, isRec );
 
-   //check if the events must be vetoed
-   bool const vetoed = m_triggerSelector.checkVeto( isRec,
-                                                    muons,
-                                                    eles,
-                                                    taus,
-                                                    gammas,
-                                                    jets,
-                                                    mets,
-                                                    EvtView
-                                                    );
-   EvtView->setUserRecord< bool >( "Veto", vetoed );
-
-   bool const HLT_accept = m_triggerSelector.passHLTrigger( isRec,
-                                                            muons,
-                                                            eles,
-                                                            taus,
-                                                            gammas,
-                                                            jets,
-                                                            mets,
-                                                            EvtView
-                                                            );
-   EvtView->setUserRecord< bool >( "HLT_accept", HLT_accept );
-
-   bool const triggerAccept = HLT_accept and L1_accept;
-   EvtView->setUserRecord< bool >( "trigger_accept", triggerAccept );
-
-   //for gen: check the binning value
-   if( !isRec ) {
-      EvtView->setUserRecord< bool >( "binning_accept", applyGeneratorCuts( EvtView, doc_particles ) );
-   }
-
    //check global effects, e.g. HCAL noise
    bool global_accept = applyGlobalEventCuts( EvtView, vertices, eles, mets );
 
    bool topo_accept = passEventTopology( muons, eles, taus, gammas, jets, mets );
    EvtView->setUserRecord< bool >( "topo_accept", topo_accept );
 
-   //event accepted by non-topo cuts, e.g. trigger and global effects
-   bool non_topo_accept = global_accept && triggerAccept && filterAccept && !vetoed;
-   EvtView->setUserRecord< bool >( "non_topo_accept", non_topo_accept );
+   // Check if there are any unprescaled single muon or single electron
+   // triggers.
+   bool const MuEaccept = m_triggerSelector.checkHLTMuEle( EvtView, isRec );
 
-   //event accepted after all cuts
-   bool accepted = topo_accept && non_topo_accept;
-   EvtView->setUserRecord< bool >( "accepted", accepted );
+   if( MuEaccept ) {
+      //check if the events must be vetoed
+      bool const vetoed = m_triggerSelector.checkVeto( isRec,
+                                                       muons,
+                                                       eles,
+                                                       taus,
+                                                       gammas,
+                                                       jets,
+                                                       mets,
+                                                       EvtView
+                                                       );
+      EvtView->setUserRecord< bool >( "Veto", vetoed );
+
+      bool const HLT_accept = m_triggerSelector.passHLTrigger( isRec,
+                                                               muons,
+                                                               eles,
+                                                               taus,
+                                                               gammas,
+                                                               jets,
+                                                               mets,
+                                                               EvtView
+                                                               );
+      EvtView->setUserRecord< bool >( "HLT_accept", HLT_accept );
+
+      bool const triggerAccept = HLT_accept and L1_accept;
+      EvtView->setUserRecord< bool >( "trigger_accept", triggerAccept );
+
+      bool const non_topo_accept = global_accept && filterAccept && triggerAccept && !vetoed;
+      EvtView->setUserRecord< bool >( "non_topo_accept", non_topo_accept );
+
+      //event accepted after all cuts
+      bool accepted = topo_accept && non_topo_accept;
+      EvtView->setUserRecord< bool >( "accepted", accepted );
+   } else {
+      EvtView->setUserRecord< bool >( "HLT_accept", false );
+      EvtView->setUserRecord< bool >( "Veto", false );
+      EvtView->setUserRecord< bool >( "trigger_accept", false );
+      EvtView->setUserRecord< bool >( "non_topo_accept", false );
+      EvtView->setUserRecord< bool >( "accepted", false );
+   }
+
+   //for gen: check the binning value
+   if( !isRec ) {
+      EvtView->setUserRecord< bool >( "binning_accept", applyGeneratorCuts( EvtView, doc_particles ) );
+   }
 }
 
 

@@ -49,6 +49,10 @@ class TriggerSelector {
                       pxl::EventView const *evtView
                       ) const;
 
+      // Check if there are any unprescaled single muon or single electron
+      // triggers.
+      bool checkHLTMuEle( pxl::EventView const *evtView, bool const isRec ) const;
+
       // Check if the given set of particles fulfills any of the possible required
       // trigger topologies.
       bool passEventTopology( int const numMuo,
