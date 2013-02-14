@@ -74,6 +74,14 @@ private:
    void applyCutsOnTau( pxl::EventView *EvtView, std::vector< pxl::Particle* > &taus, const bool& isRec );
    bool passTau( pxl::Particle *tau, const bool& isRec );
    bool passGamma( pxl::Particle *gam, const bool& isRec );
+   bool passVgamma2011PhotonID( pxl::Particle const *gam,
+                                bool const barrel,
+                                bool const endcap
+                                ) const;
+   bool passCutBasedPhotonID2012( pxl::Particle const *gam,
+                                  bool const barrel,
+                                  bool const endcap
+                                  ) const;
    void applyCutsOnGamma( pxl::EventView *EvtView, std::vector< pxl::Particle* > &gammas, const bool &isRec );
    void applyCutsOnJet( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
    bool passJet( pxl::Particle *jet, const bool &isRec ) const;
@@ -218,13 +226,37 @@ private:
    double const m_gam_eta_endcap_max;
    bool const   m_gam_useEndcap;
    bool const   m_gam_useConverted;
-   bool const   m_gam_useSeedVeto;
    bool const   m_gam_rejectOutOfTime;
-   double const m_gam_HoEm_max;
    double const m_gam_corrFactor_max;
-   // Barrel:
+
    double const m_gam_barrel_sigmaIetaIeta_min;
    double const m_gam_barrel_sigmaIetaIeta_max;
+   double const m_gam_endcap_sigmaIetaIeta_max;
+
+   // CutBasedPhotonID2012:
+   bool const m_gam_CutBasedPhotonID2012_use;
+   // Barrel:
+   bool const   m_gam_barrel_electronVeto_require;
+   double const m_gam_barrel_HoEm2012_max;
+   double const m_gam_barrel_PFIsoChargedHadron_max;
+   double const m_gam_barrel_PFIsoNeutralHadron_offset;
+   double const m_gam_barrel_PFIsoNeutralHadron_slope;
+   double const m_gam_barrel_PFIsoPhoton_offset;
+   double const m_gam_barrel_PFIsoPhoton_slope;
+   // Endcap:
+   bool const   m_gam_endcap_electronVeto_require;
+   double const m_gam_endcap_HoEm2012_max;
+   double const m_gam_endcap_PFIsoChargedHadron_max;
+   double const m_gam_endcap_PFIsoNeutralHadron_offset;
+   double const m_gam_endcap_PFIsoNeutralHadron_slope;
+   double const m_gam_endcap_PFIsoPhoton_offset;
+   double const m_gam_endcap_PFIsoPhoton_slope;
+
+   // Vgamma2011PhotonID:
+   bool const   m_gam_Vgamma2012PhotonID_use;
+   bool const   m_gam_useSeedVeto;
+   double const m_gam_HoEm_max;
+   // Barrel:
    double const m_gam_barrel_TrkIso_offset;
    double const m_gam_barrel_TrkIso_slope;
    double const m_gam_barrel_TrkIso_rhoSlope;
@@ -235,7 +267,6 @@ private:
    double const m_gam_barrel_HcalIso_slope;
    double const m_gam_barrel_HcalIso_rhoSlope;
    // Endcap:
-   double const m_gam_endcap_sigmaIetaIeta_max;
    double const m_gam_endcap_TrkIso_offset;
    double const m_gam_endcap_TrkIso_slope;
    double const m_gam_endcap_TrkIso_rhoSlope;
@@ -245,6 +276,7 @@ private:
    double const m_gam_endcap_HcalIso_offset;
    double const m_gam_endcap_HcalIso_slope;
    double const m_gam_endcap_HcalIso_rhoSlope;
+
    // ID:
    bool const        m_gam_ID_use;
    std::string const m_gam_ID_name;

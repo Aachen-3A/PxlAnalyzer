@@ -103,13 +103,37 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gam_eta_endcap_max(           cfg.GetItem< double >( "Gamma.Eta.Endcap.max" ) ),
    m_gam_useEndcap(                cfg.GetItem< bool   >( "Gamma.UseEndcap" ) ),
    m_gam_useConverted(             cfg.GetItem< bool   >( "Gamma.UseConverted" ) ),
-   m_gam_useSeedVeto(              cfg.GetItem< bool   >( "Gamma.UseSeedVeto" ) ),
    m_gam_rejectOutOfTime(          cfg.GetItem< bool   >( "Gamma.RejectOutOfTime" ) ),
-   m_gam_HoEm_max(                 cfg.GetItem< double >( "Gamma.HoEm.max" ) ),
    m_gam_corrFactor_max(           cfg.GetItem< double >( "Gamma.CorrFactor.max" ) ),
-   // Barrel:
+
    m_gam_barrel_sigmaIetaIeta_min( cfg.GetItem< double >( "Gamma.Barrel.SigmaIetaIeta.min" ) ),
    m_gam_barrel_sigmaIetaIeta_max( cfg.GetItem< double >( "Gamma.Barrel.SigmaIetaIeta.max" ) ),
+   m_gam_endcap_sigmaIetaIeta_max( cfg.GetItem< double >( "Gamma.Endcap.SigmaIetaIeta.max" ) ),
+
+   // CutBasedPhotonID2012:
+   m_gam_CutBasedPhotonID2012_use( cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012.use" ) ),
+   // Barrel:
+   m_gam_barrel_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Barrel.ElectronVeto.Require" ) ),
+   m_gam_barrel_HoEm2012_max(              cfg.GetItem< double >( "Gamma.Barrel.HoEm2012.max" ) ),
+   m_gam_barrel_PFIsoChargedHadron_max(    cfg.GetItem< double >( "Gamma.Barrel.PFIsoChargedHadron.max" ) ),
+   m_gam_barrel_PFIsoNeutralHadron_offset( cfg.GetItem< double >( "Gamma.Barrel.PFIsoNeutralHadron.Offset" ) ),
+   m_gam_barrel_PFIsoNeutralHadron_slope(  cfg.GetItem< double >( "Gamma.Barrel.PFIsoNeutralHadron.Slope" ) ),
+   m_gam_barrel_PFIsoPhoton_offset(        cfg.GetItem< double >( "Gamma.Barrel.PFIsoPhoton.Offset" ) ),
+   m_gam_barrel_PFIsoPhoton_slope(         cfg.GetItem< double >( "Gamma.Barrel.PFIsoPhoton.Slope" ) ),
+   // Endcap:
+   m_gam_endcap_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Endcap.ElectronVeto.Require" ) ),
+   m_gam_endcap_HoEm2012_max(              cfg.GetItem< double >( "Gamma.Endcap.HoEm2012.max" ) ),
+   m_gam_endcap_PFIsoChargedHadron_max(    cfg.GetItem< double >( "Gamma.Endcap.PFIsoChargedHadron.max" ) ),
+   m_gam_endcap_PFIsoNeutralHadron_offset( cfg.GetItem< double >( "Gamma.Endcap.PFIsoNeutralHadron.Offset" ) ),
+   m_gam_endcap_PFIsoNeutralHadron_slope(  cfg.GetItem< double >( "Gamma.Endcap.PFIsoNeutralHadron.Slope" ) ),
+   m_gam_endcap_PFIsoPhoton_offset(        cfg.GetItem< double >( "Gamma.Endcap.PFIsoPhoton.Offset" ) ),
+   m_gam_endcap_PFIsoPhoton_slope(         cfg.GetItem< double >( "Gamma.Endcap.PFIsoPhoton.Slope" ) ),
+
+   // Vgamma2011PhotonID:
+   m_gam_Vgamma2012PhotonID_use(   cfg.GetItem< bool   >( "Gamma.Vgamma2011PhotonID.use" ) ),
+   m_gam_useSeedVeto(              cfg.GetItem< bool   >( "Gamma.UseSeedVeto" ) ),
+   m_gam_HoEm_max(                 cfg.GetItem< double >( "Gamma.HoEm.max" ) ),
+   // Barrel:
    m_gam_barrel_TrkIso_offset(     cfg.GetItem< double >( "Gamma.Barrel.TrackIso.Offset" ) ),
    m_gam_barrel_TrkIso_slope(      cfg.GetItem< double >( "Gamma.Barrel.TrackIso.Slope" ) ),
    m_gam_barrel_TrkIso_rhoSlope(   cfg.GetItem< double >( "Gamma.Barrel.TrackIso.RhoSlope" ) ),
@@ -120,7 +144,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gam_barrel_HcalIso_slope(     cfg.GetItem< double >( "Gamma.Barrel.HCALIso.Slope" ) ),
    m_gam_barrel_HcalIso_rhoSlope(  cfg.GetItem< double >( "Gamma.Barrel.HCALIso.RhoSlope" ) ),
    // Endcap:
-   m_gam_endcap_sigmaIetaIeta_max( cfg.GetItem< double >( "Gamma.Endcap.SigmaIetaIeta.max" ) ),
    m_gam_endcap_TrkIso_offset(     cfg.GetItem< double >( "Gamma.Endcap.TrackIso.Offset" ) ),
    m_gam_endcap_TrkIso_slope(      cfg.GetItem< double >( "Gamma.Endcap.TrackIso.Slope" ) ),
    m_gam_endcap_TrkIso_rhoSlope(   cfg.GetItem< double >( "Gamma.Endcap.TrackIso.RhoSlope" ) ),
@@ -130,6 +153,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gam_endcap_HcalIso_offset(    cfg.GetItem< double >( "Gamma.Endcap.HCALIso.Offset" ) ),
    m_gam_endcap_HcalIso_slope(     cfg.GetItem< double >( "Gamma.Endcap.HCALIso.Slope" ) ),
    m_gam_endcap_HcalIso_rhoSlope(  cfg.GetItem< double >( "Gamma.Endcap.HCALIso.RhoSlope" ) ),
+
    // ID:
    m_gam_ID_use(                   cfg.GetItem< bool   >( "Gamma.ID.use" ) ),
    m_gam_ID_name(                  cfg.GetItem< string >( "Gamma.ID.name" ) ),
@@ -176,6 +200,14 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    m_rho25( 0.0 )
 {
+   if( not m_gam_Vgamma2012PhotonID_use xor m_gam_CutBasedPhotonID2012_use ) {
+      stringstream error;
+      error << "In config file: ";
+      error << "'" << cfg.GetConfigFilePath() << "': ";
+      error << "exactly one of 'Gamma.Vgamma2011PhotonID.use' and 'Gamma.CutBasedPhotonID2012.use' ";
+      error << "must be true!";
+      throw Tools::config_error( error.str() );
+   }
 }
 
 //--------------------Destructor-----------------------------------------------------------------
@@ -759,53 +791,19 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
          if( gam_sigma_ieta_ieta > m_gam_barrel_sigmaIetaIeta_max ) return false;
       }
 
-      double maxTrackIso = m_gam_barrel_TrkIso_offset
-                         + m_gam_barrel_TrkIso_slope * gamPt
-                         + m_gam_barrel_TrkIso_rhoSlope * m_rho25;
-
-      double maxEcalIso  = m_gam_barrel_EcalIso_offset
-                         + m_gam_barrel_EcalIso_slope * gamPt
-                         + m_gam_barrel_EcalIso_rhoSlope * m_rho25;
-
-      double maxHcalIso  = m_gam_barrel_HcalIso_offset
-                         + m_gam_barrel_HcalIso_slope * gamPt
-                         + m_gam_barrel_HcalIso_rhoSlope * m_rho25;
-
       if( endcap ) {
          if( gam_sigma_ieta_ieta > m_gam_endcap_sigmaIetaIeta_max ) return false;
-
-         maxTrackIso = m_gam_endcap_TrkIso_offset
-                     + m_gam_endcap_TrkIso_slope * gamPt
-                     + m_gam_endcap_TrkIso_rhoSlope * m_rho25;
-
-         maxEcalIso  = m_gam_endcap_EcalIso_offset
-                     + m_gam_endcap_EcalIso_slope * gamPt
-                     + m_gam_endcap_EcalIso_rhoSlope * m_rho25;
-
-         maxHcalIso  = m_gam_endcap_HcalIso_offset
-                     + m_gam_endcap_HcalIso_slope * gamPt
-                     + m_gam_endcap_HcalIso_rhoSlope * m_rho25;
       }
 
-      // New (uniform) naming convention in Skimmer.
-      try {
-         //Jurrasic ECAL Isolation
-         if( gam->findUserRecord< double >( "ID_ECALIso" ) > maxEcalIso ) return false;
-         //Tower-based HCAL Isolation
-         if( gam->findUserRecord< double >( "ID_HCALIso" ) > maxHcalIso ) return false;
-         //hollow cone track isolation
-         if( gam->findUserRecord< double >( "ID_TrkIso" ) > maxTrackIso ) return false;
-      } catch( std::runtime_error ) {
-         // Jurrasic ECAL Isolation.
-         if( gam->findUserRecord< double >( "ECALIso" ) > maxEcalIso ) return false;
-         // Tower-based HCAL Isolation.
-         if( gam->findUserRecord< double >( "HCALIso" ) > maxHcalIso ) return false;
-         // Hollow cone track isolation.
-         if( gam->findUserRecord< double >( "TrkIso" ) > maxTrackIso ) return false;
+      if( m_gam_Vgamma2012PhotonID_use ) {
+         bool const passed = passVgamma2011PhotonID( gam, barrel, endcap );
+         if( not passed ) return false;
       }
 
-      //Hadronic / electromagnetic energy fraction
-      if( gam->findUserRecord< double >( "HoEm" ) > m_gam_HoEm_max ) return false;
+      if( m_gam_CutBasedPhotonID2012_use ) {
+         bool const passed = passCutBasedPhotonID2012( gam, barrel, endcap );
+         if( not passed ) return false;
+      }
 
       if( m_gam_addSpikeCleaning ) {
          //swiss cross spike tagging
@@ -822,9 +820,6 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
             if( R29 > m_gam_r29_max ) return false;
          }
       }
-
-      //track (pixel seed) veto
-      if( m_gam_useSeedVeto and gam->findUserRecord< bool >( "HasSeed" ) ) return false;
 
       //recoFlag might not be set, assume it fine then
       if( m_gam_rejectOutOfTime and gam->findUserRecord< unsigned int >( "recoFlag", 0 ) == 2 ) return false;
@@ -847,6 +842,111 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
    }
 
    //no cut failed
+   return true;
+}
+
+
+bool EventSelector::passVgamma2011PhotonID( pxl::Particle const *gam,
+                                            bool const barrel,
+                                            bool const endcap
+                                            ) const {
+   // Track (pixel seed) veto.
+   if( m_gam_useSeedVeto and gam->findUserRecord< bool >( "HasSeed" ) ) return false;
+
+   if( gam->findUserRecord< double >( "HoEm" ) > m_gam_HoEm_max ) return false;
+
+   double const gamPt = gam->getPt();
+
+   double maxTrackIso = m_gam_barrel_TrkIso_offset
+                      + m_gam_barrel_TrkIso_slope * gamPt
+                      + m_gam_barrel_TrkIso_rhoSlope * m_rho25;
+
+   double maxEcalIso  = m_gam_barrel_EcalIso_offset
+                      + m_gam_barrel_EcalIso_slope * gamPt
+                      + m_gam_barrel_EcalIso_rhoSlope * m_rho25;
+
+   double maxHcalIso  = m_gam_barrel_HcalIso_offset
+                      + m_gam_barrel_HcalIso_slope * gamPt
+                      + m_gam_barrel_HcalIso_rhoSlope * m_rho25;
+
+   if( endcap ) {
+      maxTrackIso = m_gam_endcap_TrkIso_offset
+                  + m_gam_endcap_TrkIso_slope * gamPt
+                  + m_gam_endcap_TrkIso_rhoSlope * m_rho25;
+
+      maxEcalIso  = m_gam_endcap_EcalIso_offset
+                  + m_gam_endcap_EcalIso_slope * gamPt
+                  + m_gam_endcap_EcalIso_rhoSlope * m_rho25;
+
+      maxHcalIso  = m_gam_endcap_HcalIso_offset
+                  + m_gam_endcap_HcalIso_slope * gamPt
+                  + m_gam_endcap_HcalIso_rhoSlope * m_rho25;
+   }
+
+   // New (uniform) naming convention in Skimmer.
+   // TODO: Remove try-block once no old samples are used anymore.
+   try {
+      //Jurrasic ECAL Isolation
+      if( gam->findUserRecord< double >( "ID_ECALIso" ) > maxEcalIso ) return false;
+      //Tower-based HCAL Isolation
+      if( gam->findUserRecord< double >( "ID_HCALIso" ) > maxHcalIso ) return false;
+      //hollow cone track isolation
+      if( gam->findUserRecord< double >( "ID_TrkIso" ) > maxTrackIso ) return false;
+   } catch( std::runtime_error ) {
+      // Jurrasic ECAL Isolation.
+      if( gam->findUserRecord< double >( "ECALIso" ) > maxEcalIso ) return false;
+      // Tower-based HCAL Isolation.
+      if( gam->findUserRecord< double >( "HCALIso" ) > maxHcalIso ) return false;
+      // Hollow cone track isolation.
+      if( gam->findUserRecord< double >( "TrkIso" ) > maxTrackIso ) return false;
+   }
+
+   return true;
+}
+
+
+bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
+                                              bool const barrel,
+                                              bool const endcap
+                                              ) const {
+   double const gamPt = gam->getPt();
+
+   bool eleVeto_require = m_gam_barrel_electronVeto_require;
+
+   double HoEm2012_max = m_gam_barrel_HoEm2012_max;
+
+   double PFIsoChargedHadron_max = m_gam_barrel_PFIsoChargedHadron_max;
+
+   double PFneutralHadronIso_max = m_gam_barrel_PFIsoNeutralHadron_offset
+                                 + m_gam_barrel_PFIsoNeutralHadron_slope * gamPt;
+
+   double PFphotonIso_max = m_gam_barrel_PFIsoPhoton_offset
+                          + m_gam_barrel_PFIsoPhoton_slope * gamPt;
+
+   if( endcap ) {
+      eleVeto_require = m_gam_endcap_electronVeto_require;
+
+      HoEm2012_max = m_gam_endcap_HoEm2012_max;
+
+      PFIsoChargedHadron_max = m_gam_endcap_PFIsoChargedHadron_max;
+
+      PFneutralHadronIso_max = m_gam_endcap_PFIsoNeutralHadron_offset
+                             + m_gam_endcap_PFIsoNeutralHadron_slope * gamPt;
+
+      PFphotonIso_max = m_gam_endcap_PFIsoPhoton_offset
+                      + m_gam_endcap_PFIsoPhoton_slope * gamPt;
+   }
+
+   if( eleVeto_require and gam->findUserRecord< bool >( "hasMatchedPromptElectron" ) ) return false;
+
+   if( gam->findUserRecord< double >( "HoverE2012" ) > HoEm2012_max ) return false;
+
+   if( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) > PFIsoChargedHadron_max ) return false;
+
+   if( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) > PFneutralHadronIso_max ) return false;
+
+   if( gam->findUserRecord< double >( "PFIso03Photon" ) > PFphotonIso_max ) return false;
+
    return true;
 }
 
