@@ -16,6 +16,7 @@
 #include "Main/EventSelector.hh"
 #include "Main/ReWeighter.hh"
 #include "Main/RunLumiRanges.hh"
+#include "Main/SkipEvents.hh"
 
 namespace fs = boost::filesystem;
 
@@ -146,6 +147,7 @@ int main( int argc, char* argv[] ) {
    // Init the run config
    //
    lumi::RunLumiRanges runcfg( RunConfigFile );
+   SkipEvents skipEvents( config );
 
    // Configure fork:
    pxl::AnalysisFork fork;
@@ -270,9 +272,15 @@ int main( int argc, char* argv[] ) {
          }
 
          //check if we shall analyze this event
-         lumi::ID run = event.findUserRecord< lumi::ID >( "Run" );
-         lumi::ID LS  = event.findUserRecord< lumi::ID >( "LumiSection" );
+         lumi::ID run      = event.findUserRecord< lumi::ID >( "Run" );
+         lumi::ID LS       = event.findUserRecord< lumi::ID >( "LumiSection" );
+         lumi::ID eventNum = event.findUserRecord< lumi::ID >( "EventNum" );
          if( ! runcfg.check( run, LS ) ) {
+            ++skipped;
+            continue;
+         }
+
+         if( skipEvents.skip( run, LS, eventNum ) ) {
             ++skipped;
             continue;
          }
