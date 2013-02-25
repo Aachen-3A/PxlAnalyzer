@@ -112,6 +112,9 @@ def plot( options, Class, canvas ):
             tex = getWIP( ratio=True )
             tex.Draw()
 
+            sqrt_s = getSqrtS( options.sqrt_s )
+            sqrt_s.Draw()
+
             xy_lines = updateLineLengths( options, primitives )
 
             if options.roi:
@@ -383,6 +386,8 @@ def commandLineParsing():
                        help = 'Set the FILLCOLOR for the error histograms. [default = %default]' )
     parser.add_option( '-s', '--square', action = 'store_true', default = False,
                        help = 'Plot the canvas (more or less) square. [default = %default]' )
+    parser.add_option( '-S', '--sqrt_s', metavar = 'SRQT(S)', type = 'float', default = 7.0,
+                       help = 'Set the value for sqrt(s) for these plots. [default = %default TeV]' )
 
     ( options, args ) = parser.parse_args()
 
@@ -536,6 +541,15 @@ def getWIP( ratio=False ):
         tex = r.TLatex( 0.15, 0.86, 'CMS work in progress' )
     else:
         tex = r.TLatex( 0.12, 0.88, 'CMS work in progress' )
+    tex.SetNDC()
+    tex.SetLineWidth( 2 )
+
+    return tex
+
+
+def getSqrtS( sqrt_s=7 ):
+    text = '#sqrt{s} = %.0f TeV' % sqrt_s
+    tex = r.TLatex( 0.5, 0.86, text )
     tex.SetNDC()
     tex.SetLineWidth( 2 )
 
