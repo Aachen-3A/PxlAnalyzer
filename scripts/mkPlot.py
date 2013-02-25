@@ -117,7 +117,7 @@ def plot( options, Class, canvas ):
 
             xy_lines = updateLineLengths( options, primitives )
 
-            if options.roi:
+            if options.roi and not options.no_roi:
                 roi = getROI( options, pad, xy_lines )
                 roi.Draw()
 
@@ -327,6 +327,9 @@ def updateLineLengths( options, primitives, ratio=False ):
 
             list_of_xy_values += [ obj.GetX1(), obj.GetY1(), obj.GetX2(), obj.GetY2() ]
 
+            if options.no_roi:
+                obj.Delete()
+
     return list_of_xy_values
 
 
@@ -388,6 +391,8 @@ def commandLineParsing():
                        help = 'Plot the canvas (more or less) square. [default = %default]' )
     parser.add_option( '-S', '--sqrt_s', metavar = 'SRQT(S)', type = 'float', default = 7.0,
                        help = 'Set the value for sqrt(s) for these plots. [default = %default TeV]' )
+    parser.add_option(       '--no-roi', action = 'store_true', default = False,
+                       help = "Do not draw the 'Region of Interest'. [default = %default]" )
 
     ( options, args ) = parser.parse_args()
 
