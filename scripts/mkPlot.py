@@ -296,6 +296,17 @@ def loopOverPrimitives( options, primitives):
 
                 obj.SetTitle( Lint )
 
+        if options.vec_sumpt:
+            if ClassName == 'TH1D':
+                name = obj.GetName()
+
+                if 'axis_ratio' in name:
+                    title = obj.GetXaxis().GetTitle()
+                    if '#Sigma' in title:
+                        title = '#Sigma |#vec{p}_{T}| / GeV'
+
+                        obj.GetXaxis().SetTitle( title )
+
 
 def updateLineLengths( options, primitives, ratio=False ):
     # List to store the x and y values of all lines.
@@ -393,6 +404,8 @@ def commandLineParsing():
                        help = 'Set the value for sqrt(s) for these plots. [default = %default TeV]' )
     parser.add_option(       '--no-roi', action = 'store_true', default = False,
                        help = "Do not draw the 'Region of Interest'. [default = %default]" )
+    parser.add_option( '-V', '--vec-sumpt', action = 'store_true', default = False,
+                       help = "Replace 'Sum p_t' by 'Sum |vec(p_t)|'. [default = %default]" )
 
     ( options, args ) = parser.parse_args()
 
