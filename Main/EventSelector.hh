@@ -127,10 +127,7 @@ private:
 
    // General selection:
 
-   // Data?
-   bool const m_runOnData;
    // Don't check for overlaps?
-   bool const m_useCharge;
    bool const m_ignoreOverlaps;
 
    // Generator selection:

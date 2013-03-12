@@ -103,14 +103,6 @@ int main( int argc, char* argv[] ) {
    const bool runCcEventClass = not NoCcEventClass;
    const bool runCcControl    = not NoCcControl;
 
-   if( config.GetItem< bool >( "General.GenOnly" ) and config.GetItem< bool >( "General.RecOnly" ) ) {
-      stringstream error;
-      error << "In config file: ";
-      error << "'" << FinalCutsFile << "': ";
-      error << "General.GenOnly and General.RecOnly not allowed simultaneously!";
-      throw Tools::config_error( error.str() );
-   }
-
    // Get the run config file from config file.
    //
    string RunConfigFile;

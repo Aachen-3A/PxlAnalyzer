@@ -13,8 +13,6 @@ using namespace std;
 
 EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // General selection:
-   m_runOnData(      cfg.GetItem< bool >( "General.RunOnData" ) ),
-   m_useCharge(      cfg.GetItem< bool >( "General.UseCharge" ) ),
    m_ignoreOverlaps( cfg.GetItem< bool >( "General.IgnoreOverlaps" ) ),
 
    // Generator selection:
