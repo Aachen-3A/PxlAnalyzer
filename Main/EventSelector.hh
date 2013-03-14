@@ -148,6 +148,7 @@ private:
    double const m_PV_ndof_min;
 
    // Electrons:
+   bool const   m_ele_use;
    double const m_ele_pt_min;
    double const m_ele_eta_barrel_max;
    double const m_ele_eta_endcap_min;
@@ -185,6 +186,7 @@ private:
    std::string const m_ele_ID_name;
 
    // Muons:
+   bool const        m_muo_use;
    double const      m_muo_pt_min;
    double const      m_muo_eta_max;
    bool const        m_muo_invertIso;
@@ -202,12 +204,14 @@ private:
    double const      m_muo_globalChi2_max;
 
    // Taus:
+   const bool   m_tau_use;
    const double m_tau_pt_min;
    const double m_tau_eta_max;
    // Discriminators:
    const std::vector< std::string > m_tau_discriminators;
 
    // Photons:
+   bool const   m_gam_use;
    double const m_gam_pt_min;
    double const m_gam_eta_barrel_max;
    double const m_gam_eta_endcap_min;
@@ -251,6 +255,7 @@ private:
    double const      m_gam_r29_max;
 
    // Jets:
+   bool const        m_jet_use;
    std::string const m_jet_algo;
    double const      m_jet_pt_min;
    double const      m_jet_eta_max;
@@ -265,6 +270,7 @@ private:
    std::string const m_jet_bJets_genFlavourAlgo;
 
    // MET:
+   bool const        m_met_use;
    std::string const m_met_type;
    double const      m_met_pt_min;
    double const      m_met_dphi_ele_min;

@@ -36,6 +36,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_PV_ndof_min( cfg.GetItem< double >( "PV.NDOF.min" ) ),
 
    // Electrons:
+   m_ele_use(                            cfg.GetItem< bool   >( "Ele.use" ) ),
    m_ele_pt_min(                         cfg.GetItem< double >( "Ele.pt.min" ) ),
    m_ele_eta_barrel_max(                 cfg.GetItem< double >( "Ele.eta.Barrel.max" ) ),
    m_ele_eta_endcap_min(                 cfg.GetItem< double >( "Ele.eta.Endcap.min" ) ),
@@ -70,6 +71,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_ID_name(                        cfg.GetItem< string >( "Ele.ID.name" ) ),
 
    // Muons:
+   m_muo_use(                        cfg.GetItem< bool   >( "Muon.use" ) ),
    m_muo_pt_min(                     cfg.GetItem< double >( "Muon.pt.min" ) ),
    m_muo_eta_max(                    cfg.GetItem< double >( "Muon.eta.max" ) ),
    m_muo_invertIso(                  cfg.GetItem< bool   >( "Muon.InvertIsolation" ) ),
@@ -87,12 +89,14 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_globalChi2_max(             cfg.GetItem< double >( "Muon.GlobalChi2.max" ) ),
 
    // Taus:
+   m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
    m_tau_pt_min(  cfg.GetItem< double >( "Tau.pt.min" ) ),
    m_tau_eta_max( cfg.GetItem< double >( "Tau.Eta.max" ) ),
    //Get Tau-Discriminators and save them
    m_tau_discriminators( Tools::splitString< string >( cfg.GetItem< string >( "Tau.Discriminators" ), true ) ),
 
    // Photons:
+   m_gam_use(                      cfg.GetItem< bool   >( "Gamma.use" ) ),
    m_gam_pt_min(                   cfg.GetItem< double >( "Gamma.pt.min" ) ),
    m_gam_eta_barrel_max(           cfg.GetItem< double >( "Gamma.Eta.Barrel.max" ) ),
    m_gam_eta_endcap_min(           cfg.GetItem< double >( "Gamma.Eta.Endcap.min" ) ),
@@ -136,6 +140,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gam_r29_max(                  cfg.GetItem< double >( "Gamma.R29.max" ) ),
 
    // Jets:
+   m_jet_use(                  cfg.GetItem< bool   >( "Jet.use" ) ),
    m_jet_algo(                 cfg.GetItem< string >( "Jet.Algo" ) ),
    m_jet_pt_min(               cfg.GetItem< double >( "Jet.pt.min" ) ),
    m_jet_eta_max(              cfg.GetItem< double >( "Jet.eta.max" ) ),
@@ -151,6 +156,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_jet_bJets_genFlavourAlgo( cfg.GetItem< string >( "Jet.BJets.genFlavourAlgo" ) ),
 
    // MET:
+   m_met_use(            cfg.GetItem< bool   >( "MET.use" ) ),
    m_met_type(           cfg.GetItem< string >( "MET.Type" ) ),
    m_met_pt_min(         cfg.GetItem< double >( "MET.pt.min" ) ),
    m_met_dphi_ele_min(   cfg.GetItem< double >( "MET.dPhi.Ele.min" ) ),
@@ -1117,12 +1123,15 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    vector< pxl::Particle* > muons, eles, taus, gammas, jets, mets, doc_particles;     // no 'bJets' because jets is only filled into varyJESMET, where all jets are treated exactly the same way
    for (vector<pxl::Particle*>::const_iterator part = allparticles.begin(); part != allparticles.end(); ++part) {
       string name = (*part)->getName();
-      if( name == "Muon") muons.push_back(*part);
-      else if( name == "Ele") eles.push_back(*part);
-      else if( name == "Tau" ) taus.push_back( *part );
-      else if( name == "Gamma") gammas.push_back(*part);
-      else if( name == m_jet_algo ) jets.push_back( *part );
-      else if( name == m_met_type ) mets.push_back( *part );
+      // Only fill the collection if we want to use the particle!
+      // If the collections are not filled, the particles are also ignored in
+      // the event cleaning.
+      if(      m_muo_use and name == "Muon"     ) muons.push_back( *part );
+      else if( m_ele_use and name == "Ele"      ) eles.push_back( *part );
+      else if( m_tau_use and name == "Tau"      ) taus.push_back( *part );
+      else if( m_gam_use and name == "Gamma"    ) gammas.push_back( *part );
+      else if( m_jet_use and name == m_jet_algo ) jets.push_back( *part );
+      else if( m_met_use and name == m_met_type ) mets.push_back( *part );
       //no need to store the status 3 particles if we're not going to check them anyway
       else if( ( m_mass_min > 0 || m_mass_max > 0 ) && name == "S3" ) {
          if( ( m_massIDs.size() == 0
