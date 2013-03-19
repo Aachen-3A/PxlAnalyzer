@@ -16,6 +16,7 @@ Decision.
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
 #include "Main/EventCleaning.hh"
+#include "Main/PhotonEffectiveArea.hh"
 
 class EventSelector {
 public:
@@ -232,6 +233,7 @@ private:
 
    // CutBasedPhotonID2012:
    bool const m_gam_CutBasedPhotonID2012_use;
+   PhotonEffectiveArea const m_gam_EA;
    // Barrel:
    bool const   m_gam_barrel_electronVeto_require;
    double const m_gam_barrel_HoEm2012_max;
@@ -322,6 +324,7 @@ private:
    TriggerSelector const m_triggerSelector;
 
    // Event variables:
+   double m_rho;
    double m_rho25;
 };
 #endif

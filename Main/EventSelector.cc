@@ -110,6 +110,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    // CutBasedPhotonID2012:
    m_gam_CutBasedPhotonID2012_use( cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012.use" ) ),
+   m_gam_EA( cfg ),
    // Barrel:
    m_gam_barrel_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Barrel.ElectronVeto.Require" ) ),
    m_gam_barrel_HoEm2012_max(              cfg.GetItem< double >( "Gamma.Barrel.HoEm2012.max" ) ),
@@ -196,6 +197,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_eventCleaning( cfg ),
    m_triggerSelector( cfg ),
 
+   m_rho( 0.0 ),
    m_rho25( 0.0 )
 {
    if( not m_gam_Vgamma2012PhotonID_use xor m_gam_CutBasedPhotonID2012_use ) {
@@ -907,7 +909,12 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
                                               bool const barrel,
                                               bool const endcap
                                               ) const {
-   double const gamPt = gam->getPt();
+   double const gamPt  = gam->getPt();
+   double const abseta = fabs( gam->getEta() );
+
+   double const chargedHadronEA = m_gam_EA.getEffectiveArea( abseta, PhotonEffectiveArea::chargedHadron );
+   double const neutralHadronEA = m_gam_EA.getEffectiveArea( abseta, PhotonEffectiveArea::neutralHadron );
+   double const photonEA        = m_gam_EA.getEffectiveArea( abseta, PhotonEffectiveArea::photon );
 
    bool eleVeto_require = m_gam_barrel_electronVeto_require;
 
@@ -939,11 +946,18 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
 
    if( gam->findUserRecord< double >( "HoverE2012" ) > HoEm2012_max ) return false;
 
-   if( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) > PFIsoChargedHadron_max ) return false;
+   // Correct the isolation variables accrding to:
+   // https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012#Effective_Areas_for_rho_correcti
+   // (r20: 2013-01-10)
+   double const chargedIsoCorr = max( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) - m_rho25 * chargedHadronEA, 0.0 );
+   double const neutralIsoCorr = max( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) - m_rho25 * neutralHadronEA, 0.0 );
+   double const photonIsoCorr  = max( gam->findUserRecord< double >( "PFIso03Photon" ) - m_rho25 * photonEA, 0.0 );
 
-   if( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) > PFneutralHadronIso_max ) return false;
+   if( chargedIsoCorr > PFIsoChargedHadron_max ) return false;
 
-   if( gam->findUserRecord< double >( "PFIso03Photon" ) > PFphotonIso_max ) return false;
+   if( neutralIsoCorr > PFneutralHadronIso_max ) return false;
+
+   if( photonIsoCorr > PFphotonIso_max ) return false;
 
    return true;
 }
@@ -1211,7 +1225,21 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
 
    // rho is only available in Rec.
    // It defaults to 0!
-   if( isRec ) m_rho25 = EvtView->findUserRecord< double >( "rho25" );
+   if( isRec ) {
+      m_rho25 = EvtView->findUserRecord< double >( "rho25" );
+      // TODO: Remove this block once corrected.
+      // In the current version of the Skimmer, the wrong number value is stored
+      // in the rho25 variable. Until the correct values are available, the
+      // "wrong" one will be corrected.
+      try {
+         m_rho = EvtView->findUserRecord< double >( "rho" );
+      } catch( std::runtime_error &e ) {
+         // The correction factor is purley empirical and extracted from a very
+         // limited set of MC (DY) and SingleMu events. This is only a temporary
+         // solution!
+         m_rho25 *= 0.9;
+      }
+   }
 
    // get all particles
    vector<pxl::Particle*> allparticles;
