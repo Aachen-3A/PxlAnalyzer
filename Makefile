@@ -168,6 +168,7 @@ install-python: | $(BINDIR)
 	@ln -sf ../scripts/remix.py $(BINDIR)/remix
 	@ln -sf ../scripts/rebinEventClasses.py $(BINDIR)/rebinEventClasses
 	@ln -sf ../scripts/renameProcess.py $(BINDIR)/renameProcess
+	@ln -sf ../scripts/handleGridOutput.py $(BINDIR)/handleGridOutput
 	@ln -sf ../python/listFiles.py $(BINDIR)/listFiles
 	@ln -sf ../python/radio.py $(BINDIR)/radio
 
