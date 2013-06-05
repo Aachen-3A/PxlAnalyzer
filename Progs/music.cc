@@ -311,7 +311,6 @@ int main( int argc, char* argv[] ) {
 
       // run event loop:
       while (input->nextEvent()) {
-
          if( numberOfEvents > -1 and e >= numberOfEvents ) break;
 
          //pxl::Objects event;
@@ -325,6 +324,13 @@ int main( int argc, char* argv[] ) {
                lost_files++;
                break;
             }
+         }
+
+         // Break the event loop if the current event is not sensible (formatted correctly).
+         if( event.getUserRecord().size() == 0 ) {
+            cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << filename << "." << endl;
+            cout << "WARNING: Continue with next event." << endl;
+            continue;
          }
 
          //check if we shall analyze this event
