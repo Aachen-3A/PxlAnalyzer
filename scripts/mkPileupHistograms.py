@@ -29,6 +29,8 @@ desc += 'This script generates histograms for the different MC truth pile-up dis
 parser = optparse.OptionParser( description = desc, usage = usage )
 parser.add_option( '-o', '--outdir', metavar='OUTDIR', default=None,
                    help='Define the output directory for the rootfiles (histograms). [default = $MUSIC_BASE/ConfigFiles]' )
+parser.add_option( '-O', '--offset', metavar='OFFSET', type=float, default=0.0,
+                   help='Set the offset for the bin edges. [default = %default]' )
 
 ( options, args ) = parser.parse_args()
 
@@ -99,12 +101,13 @@ probdist_Fall11 = [
     ]
 
 numBin = len( probdist_Fall11 )
-xMax   = numBin
+xMin   = - options.offset
+xMax   = numBin - options.offset
 
-mcHist = TH1D( 'mcHist_Fall11', 'Pile-Up MC', numBin, -0.5, xMax - 0.5 )
+mcHist = TH1D( 'mcHist_Fall11', 'Pile-Up MC', numBin, xMin, xMax )
 
 for i in range( 0, numBin ):
-    mcHist.SetBinContent( i, probdist_Fall11[i] )
+    mcHist.SetBinContent( i + 1, probdist_Fall11[i] )
 
 rootfile = TFile( os.path.join( options.outdir, 'MCPileUp_Fall11.root' ), 'RECREATE' )
 rootfile.cd()
@@ -176,12 +179,13 @@ probdist_Fall11_InTime = [
     ]
 
 numBin = len( probdist_Fall11_InTime )
-xMax   = numBin
+xMin   = - options.offset
+xMax   = numBin - options.offset
 
-mcHist = TH1D( 'mcHist_Fall11_InTime', 'Pile-Up MC', numBin, -0.5, xMax - 0.5 )
+mcHist = TH1D( 'mcHist_Fall11_InTime', 'Pile-Up MC', numBin, xMin, xMax )
 
 for i in range( 0, numBin ):
-    mcHist.SetBinContent( i, probdist_Fall11_InTime[i] )
+    mcHist.SetBinContent( i + 1, probdist_Fall11_InTime[i] )
 
 rootfile = TFile( os.path.join( options.outdir, 'MCPileUp_Fall11_InTime.root' ), 'RECREATE' )
 rootfile.cd()
