@@ -15,7 +15,6 @@ ReWeighter::ReWeighter( const Tools::MConfig &cutconfig  ) :
    m_useGenWeights( cutconfig.GetItem< bool >( "General.UseGeneratorWeights" ) ),
    m_usePileUpReWeighting( cutconfig.GetItem< bool >( "Pileup.UsePileupReWeighting" ) )
 {
-   m_LumiWeights.weight3D_init( 1 );
 }
 
 
@@ -26,11 +25,9 @@ void ReWeighter::ReWeightEvent( const pxl::Event &event ) {
    if( not m_useGenWeights ) GenEvtView->setUserRecord< double >( "Weight", 1.0 );
 
    if( m_usePileUpReWeighting ) {
-      const int numVerticesPU       = GenEvtView->findUserRecord< int >( "NumVerticesPU" );
-      const int numVerticesPULastBX = GenEvtView->findUserRecord< int >( "NumVerticesPULastBX" );
-      const int numVerticesPUNextBX = GenEvtView->findUserRecord< int >( "NumVerticesPUNextBX" );
+      int const numVerticesPUTrue = GenEvtView->findUserRecord< int >( "NumVerticesPU" );
 
-      const double pileupWeight = m_LumiWeights.weight3D( numVerticesPULastBX, numVerticesPU, numVerticesPUNextBX );
+      double const pileupWeight = m_LumiWeights.weight( numVerticesPUTrue );
 
       GenEvtView->setUserRecord< double >( "PUWeight", pileupWeight );
    }

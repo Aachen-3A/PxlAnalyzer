@@ -5,7 +5,7 @@ namespace Tools {
 }
 
 // CMSSW include:
-#include "PhysicsTools/Utilities/interface/Lumi3DReWeighting.h"
+#include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 
 
 class ReWeighter {
@@ -16,7 +16,7 @@ public:
    void ReWeightEvent( const pxl::Event &event );
 
 private:
-   edm::Lumi3DReWeighting m_LumiWeights;
+   edm::LumiReWeighting m_LumiWeights;
    const bool m_useGenWeights;
    const bool m_usePileUpReWeighting;
 };
