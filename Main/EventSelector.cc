@@ -13,7 +13,10 @@ using namespace std;
 
 EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // General selection:
+   m_data(           cfg.GetItem< bool >( "General.RunOnData" ) ),
    m_ignoreOverlaps( cfg.GetItem< bool >( "General.IgnoreOverlaps" ) ),
+   // When running on data, FastSim is always false!
+   m_runOnFastSim( not m_data and cfg.GetItem< bool >( "General.FastSim" ) ),
 
    // Generator selection:
    m_binningValue_max( cfg.GetItem< double >( "Generator.BinningValue.max" ) ),
@@ -1138,7 +1141,8 @@ bool EventSelector::applyGlobalEventCuts( pxl::EventView* EvtView,
    if( EvtView->findUserRecord< std::string >( "Type" ) == "Rec" ){
       //only HCAL noise ID cut on rec level in the moment
       //return true when empty to disable cut
-      if( m_hcal_noise_ID_use and EvtView->findUserRecord< bool >( m_hcal_noise_ID_name ) ) return false;
+      if( not m_runOnFastSim )
+         if( m_hcal_noise_ID_use and EvtView->findUserRecord< bool >( m_hcal_noise_ID_name ) ) return false;
 
       // Use cut on track number?
       if( m_tracks_use )

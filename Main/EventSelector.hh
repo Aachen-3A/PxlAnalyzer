@@ -128,8 +128,11 @@ private:
 
    // General selection:
 
+   bool const m_data;
    // Don't check for overlaps?
    bool const m_ignoreOverlaps;
+   // Running on FASTSIM?
+   bool const m_runOnFastSim;
 
    // Generator selection:
 
