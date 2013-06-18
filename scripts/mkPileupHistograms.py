@@ -27,8 +27,8 @@ desc  = 'For data pile-up distributions (histograms), please use: pileupCalc.py.
 desc += 'This script generates histograms for the different MC truth pile-up distributions.'
 
 parser = optparse.OptionParser( description = desc, usage = usage )
-parser.add_option( '-o', '--outdir', metavar = 'OUTDIR', default = '$MUSIC_BASE/ConfigFiles',
-                   help = 'Define the output directory for the rootfiles (histograms). [default = %default]' )
+parser.add_option( '-o', '--outdir', metavar='OUTDIR', default=None,
+                   help='Define the output directory for the rootfiles (histograms). [default = $MUSIC_BASE/ConfigFiles]' )
 
 ( options, args ) = parser.parse_args()
 
