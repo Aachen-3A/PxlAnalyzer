@@ -153,6 +153,11 @@ private:
    double const m_PV_rho_max;
    double const m_PV_ndof_min;
 
+   // Tracks:
+   bool const         m_tracks_use;
+   std::string const  m_tracks_type;
+   unsigned int const m_tracks_num_max;
+
    // Electrons:
    bool const   m_ele_use;
    double const m_ele_pt_min;

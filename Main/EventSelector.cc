@@ -33,6 +33,11 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_PV_rho_max(  cfg.GetItem< double >( "PV.Rho.max" ) ),
    m_PV_ndof_min( cfg.GetItem< double >( "PV.NDOF.min" ) ),
 
+   // Tracks:
+   m_tracks_use(     cfg.GetItem< bool         >( "Tracks.use" ) ),
+   m_tracks_type(    cfg.GetItem< string       >( "Tracks.type" ) ),
+   m_tracks_num_max( cfg.GetItem< unsigned int >( "Tracks.num.max" ) ),
+
    // Electrons:
    m_ele_use(                            cfg.GetItem< bool   >( "Ele.use" ) ),
    m_ele_pt_min(                         cfg.GetItem< double >( "Ele.pt.min" ) ),
@@ -1134,6 +1139,10 @@ bool EventSelector::applyGlobalEventCuts( pxl::EventView* EvtView,
       //only HCAL noise ID cut on rec level in the moment
       //return true when empty to disable cut
       if( m_hcal_noise_ID_use and EvtView->findUserRecord< bool >( m_hcal_noise_ID_name ) ) return false;
+
+      // Use cut on track number?
+      if( m_tracks_use )
+         if( EvtView->findUserRecord< unsigned int >( "Num" + m_tracks_type ) > m_tracks_num_max ) return false;
    }
 
    for( std::vector< pxl::Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ){
