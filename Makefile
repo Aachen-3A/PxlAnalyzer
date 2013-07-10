@@ -182,6 +182,7 @@ install-python: | $(BINDIR)
 	@ln -sf ../scripts/installLHAPDF.py $(BINDIR)/installLHAPDF
 	@ln -sf ../python/listFiles.py $(BINDIR)/listFiles
 	@ln -sf ../python/radio.py $(BINDIR)/radio
+	@ln -sf ../Tools/plotPtilde.py $(BINDIR)/plotPtilde
 
 # Directory rules:
 $(BINDIR):
