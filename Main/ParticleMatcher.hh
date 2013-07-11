@@ -13,38 +13,34 @@ declared to have no match. For unmatched particles Match UserRecord is set to -1
 #include "Tools/PXL/JetSubtypeCriterion.hh"
 #include <iostream>
 #include "TMatrixT.h"
+#include <string>
 #include <vector>
 
-class ParticleMatcher {
+#include "Main/GenRecNameMap.hh"
 
+namespace Tools {
+   class MConfig;
+}
+
+class ParticleMatcher {
    public:
-      // Konstruktor
-      ParticleMatcher(double DeltaR_Particles = 0.2,
-                      double DeltaR_MET = 0.5,
-                      double DeltaPtoPt = 1000000.0,
-                      double DeltaCharge = 10.0,
-                      int fDebug = 0)
-               : _DeltaR_Particles(DeltaR_Particles),
-                 _DeltaR_MET(DeltaR_MET),
-                 _DeltaPtoPt(DeltaPtoPt),
-                 _DeltaCharge(DeltaCharge),
-                 _fDebug(fDebug) {};
-      // Destruktor
+      // Construktor
+      ParticleMatcher( Tools::MConfig const &cfg,
+                       int const debug = 0
+                       );
+      // Destructor
       ~ParticleMatcher() {;};
       // Match method
-      void matchObjects(pxl::EventView* GenView,
-                        pxl::EventView* RecView,
-                        const std::vector<std::string>& _JetAlgos,
-                        const std::string& _bJetAlgo,
-                        const std::string& _METType,
-                        const bool& regardingBJets,
-                        const bool& CustomMatch = false);
+      void matchObjects( pxl::EventView const *GenEvtView,
+                         pxl::EventView const *RecEvtView,
+                         bool const CustomMatch = false
+                         ) const;
       void makeMatching(std::vector<pxl::Particle*>& gen_particles,
                         std::vector<pxl::Particle*>& rec_particles,
-                        const std::string& _METType,
                         const std::string& Match = "Match",
                         const std::string& hctaM = "hctaM",
-                        const std::string& linkname = "priv-gen-rec");
+                        const std::string& linkname = "priv-gen-rec"
+                        ) const;
 
    private:
       // Some helper methods
@@ -54,19 +50,28 @@ class ParticleMatcher {
                              const unsigned int& row,
                              const double& DeltaRMatching,
                              const double& DeltaChargeMatching,
-                             const double& DeltaPtoPtMatching);
+                             const double& DeltaPtoPtMatching
+                             ) const;
       int SmallestColumnElement(TMatrixT<double>* matrixDR,
                                 TMatrixT<double>* matrixDp,
                                 TMatrixT<double>* matrixDC,
                                 const unsigned int& col,
                                 const double& DeltaRMatching,
                                 const double& DeltaChargeMatching,
-                                const double& DeltaPtoPtMatching);
-      //variable to define dR which decides matching
-	double _DeltaR_Particles;
-	double _DeltaR_MET;
-   double _DeltaPtoPt;
-	double _DeltaCharge;
-      int _fDebug;
+                                const double& DeltaPtoPtMatching
+                                ) const;
+   //variable to define dR which decides matching
+   double const m_DeltaR_Particles;
+   double const m_DeltaR_MET;
+   double const m_DeltaPtoPt;
+   double const m_DeltaCharge;
+
+   bool const        m_jet_bJets_use;
+   std::string const m_jet_bJets_algo;
+   std::string const m_jet_bJets_gen_label;
+
+   GenRecNameMap const m_gen_rec_map;
+
+   int const m_debug;
 };
 #endif

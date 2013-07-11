@@ -1,105 +1,178 @@
 #include "ParticleMatcher.hh"
 
+#include "Tools/MConfig.hh"
+
 using namespace std;
 using namespace pxl;
 
+ParticleMatcher::ParticleMatcher( Tools::MConfig const &cfg,
+                                  int const debug
+                                  ) :
+   m_DeltaR_Particles( cfg.GetItem< double >( "Matching.DeltaR.particles" ) ),
+   m_DeltaR_MET(       cfg.GetItem< double >( "Matching.DeltaR.met" ) ),
+   m_DeltaPtoPt(       cfg.GetItem< double >( "Matching.DeltaPtOverPt" ) ),
+   m_DeltaCharge(      cfg.GetItem< double >( "Matching.DeltaCharge" ) ),
+
+   m_jet_bJets_use(       cfg.GetItem< bool   >( "Jet.BJets.use" ) ),
+   m_jet_bJets_algo(      cfg.GetItem< string >( "Jet.BJets.Algo" ) ),
+   m_jet_bJets_gen_label( cfg.GetItem< string >( "Jet.BJets.Gen.Label" ) ),
+
+   m_gen_rec_map( cfg ),
+
+   m_debug( debug )
+{}
+
 // ------------ matching Method ------------
 
-void ParticleMatcher::matchObjects(EventView* GenView,
-                                   EventView* RecView,
-                                   const std::vector<std::string>& _JetAlgos,
-                                   const std::string& _bJetAlgo,
-                                   const std::string& _METType,
-                                   const bool& regardingBJets,
-                                   const bool& CustomMatch) {
-
-   // match all particles of each Particle types without regarding b-jets:
-   // FIXME: Make code more generic! Generate a list of all Particle types
-   std::vector<std::string> typeList;
-   typeList.push_back( "Muon" );
-   typeList.push_back( "Ele" );
-   typeList.push_back( "Tau" );
-   typeList.push_back( "Gamma" );
-   typeList.push_back( _METType );
-   int count_label = 0;
-   for (std::vector<std::string>::const_iterator jet_label = _JetAlgos.begin(); jet_label != _JetAlgos.end(); ++jet_label) {
-      typeList.push_back(_JetAlgos[count_label]);
-      count_label++;
-   }
-
+void ParticleMatcher::matchObjects( EventView const *GenEvtView,
+                                    EventView const *RecEvtView,
+                                    bool const customMatch
+                                    ) const {
    // containers to keep the filtered gen/rec particles
-   vector<Particle*> gen_particles;
-   vector<Particle*> rec_particles;
-   for (std::vector<std::string>::const_iterator partType = typeList.begin(); partType != typeList.end(); ++partType) {
-      // Choose name filter criterion
+   vector< Particle* > gen_particles;
+   vector< Particle* > rec_particles;
+
+   for( GenRecNameMap::const_iterator objType = m_gen_rec_map.begin(); objType != m_gen_rec_map.end(); ++objType ) {
       gen_particles.clear();
       rec_particles.clear();
-      ParticlePtEtaNameCriterion crit(*partType);
-      ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, crit );
-      ParticleFilter::apply( RecView->getObjectOwner(), rec_particles, crit );
-      makeMatching(gen_particles, rec_particles, _METType, "Match", "hctaM", "priv-gen-rec");
+
+      // Choose name filter criterion
+      ParticlePtEtaNameCriterion const critRec( (*objType).second.RecName );
+      ParticlePtEtaNameCriterion const critGen( (*objType).second.GenName );
+
+      ParticleFilter::apply( RecEvtView->getObjectOwner(), rec_particles, critRec );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(), gen_particles, critGen );
+
+      makeMatching( gen_particles, rec_particles, "Match", "hctaM", "priv-gen-rec" );
    }
 
-   // want to match something else? Feel free to do it here!
-   if(CustomMatch == true){
+   // jet-subtype-matching:
+   if( m_jet_bJets_use ) {
+      // Get all Gen b-jets.
+      gen_particles.clear();
+      JetSubtypeCriterion const critBJetGen( m_gen_rec_map.get( "Jet" ).GenName, m_jet_bJets_gen_label );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             gen_particles,
+                             critBJetGen
+                             );
 
-      // jet-subtype-matching:
-      if (regardingBJets) {
-         for (std::vector<std::string>::const_iterator jet_label = _JetAlgos.begin(); jet_label != _JetAlgos.end(); ++jet_label) {
-            // bJet(rec)-bjet(gen)-matching:
-            gen_particles.clear();
-            rec_particles.clear();
-            ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, JetSubtypeCriterion(*jet_label, "genBJet") );
-            ParticleFilter::apply( RecView->getObjectOwner(), rec_particles, JetSubtypeCriterion(*jet_label, _bJetAlgo) );
-            makeMatching(gen_particles, rec_particles, _METType, "bJet-Match", "bJet-hctaM", "bJet-priv-gen-rec");
+      // Get all Rec b-jets.
+      rec_particles.clear();
+      JetSubtypeCriterion const critBJetRec( m_gen_rec_map.get( "Jet" ).RecName, m_jet_bJets_algo );
+      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+                             rec_particles,
+                             critBJetRec
+                             );
 
-            // nonBJet(rec)-nonBjet(gen)-matching:
-            gen_particles.clear();
-            rec_particles.clear();
-            ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, JetSubtypeCriterion(*jet_label, "nonB") );
-            ParticleFilter::apply( RecView->getObjectOwner(), rec_particles, JetSubtypeCriterion(*jet_label, "nonB") );
-            makeMatching(gen_particles, rec_particles, _METType, "nonBJet-Match", "nonBJet-hctaM", "nonBJet-priv-gen-rec");
-         }
-      }
+      makeMatching( gen_particles,
+                    rec_particles,
+                    "bJet-Match",
+                    "bJet-hctaM",
+                    "bJet-priv-gen-rec"
+                    );
 
+      // nonBJet(rec)-nonBjet(gen)-matching:
+      gen_particles.clear();
+      JetSubtypeCriterion const critJetGen( m_gen_rec_map.get( "Jet" ).GenName, "nonB" );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             gen_particles,
+                             critJetGen
+                             );
+
+      rec_particles.clear();
+      JetSubtypeCriterion const critJetRec( m_gen_rec_map.get( "Jet" ).RecName, "nonB" );
+      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+                             rec_particles,
+                             critJetRec
+                             );
+
+      makeMatching( gen_particles,
+                    rec_particles,
+                    "nonBJet-Match",
+                    "nonBJet-hctaM",
+                    "nonBJet-priv-gen-rec"
+                    );
+   }
+
+   if( customMatch ) {
       //Make matching for estimation of fake rate for gammas
       rec_particles.clear();
-      ParticlePtEtaNameCriterion critGamma("Gamma");
-      ParticleFilter::apply( RecView->getObjectOwner(), rec_particles, critGamma );
+      ParticlePtEtaNameCriterion const critGamRec( m_gen_rec_map.get( "Gam" ).RecName );
+      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+                             rec_particles,
+                             critGamRec
+                             );
 
       gen_particles.clear();
-      ParticlePtEtaNameCriterion critEle("Ele");
-      ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, critEle );
-      makeMatching(gen_particles, rec_particles, _METType, "MatchGammaEle", "hctaMGammaEle", "priv-genEle-recGamma");
+      ParticlePtEtaNameCriterion const critEleGen( m_gen_rec_map.get( "Ele" ).GenName );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             gen_particles,
+                             critEleGen
+                             );
 
-      count_label = 0;
+      makeMatching( gen_particles,
+                    rec_particles,
+                    "MatchGammaEle",
+                    "hctaMGammaEle",
+                    "priv-genEle-recGamma"
+                    );
 
-      for (std::vector<std::string>::const_iterator jet_label = _JetAlgos.begin(); jet_label != _JetAlgos.end(); ++jet_label) {
-         gen_particles.clear();
-         ParticlePtEtaNameCriterion critJet(_JetAlgos[count_label]);
-         ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, critJet );
-         makeMatching(gen_particles, rec_particles, _METType, "MatchGamma"+_JetAlgos[count_label] , "hctaMGamma"+_JetAlgos[count_label], "priv-gen"+_JetAlgos[count_label]+"-recGamma");
-         count_label++;
-      }
+      gen_particles.clear();
+      ParticlePtEtaNameCriterion const critJetGen( m_gen_rec_map.get( "Jet" ).GenName );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             gen_particles,
+                             critJetGen
+                             );
+
+      makeMatching( gen_particles,
+                    rec_particles,
+                    "MatchGamma" + m_gen_rec_map.get( "Jet" ).RecName,
+                    "hctaMGamma" + m_gen_rec_map.get( "Jet" ).RecName,
+                    "priv-gen"   + m_gen_rec_map.get( "Jet" ).RecName + "-recGamma"
+                    );
 
       //match SIM converted photons to GEN photons
       gen_particles.clear();
-      ParticlePtEtaNameCriterion critGammaGen("Gamma");
-      ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, critGammaGen );
+      ParticlePtEtaNameCriterion const critGamGen( m_gen_rec_map.get( "Gam" ).GenName );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             gen_particles,
+                             critGamGen
+                             );
+
+      // Use Rec particles container here.
       rec_particles.clear();
-      ParticlePtEtaNameCriterion critSIMConv("SIMConvGamma");
-      ParticleFilter::apply( GenView->getObjectOwner(), rec_particles, critSIMConv );
-      makeMatching(gen_particles, rec_particles, _METType, "MatchGammaSIM", "hctaMGammaSIM", "priv-genGamma-SIMGammaConv");
+      ParticlePtEtaNameCriterion const critSIMConv( "SIMConvGamma" );
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             rec_particles,
+                             critSIMConv
+                             );
+
+      makeMatching( gen_particles,
+                    rec_particles,
+                    "MatchGammaSIM",
+                    "hctaMGammaSIM",
+                    "priv-genGamma-SIMGammaConv"
+                    );
 
       //match SIM converted photons to REC photons
       rec_particles.clear();
-      ParticlePtEtaNameCriterion critGammaRec("Gamma");
-      ParticleFilter::apply( RecView->getObjectOwner(), rec_particles, critGammaRec );
+      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+                             rec_particles,
+                             critGamRec
+                             );
+
       gen_particles.clear();
-      ParticleFilter::apply( GenView->getObjectOwner(), gen_particles, critSIMConv );
-      makeMatching(gen_particles, rec_particles, _METType, "MatchGammaRecSIM", "hctaMGammaRecSIM", "priv-recGamma-SIMGammaConv");
+      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+                             gen_particles,
+                             critSIMConv
+                             );
 
-
+      makeMatching( gen_particles,
+                    rec_particles,
+                    "MatchGammaRecSIM",
+                    "hctaMGammaRecSIM",
+                    "priv-recGamma-SIMGammaConv"
+                    );
    }
 }
 
@@ -109,10 +182,10 @@ void ParticleMatcher::matchObjects(EventView* GenView,
 
 void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
                                    std::vector<Particle*>& rec_particles,
-                                   const string& _METType,
                                    const string& Match,
                                    const string& hctaM,
-                                   const string& linkname) {
+                                   const string& linkname
+                                   ) const {
    // First set for Gen all Matches to -1 and reset bools:
    for (std::vector<Particle*>::iterator gen_iter = gen_particles.begin(); gen_iter != gen_particles.end(); gen_iter++) {
       (*gen_iter)->setUserRecord<int>(Match, -1);
@@ -132,7 +205,7 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
       unsigned int row = 0;
       std::string particle;
 
-      if (_fDebug > 1) cout << "Found " << num_gen << " Gen Objects and " << num_rec << " Rec Objects" << endl;
+      if( m_debug > 1 ) cout << "Found " << num_gen << " Gen Objects and " << num_rec << " Rec Objects" << endl;
 
       TMatrixT<double> DistanzMatrix(num_gen, num_rec);
       TMatrixT<double> DeltaPtoPtMatrix(num_gen, num_rec);
@@ -142,7 +215,7 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
          col = 0;
          for (std::vector<Particle*>::iterator rec_iter = rec_particles.begin(); rec_iter != rec_particles.end(); rec_iter++) {
             // Calculate the distance
-            if (_fDebug > 0) {
+            if( m_debug > 0 ) {
                cout << "Gen: " << (*gen_iter)->print(0);
                cout << "Rec: " << (*rec_iter)->print(0);
                cout << "Distance: " << (*gen_iter)->getVector().deltaR(&((*rec_iter)->getVector())) << endl;
@@ -155,23 +228,23 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
          row++;
       }
 
-      if (_fDebug > 0) DistanzMatrix.Print();
+      if( m_debug > 0 ) DistanzMatrix.Print();
 
       //define value in dR used as matching criterion
-      double DeltaRMatching = _DeltaR_Particles;
+      double DeltaRMatching = m_DeltaR_Particles;
       //define value in DeltaPtoPt used as matching criterion
-      double DeltaPtoPtMatching = _DeltaPtoPt;
+      double DeltaPtoPtMatching = m_DeltaPtoPt;
       // def value in Delta Charge used as matching criterion
-      double DeltaChargeMatching = _DeltaCharge;
+      double DeltaChargeMatching = m_DeltaCharge;
 
       particle = (gen_particles.front())->getName();
-      if (particle == _METType) DeltaRMatching = _DeltaR_MET;
+      if( particle == m_gen_rec_map.get( "MET" ).GenName ) DeltaRMatching = m_DeltaR_MET;
 
       // go through every row and pushback index of Rec with smallest Distance
       for (unsigned int irow = 0; irow < num_gen; irow++) {
          int matched = SmallestRowElement(&DistanzMatrix, &DeltaPtoPtMatrix, &DeltaChargeMatrix, irow, DeltaRMatching, DeltaChargeMatching, DeltaPtoPtMatching);
          gen_particles[irow]->setUserRecord<int>(Match, matched);
-         if (_fDebug > 0) cout << "GenObject " << irow << " is matched with " << matched << endl;
+         if( m_debug > 0 ) cout << "GenObject " << irow << " is matched with " << matched << endl;
 
          if (matched != -1){
             gen_particles[ irow ]->setUserRecord< int >( "Charge"+Match, DeltaChargeMatrix( irow, matched ) );
@@ -179,7 +252,7 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
             gen_particles[irow]->linkSoft(rec_particles[matched], linkname);
 
             rec_particles[matched]->setUserRecord<bool>(hctaM, true);
-            if (_fDebug > 0) cout << "RecObject " << matched << " has matching Gen " << endl;
+            if( m_debug > 0 ) cout << "RecObject " << matched << " has matching Gen " << endl;
          }
       }
 
@@ -187,14 +260,14 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
          //define value in dR which defines matching
          int matched = SmallestColumnElement(&DistanzMatrix, &DeltaPtoPtMatrix, &DeltaChargeMatrix, icol, DeltaRMatching, DeltaChargeMatching, DeltaPtoPtMatching);
          rec_particles[icol]->setUserRecord<int>(Match, matched);
-         if (_fDebug > 0) cout << "RecObject " << icol << " is matched with " << matched << endl;
+         if( m_debug > 0 ) cout << "RecObject " << icol << " is matched with " << matched << endl;
 
          if (matched != -1) {
             rec_particles[ icol ]->setUserRecord< int >( "Charge"+Match, DeltaChargeMatrix( matched, icol ) );
             //redundant information with softlink, should replace the UserRecords after testing
             rec_particles[icol]->linkSoft(gen_particles[matched], linkname);
             gen_particles[matched]->setUserRecord<bool>(hctaM, true);
-            if (_fDebug > 0) cout << "GenObject " << matched << " has matching Rec " << endl;
+            if( m_debug > 0 ) cout << "GenObject " << matched << " has matching Rec " << endl;
          }
       }
    }
@@ -208,7 +281,8 @@ int ParticleMatcher::SmallestRowElement(TMatrixT<double>* matrixDR,
                                         const unsigned int& row,
                                         const double& DeltaRMatching,
                                         const double& DeltaChargeMatching,
-                                        const double& DeltaPtoPtMatching) {
+                                        const double& DeltaPtoPtMatching
+                                        ) const {
 
    // loop over row and return index of smallest element
    double elementDR = (*matrixDR)(row, 0);
@@ -235,7 +309,8 @@ int ParticleMatcher::SmallestColumnElement(TMatrixT<double>* matrixDR,
                                            const unsigned int& col,
                                            const double& DeltaRMatching,
                                            const double& DeltaChargeMatching,
-                                           const double& DeltaPtoPtMatching) {
+                                           const double& DeltaPtoPtMatching
+                                           ) const {
 
    // loop over row and return index of smallest element
    double elementDR = (*matrixDR)(0, col);

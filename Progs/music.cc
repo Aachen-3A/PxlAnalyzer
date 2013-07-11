@@ -14,6 +14,7 @@
 #include <boost/filesystem/path.hpp>
 
 #include "Main/EventSelector.hh"
+#include "Main/ParticleMatcher.hh"
 #include "Main/ReWeighter.hh"
 #include "Main/RunLumiRanges.hh"
 #include "Main/SkipEvents.hh"
@@ -148,6 +149,9 @@ int main( int argc, char* argv[] ) {
    //initialize the EventSelector
    EventSelector Selector( config );
 
+   // Initialize the ParticleMatcher.
+   ParticleMatcher Matcher( config );
+
    // configure processes:
    if( runCcControl ){
       cp2::RecControl *plots = new cp2::RecControl( config, PlotConfig, &Selector );
@@ -158,7 +162,7 @@ int main( int argc, char* argv[] ) {
          fork.setObject( gen_plots );
          fork.setIndex( "GenControl", gen_plots );
 
-         CcControl *old_plots = new CcControl( config, &Selector);
+         CcControl *old_plots = new CcControl( config );
          fork.setObject( old_plots );
          fork.setIndex( "CcControl", old_plots );
       }
@@ -307,8 +311,8 @@ int main( int argc, char* argv[] ) {
             Selector.performSelection(GenEvtView, 0);
             Selector.performSelection(RecEvtView, 0);
 
-            // Redo Matching
-            Selector.redoMatching(GenEvtView, RecEvtView);
+            // Redo matching.
+            Matcher.matchObjects( GenEvtView, RecEvtView, true );
 
             //synchronize some user records
             Selector.synchronizeGenRec( GenEvtView, RecEvtView );
@@ -320,9 +324,9 @@ int main( int argc, char* argv[] ) {
                // SAME for JES_DOWN: modify Jets,  apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
                Selector.performSelection(GenEvtView_JES_DOWN, -1);
                Selector.performSelection(RecEvtView_JES_DOWN, -1);
-               // redo Matching
-               Selector.redoMatching(GenEvtView_JES_UP, RecEvtView_JES_UP);
-               Selector.redoMatching(GenEvtView_JES_DOWN, RecEvtView_JES_DOWN);
+               // Redo matching for JES.
+               Matcher.matchObjects( GenEvtView_JES_UP, RecEvtView_JES_UP );
+               Matcher.matchObjects( GenEvtView_JES_DOWN, RecEvtView_JES_DOWN );
                //synchronize some user records
                Selector.synchronizeGenRec( GenEvtView_JES_UP, RecEvtView_JES_UP );
                Selector.synchronizeGenRec( GenEvtView_JES_DOWN, RecEvtView_JES_DOWN );

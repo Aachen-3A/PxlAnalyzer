@@ -98,7 +98,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    // Taus:
    m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
-   m_tau_type(    cfg.GetItem< string >( "Tau.Type" ) ),
    m_tau_pt_min(  cfg.GetItem< double >( "Tau.pt.min" ) ),
    m_tau_eta_max( cfg.GetItem< double >( "Tau.Eta.max" ) ),
    //Get Tau-Discriminators and save them
@@ -175,7 +174,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    // Jets:
    m_jet_use(                  cfg.GetItem< bool   >( "Jet.use" ) ),
-   m_jet_algo(                 cfg.GetItem< string >( "Jet.Algo" ) ),
    m_jet_pt_min(               cfg.GetItem< double >( "Jet.pt.min" ) ),
    m_jet_eta_max(              cfg.GetItem< double >( "Jet.eta.max" ) ),
    m_jet_isPF(                 cfg.GetItem< bool   >( "Jet.isPF" ) ),
@@ -188,10 +186,10 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_jet_bJets_algo(           cfg.GetItem< string >( "Jet.BJets.Algo" ) ),
    m_jet_bJets_discr_min(      cfg.GetItem< double >( "Jet.BJets.Discr.min" ) ),
    m_jet_bJets_genFlavourAlgo( cfg.GetItem< string >( "Jet.BJets.genFlavourAlgo" ) ),
+   m_jet_bJets_gen_label(      cfg.GetItem< string >( "Jet.BJets.Gen.Label" ) ),
 
    // MET:
    m_met_use(            cfg.GetItem< bool   >( "MET.use" ) ),
-   m_met_type(           cfg.GetItem< string >( "MET.Type" ) ),
    m_met_pt_min(         cfg.GetItem< double >( "MET.pt.min" ) ),
    m_met_dphi_ele_min(   cfg.GetItem< double >( "MET.dPhi.Ele.min" ) ),
 
@@ -202,8 +200,22 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // To access the JEC uncertainties from file.
    m_jecUnc( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESFile" ) ) ),
 
-   // Particle Matcher.
-   m_matcher(),
+   m_gen_rec_map( cfg ),
+
+   // Get particle names that shall be used from config and cache them.
+   m_RecMuoName( m_gen_rec_map.get( "Muo" ).RecName ),
+   m_RecEleName( m_gen_rec_map.get( "Ele" ).RecName ),
+   m_RecTauName( m_gen_rec_map.get( "Tau" ).RecName ),
+   m_RecGamName( m_gen_rec_map.get( "Gam" ).RecName ),
+   m_RecJetName( m_gen_rec_map.get( "Jet" ).RecName ),
+   m_RecMETName( m_gen_rec_map.get( "MET" ).RecName ),
+
+   m_GenMuoName( m_gen_rec_map.get( "Muo" ).GenName ),
+   m_GenEleName( m_gen_rec_map.get( "Ele" ).GenName ),
+   m_GenTauName( m_gen_rec_map.get( "Tau" ).GenName ),
+   m_GenGamName( m_gen_rec_map.get( "Gam" ).GenName ),
+   m_GenJetName( m_gen_rec_map.get( "Jet" ).GenName ),
+   m_GenMETName( m_gen_rec_map.get( "MET" ).GenName ),
 
    m_eventCleaning( cfg ),
    m_triggerSelector( cfg ),
@@ -225,17 +237,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
 EventSelector::~EventSelector() {
 }
-
-//-------------------- Redo Matching -----------------------------------------------------------------
-
-void EventSelector::redoMatching(EventView* GenEvtView, EventView* RecEvtView) {
-
-   std::vector<string> jetalgos;
-   jetalgos.push_back( m_jet_algo );
-   m_matcher.matchObjects( GenEvtView, RecEvtView, jetalgos, m_jet_bJets_algo, m_met_type, m_jet_bJets_use, true );
-
-}
-
 
 // This function looks for gen filters that are written in the RecEvtView and
 // fill them into the GenEvtView for further processing.
@@ -1001,7 +1002,7 @@ void EventSelector::applyCutsOnJet( pxl::EventView* EvtView, std::vector< pxl::P
             }
          } else {
             if( abs( thisJet->findUserRecord< int >( m_jet_bJets_genFlavourAlgo ) ) == 5 ) {
-               thisJet->setUserRecord< string >( "bJetType", "genBJet" );
+               thisJet->setUserRecord< string >( "bJetType", m_jet_bJets_gen_label );
             } else {
                thisJet->setUserRecord< string >( "bJetType", "nonB" );
             }
@@ -1035,6 +1036,20 @@ bool EventSelector::passJet( pxl::Particle *jet, const bool &isRec ) const {
 }
 
 
+void EventSelector::countParticles( pxl::EventView *EvtView,
+                                    std::vector< pxl::Particle* > const &particles,
+                                    std::string const &name,
+                                    bool const &isRec
+                                    ) const {
+   std::string label = "Num";
+   if( isRec )
+      label += m_gen_rec_map.get( name ).RecName;
+   else
+      label += m_gen_rec_map.get( name ).GenName;
+
+   EvtView->setUserRecord< int >( label, particles.size() );
+}
+
 
 void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec ) {
    unsigned int numJet = 0;
@@ -1050,8 +1065,19 @@ void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Partic
    } else {
       numJet = jets.size();
    }
-   EvtView->setUserRecord< int >( "Num" + m_jet_algo, numJet );
-   EvtView->setUserRecord< int >( "Num" + m_jet_bJets_algo, numB );
+
+   std::string labelJet  = "Num";
+   std::string labelBJet = "Num";
+   if( isRec ) {
+      labelJet  += m_RecJetName;
+      labelBJet += m_jet_bJets_algo;
+   } else {
+      labelJet  += m_GenJetName;
+      labelBJet += m_jet_bJets_gen_label;
+   }
+
+   EvtView->setUserRecord< int >( labelJet,  numJet );
+   EvtView->setUserRecord< int >( labelBJet, numB );
 }
 
 
@@ -1272,21 +1298,31 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
       // Only fill the collection if we want to use the particle!
       // If the collections are not filled, the particles are also ignored in
       // the event cleaning.
-      if(      m_muo_use and name == "Muon"     ) muons.push_back( *part );
-      else if( m_ele_use and name == "Ele"      ) eles.push_back( *part );
-      else if( m_tau_use and name == m_tau_type ) taus.push_back( *part );
-      else if( m_gam_use and name == "Gamma"    ) gammas.push_back( *part );
-      else if( m_jet_use and name == m_jet_algo ) jets.push_back( *part );
-      else if( m_met_use and name == m_met_type ) mets.push_back( *part );
-      //no need to store the status 3 particles if we're not going to check them anyway
-      else if( ( m_mass_min > 0 || m_mass_max > 0 ) && name == "S3" ) {
-         if( ( m_massIDs.size() == 0
-               || std::find( m_massIDs.begin(), m_massIDs.end(), (*part)->findUserRecord< int >( "id" ) ) != m_massIDs.end() )
-             &&
-             ( m_massMotherIDs.size() == 0
-               || std::find( m_massMotherIDs.begin(), m_massMotherIDs.end(), (*part)->findUserRecord< int >( "mother_id" ) ) != m_massMotherIDs.end() )
-             ) {
-            doc_particles.push_back(*part);
+      if( isRec ) {
+         if(      m_muo_use and name == m_RecMuoName ) muons.push_back( *part );
+         else if( m_ele_use and name == m_RecEleName ) eles.push_back( *part );
+         else if( m_tau_use and name == m_RecTauName ) taus.push_back( *part );
+         else if( m_gam_use and name == m_RecGamName ) gammas.push_back( *part );
+         else if( m_jet_use and name == m_RecJetName ) jets.push_back( *part );
+         else if( m_met_use and name == m_RecMETName ) mets.push_back( *part );
+         // There are no S3 particles in Rec.
+      } else {
+         if(      m_muo_use and name == m_GenMuoName ) muons.push_back( *part );
+         else if( m_ele_use and name == m_GenEleName ) eles.push_back( *part );
+         else if( m_tau_use and name == m_GenTauName ) taus.push_back( *part );
+         else if( m_gam_use and name == m_GenGamName ) gammas.push_back( *part );
+         else if( m_jet_use and name == m_GenJetName ) jets.push_back( *part );
+         else if( m_met_use and name == m_GenMETName ) mets.push_back( *part );
+         //no need to store the status 3  particles if we're not going to check them anyway
+         else if( ( m_mass_min > 0 || m_mass_max > 0 ) && name == "S3" ) {
+            if( ( m_massIDs.size() == 0
+                  || std::find( m_massIDs.begin(), m_massIDs.end(), (*part)->findUserRecord< int >( "id" ) ) != m_massIDs.end() )
+                &&
+                ( m_massMotherIDs.size() == 0
+                  || std::find( m_massMotherIDs.begin(), m_massMotherIDs.end(), (*part)->findUserRecord< int >( "mother_id" ) ) != m_massMotherIDs.end() )
+                ) {
+               doc_particles.push_back(*part);
+            }
          }
       }
    }
@@ -1325,12 +1361,12 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    applyCutsOnMET( EvtView, mets, isRec );
 
    //now store the number of particles of each type
-   EvtView->setUserRecord< int >( "NumTau", taus.size() );
-   EvtView->setUserRecord< int >( "NumMuon", muons.size() );
-   EvtView->setUserRecord< int >( "NumEle" , eles.size() );
-   EvtView->setUserRecord< int >( "NumGamma", gammas.size() );
+   countParticles( EvtView, muons,  "Muo", isRec );
+   countParticles( EvtView, eles,   "Ele", isRec );
+   countParticles( EvtView, taus,   "Tau", isRec );
+   countParticles( EvtView, gammas, "Gam", isRec );
+   countParticles( EvtView, mets,   "MET", isRec );
    countJets( EvtView, jets, isRec );
-   EvtView->setUserRecord< int >( "Num" + m_met_type, mets.size() );
 
    applyCutsOnVertex( EvtView, vertices, isRec );
 
@@ -1378,10 +1414,6 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    //event accepted after all cuts
    bool accepted = topo_accept && non_topo_accept;
    EvtView->setUserRecord< bool >( "accepted", accepted );
-
-   //cout << endl << "After Everything" << endl;
-   //dumpEventView(EvtView);
-   //cout << endl << endl;
 }
 
 
@@ -1418,37 +1450,40 @@ bool EventSelector::passEventTopology( int const numMuo,
                                                );
 }
 
-
+// FIXME: This doesn't work anymore (due to the changes in the particle naming)!
+// In my opinion, this should be somewhere else and also should also be called
+// from outside (form main function or so).
+// Feel free to reimplement and remove this part!
 //--------------Dump all the stuff inside the EventView--------------------------------------------------------
 
-void EventSelector::dumpEventView(const EventView* EvtView) {
+//void EventSelector::dumpEventView(const EventView* EvtView) {
 
-   cout << endl << "   Starting EventViewDump: " << endl
-                << "   ======================= " << endl << endl;
-   cout << "      in detail : " << " #Ele = " << EvtView->findUserRecord<int>("NumEle")
-                                << ", #Mu = " << EvtView->findUserRecord<int>("NumMuon")
-                                << ", #Gam = " << EvtView->findUserRecord<int>("NumGamma")
-            << ", #" << m_met_type << " = " << EvtView->findUserRecord< int >( "Num" + m_met_type )
-            << ", #" << m_jet_algo << " = " << EvtView->findUserRecord< int >( "Num" + m_jet_algo )
-            << ", #" << m_jet_bJets_algo  << " = " << EvtView->findUserRecord< int >( "Num" + m_jet_bJets_algo )
-            << ", #Vertices = " << EvtView->findUserRecord<int>("NumVertices") << endl;
-   cout << "      Type      : " <<  EvtView->findUserRecord<string>("Type") << endl;
-   // loop over all particles:
-   vector<Particle*> particles;
-   EvtView->getObjectsOfType<Particle>(particles);
-   pxl::sortParticles( particles );
-   for (vector<Particle*>::const_iterator part = particles.begin(); part != particles.end(); ++part) {
-      cout << "      ";
-      (*part)->print(0);
-   }
-   if (EvtView->findUserRecord<string>("Type") == "Rec") {
+   //cout << endl << "   Starting EventViewDump: " << endl
+                //<< "   ======================= " << endl << endl;
+   //cout << "      in detail : " << " #Ele = " << EvtView->findUserRecord<int>("NumEle")
+                                //<< ", #Mu = " << EvtView->findUserRecord<int>("NumMuon")
+                                //<< ", #Gam = " << EvtView->findUserRecord<int>("NumGamma")
+            //<< ", #" << m_met_type << " = " << EvtView->findUserRecord< int >( "Num" + m_met_type )
+            //<< ", #" << m_jet_algo << " = " << EvtView->findUserRecord< int >( "Num" + m_jet_algo )
+            //<< ", #" << m_jet_bJets_algo  << " = " << EvtView->findUserRecord< int >( "Num" + m_jet_bJets_algo )
+            //<< ", #Vertices = " << EvtView->findUserRecord<int>("NumVertices") << endl;
+   //cout << "      Type      : " <<  EvtView->findUserRecord<string>("Type") << endl;
+   //// loop over all particles:
+   //vector<Particle*> particles;
+   //EvtView->getObjectsOfType<Particle>(particles);
+   //pxl::sortParticles( particles );
+   //for (vector<Particle*>::const_iterator part = particles.begin(); part != particles.end(); ++part) {
+      //cout << "      ";
+      //(*part)->print(0);
+   //}
+   //if (EvtView->findUserRecord<string>("Type") == "Rec") {
 
-      //this record steers if event is globally accepted by trigger, depending on "OR" of the HLT-path selected
-      cout << endl << "      HLT accept?   : " << EvtView->findUserRecord<bool>("HLT_accept", false) << endl;
-   }
-   //this record steers if event is globally accepted by event topology criteria
-   cout << "      Topo accept?   : " << EvtView->findUserRecord<bool>("Topo_accept", false) << endl;
-}
+      ////this record steers if event is globally accepted by trigger, depending on "OR" of the HLT-path selected
+      //cout << endl << "      HLT accept?   : " << EvtView->findUserRecord<bool>("HLT_accept", false) << endl;
+   //}
+   ////this record steers if event is globally accepted by event topology criteria
+   //cout << "      Topo accept?   : " << EvtView->findUserRecord<bool>("Topo_accept", false) << endl;
+//}
 
 // This function changes the Muon quantities from "normal" to cocktail".
 // (Only doing this for the four momentum of the muon atm. To be extended in the

@@ -10,12 +10,12 @@ Decision.
 #include <string>
 #include "Tools/PXL/PXL.hh"
 #include "Tools/MConfig.hh"
-#include "ParticleMatcher.hh"
 #include "TriggerSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
 #include "Main/EventCleaning.hh"
+#include "Main/GenRecNameMap.hh"
 #include "Main/PhotonEffectiveArea.hh"
 
 class EventSelector {
@@ -24,8 +24,6 @@ public:
 
    // Destruktor
    ~EventSelector();
-   // Matching Redo
-   void redoMatching(pxl::EventView* GenEvtView, pxl::EventView* RecEvtView);
    // main method to perform the selection
    void performSelection(pxl::EventView*  EvtView, const int& JES);
    //synchronize certain values between gen and rec event views
@@ -35,15 +33,6 @@ public:
    double TransverseInvariantMass(pxl::EventView* GenEvtView, const std::string& type1, const std::string& type2);
    // calculate invariant mass of particle of Type1 and Type2
    double InvariantMass(pxl::EventView* GenEvtView, const std::string& type1, const std::string& type2);
-
-   //what MET to use
-   std::string getMETType() const { return m_met_type; }
-   //what JetAlgo to use
-   std::string getJetAlgo() const { return m_jet_algo; }
-   //requested number of objects for accepted events
-
-   //value of the b-jet discriminator cut
-   double getBcut() const { return m_jet_bJets_discr_min; }
 
    bool passEventTopology( int const numMuo,
                            int const numEle,
@@ -86,6 +75,12 @@ private:
    void applyCutsOnGamma( pxl::EventView *EvtView, std::vector< pxl::Particle* > &gammas, const bool &isRec );
    void applyCutsOnJet( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
    bool passJet( pxl::Particle *jet, const bool &isRec ) const;
+
+   void countParticles( pxl::EventView *EvtView,
+                        std::vector< pxl::Particle* > const &particles,
+                        std::string const &name,
+                        bool const &isRec
+                        ) const;
    void countJets( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
    void applyCutsOnMET( pxl::EventView *EvtView, std::vector< pxl::Particle* > &mets, const bool &isRec);
    bool passMET( pxl::Particle *met, const bool &isRec ) const;
@@ -220,12 +215,11 @@ private:
    double const      m_muo_globalChi2_max;
 
    // Taus:
-   bool const        m_tau_use;
-   std::string const m_tau_type;
-   double const      m_tau_pt_min;
-   double const      m_tau_eta_max;
+   bool const   m_tau_use;
+   double const m_tau_pt_min;
+   double const m_tau_eta_max;
    // Discriminators:
-   const std::vector< std::string > m_tau_discriminators;
+   std::vector< std::string > const m_tau_discriminators;
 
    // Photons:
    bool const   m_gam_use;
@@ -298,7 +292,6 @@ private:
 
    // Jets:
    bool const        m_jet_use;
-   std::string const m_jet_algo;
    double const      m_jet_pt_min;
    double const      m_jet_eta_max;
    bool const        m_jet_isPF;
@@ -310,12 +303,12 @@ private:
    std::string const m_jet_bJets_algo;
    double const      m_jet_bJets_discr_min;
    std::string const m_jet_bJets_genFlavourAlgo;
+   std::string const m_jet_bJets_gen_label;
 
    // MET:
-   bool const        m_met_use;
-   std::string const m_met_type;
-   double const      m_met_pt_min;
-   double const      m_met_dphi_ele_min;
+   bool const   m_met_use;
+   double const m_met_pt_min;
+   double const m_met_dphi_ele_min;
 
    //HCAL noise ID
    bool const        m_hcal_noise_ID_use;
@@ -328,7 +321,22 @@ private:
    // To access the JEC uncertainties from file.
    JetCorrectionUncertainty m_jecUnc;
 
-   ParticleMatcher m_matcher;
+   // Class mapping Gen and Rec particle names.
+   GenRecNameMap const m_gen_rec_map;
+
+   std::string const m_RecMuoName;
+   std::string const m_RecEleName;
+   std::string const m_RecTauName;
+   std::string const m_RecGamName;
+   std::string const m_RecJetName;
+   std::string const m_RecMETName;
+
+   std::string const m_GenMuoName;
+   std::string const m_GenEleName;
+   std::string const m_GenTauName;
+   std::string const m_GenGamName;
+   std::string const m_GenJetName;
+   std::string const m_GenMETName;
 
    EventCleaning const m_eventCleaning;
 
