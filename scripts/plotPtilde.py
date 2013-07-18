@@ -27,6 +27,8 @@ def main():
                        help='Set the actual results-pickle file or p-tilde rootfile (only used if INPUTPICKLE is not found). [default = %default]' )
     parser.add_option( '-s', '--square', action = 'store_true', default=False,
                        help='Set to make a square p-tilde plot. [default = %default]' )
+    parser.add_option( '-g', '--grid', action='store_true', default=False,
+                       help='Draw grid lines along the x and y-axis. [default = %default]' )
 
     ( options, args ) = parser.parse_args()
     del parser
@@ -48,6 +50,10 @@ def main():
         rootfile = ROOT.TFile.Open( options.results )
         c_p_tilde = rootfile.Get( 'c_p-tilde' )
         rootfile.Close()
+
+        if options.grid:
+            ROOT.gStyle.SetPadGridX( ROOT.kTRUE )
+            ROOT.gStyle.SetPadGridY( ROOT.kTRUE )
 
         lines = []
         for prim in c_p_tilde.GetListOfPrimitives():
@@ -93,7 +99,10 @@ def main():
         if p_tilde_overflow:
             p_tilde_overflow.Draw( 'e1 same' )
 
-        p_tilde_stack.Draw( 'axis nostack same' )
+        if options.grid:
+            p_tilde_stack.Draw( 'axis axig same' )
+        else:
+            p_tilde_stack.Draw( 'axis same' )
 
         y_min = lines[0].GetY1()
         y_max = lines[0].GetY2()
