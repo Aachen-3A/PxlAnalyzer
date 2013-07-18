@@ -61,6 +61,10 @@ def plot( options, Class, canvas ):
     canvas.Draw()
     for pad in canvas.GetListOfPrimitives():
         pad.cd()
+
+        if options.logx:
+            pad.SetLogx( True )
+
         primitives = pad.GetListOfPrimitives()
 
         loopOverPrimitives( options, primitives )
@@ -96,6 +100,8 @@ def plot( options, Class, canvas ):
             bg_histo_CL.SetFillColor( options.fill_color )
 
             axes = primitives.FindObject( Class + '_axis' )
+            if options.logx:
+                axes.GetXaxis().SetLabelOffset( -0.007 )
 
             # First need to scale the axes!
             if options.x_min != None and options.x_max != None:
