@@ -17,6 +17,8 @@ def main():
                        help='Set distribution (0: Sumpt, 1: Minv, 2: MET). [default = %default]' )
     parser.add_option( '-r', '--rootfile', metavar='ROOTFILENAME', default='p-tilde-new.root',
                        help='Set the name of the output rootfile. [default = %default]' )
+    parser.add_option( '-p', '--pdf', metavar='PDFFILENAME', default=None,
+                       help='Set the name of the output pdffile. [default = p-tilde-I.pdf, where I is the distribution.]' )
     parser.add_option( '-n', '--num-bins', metavar='NUMBINS', type='int', default=10,
                        help='Set number of bins for p-tilde histogram. [default = %default]' )
     parser.add_option( '-i', '--input', metavar='INPUTPICKLE', default='./p-tilde.pkl',
@@ -123,6 +125,11 @@ def main():
         canvas.Update()
 
         code.interact()
+
+        if options.pdf:
+            canvas.SaveAs( options.pdf + '.pdf' )
+        else:
+            canvas.SaveAs( 'p-tilde-' + options.dist_plain + '.pdf' )
 
     else:
         all_p_tilde    = []  # p-tilde for data or pseudo-data
@@ -312,7 +319,11 @@ def printHistos( options, p_tilde_hist, bg_p_tilde_hist, bg_p_tilde_hist_weight 
     legend.Draw()
 
     canvas.Update()
-    canvas.Print( 'p-tilde-' + options.dist_plain + '.pdf' )
+
+    if options.pdf:
+        canvas.SaveAs( options.pdf + '.pdf' )
+    else:
+        canvas.SaveAs( 'p-tilde-' + options.dist_plain + '.pdf' )
 
     c2 = ROOT.TCanvas( 'p-tilde-weighted', 'weight' )
     c2.cd()
