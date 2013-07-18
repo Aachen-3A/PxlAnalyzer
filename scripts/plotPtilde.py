@@ -92,6 +92,11 @@ def main():
         canvas.SetLogy( True )
         canvas.cd()
 
+        canvas.SetTopMargin( 0.06 )
+        canvas.SetBottomMargin( 0.12 )
+        canvas.SetLeftMargin( 0.1 )
+        canvas.SetRightMargin( 0.03 )
+
         p_tilde_stack.Draw( 'axis nostack' )
         bg_p_tilde.Draw( 'hist same' )
         p_tilde.Draw( 'e same' )
