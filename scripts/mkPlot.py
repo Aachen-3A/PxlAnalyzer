@@ -275,7 +275,8 @@ def loopOverPrimitives( options, primitives):
                     obj.Delete()
 
             if '#tilde{p}' in title:
-                obj.SetY( 0.955 )
+                obj.SetY( 0.948 )
+                obj.SetTextSize( 0.065 )
                 if title.endswith( '=0}' ):
                     obj.SetTitle( '#tilde{p} < 10^{-5}' )
                 if '=1e-05' in title:
