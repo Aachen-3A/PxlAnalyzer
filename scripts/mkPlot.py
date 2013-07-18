@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import code
 import json
 import logging
 import math
@@ -53,7 +52,8 @@ def main():
     canvas.SaveAs( Class + options.postfix + '.svg'  )
     canvas.SaveAs( Class + options.postfix + '.root' )
 
-    code.interact()
+    if not options.no_interactive:
+        raw_input( "Press ENTER to exit." )
 
 
 def plot( options, Class, canvas ):
@@ -406,6 +406,8 @@ def commandLineParsing():
                        help = "Do not draw the 'Region of Interest'. [default = %default]" )
     parser.add_option( '-V', '--vec-sumpt', action = 'store_true', default = False,
                        help = "Replace 'Sum p_t' by 'Sum |vec(p_t)|'. [default = %default]" )
+    parser.add_option(       '--no-interactive', action = 'store_true', default = False,
+                       help = "Do not use the interactive mode. [default = %default]" )
 
     ( options, args ) = parser.parse_args()
 
@@ -423,6 +425,9 @@ def commandLineParsing():
     except ValueError:
         class_name = args[0]
         dist = None
+
+    if options.no_interactive:
+        r.gROOT.SetBatch( True )
 
     if os.path.exists( options.root_file ):
         options.root_file = r.TFile.Open( options.root_file )
