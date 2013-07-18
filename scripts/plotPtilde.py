@@ -59,10 +59,10 @@ def main():
         for prim in c_p_tilde.GetListOfPrimitives():
             if prim.ClassName() == 'TLegend':
                 legend = prim
-                legend.SetX1NDC( 0.60 )
-                legend.SetY1NDC( 0.70 )
-                legend.SetX2NDC( 0.78 )
-                legend.SetY2NDC( 0.93 )
+                legend.SetX1NDC( 0.83 )
+                legend.SetY1NDC( 0.77 )
+                legend.SetX2NDC( 1.0 )
+                legend.SetY2NDC( 1.0 )
             if prim.ClassName() == 'TLine':
                 lines.append( prim )
 
