@@ -377,8 +377,8 @@ void EventSelector::varyJESMET( vector< pxl::Particle* > const &jets,
       //loop over met and correct for residual JES-variation
       for( vector< Particle* >::const_iterator rec_met = met.begin(); rec_met != met.end(); ++rec_met ) {
          Particle *thisMET = *rec_met;
-         double Px = thisMET->getPx() - dPx;
-         double Py = thisMET->getPy() - dPy;
+         double Px = thisMET->getPx() + dPx;
+         double Py = thisMET->getPy() + dPy;
 
          //WARNING: Change the actual PXL particle:
          thisMET->setP4( Px, Py, 0., sqrt(Px*Px + Py*Py) );
