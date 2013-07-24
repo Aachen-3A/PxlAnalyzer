@@ -178,7 +178,7 @@ int main( int argc, char* argv[] ) {
    EventAdaptor Adaptor( config, debug );
 
    // Initialize the ParticleMatcher.
-   ParticleMatcher Matcher( config );
+   ParticleMatcher Matcher( config, debug );
 
    // configure processes:
    if( runCcControl ){

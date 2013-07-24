@@ -1,5 +1,7 @@
 #include "ParticleMatcher.hh"
 
+#include <iostream>
+
 #include "Tools/MConfig.hh"
 
 using namespace std;
@@ -206,7 +208,10 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
       unsigned int row = 0;
       std::string particle;
 
-      if( m_debug > 1 ) cout << "Found " << num_gen << " Gen Objects and " << num_rec << " Rec Objects" << endl;
+      if( m_debug > 1 ) {
+         cerr << "[INFO] (ParticleMatcher):" << endl;
+         cerr << "Found " <<  num_gen << " Gen Objects and " << num_rec << " Rec Objects." << endl;
+      }
 
       TMatrixT<double> DistanzMatrix(num_gen, num_rec);
       TMatrixT<double> DeltaPtoPtMatrix(num_gen, num_rec);
@@ -215,21 +220,34 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
       for (std::vector<Particle*>::iterator gen_iter = gen_particles.begin(); gen_iter != gen_particles.end(); gen_iter++) {
          col = 0;
          for (std::vector<Particle*>::iterator rec_iter = rec_particles.begin(); rec_iter != rec_particles.end(); rec_iter++) {
+            pxl::LorentzVector const &genVec = (*gen_iter)->getVector();
+            pxl::LorentzVector const &recVec = (*rec_iter)->getVector();
             // Calculate the distance
-            if( m_debug > 0 ) {
-               cout << "Gen: " << (*gen_iter)->print(0);
-               cout << "Rec: " << (*rec_iter)->print(0);
-               cout << "Distance: " << (*gen_iter)->getVector().deltaR(&((*rec_iter)->getVector())) << endl;
+            double const deltaR     = genVec.deltaR( &recVec );
+            double const deltaPtoPt = fabs( ( recVec.getPt() / genVec.getPt() ) - 1 );
+            double const deltaQ     = fabs( (*rec_iter)->getCharge() - (*gen_iter)->getCharge() );
+            if( m_debug > 2 ) {
+               cerr << "[DEBUG] (ParticleMatcher): Matching information:" << endl;
+               cerr << "Gen: ";
+               (*gen_iter)->print( 0, cerr );
+               cerr << "Rec: ";
+               (*rec_iter)->print( 0, cerr );
+               cerr << "deltaR     = " << deltaR     << endl;
+               cerr << "deltaPtoPt = " << deltaPtoPt << endl;
+               cerr << "deltaQ     = " << deltaQ     << endl;
             }
-            DistanzMatrix(row,col) = (*gen_iter)->getVector().deltaR(&((*rec_iter)->getVector()));
-            DeltaPtoPtMatrix(row,col) = fabs(((*rec_iter)->getVector().getPt() / (*gen_iter)->getVector().getPt()) - 1);
-            DeltaChargeMatrix(row,col) = fabs( ((*rec_iter)->getCharge()) - ((*gen_iter)->getCharge()) );
+            DistanzMatrix( row, col ) = deltaR;
+            DeltaPtoPtMatrix( row, col ) = deltaPtoPt;
+            DeltaChargeMatrix( row, col ) = deltaQ;
             col++;
          }
          row++;
       }
 
-      if( m_debug > 0 ) DistanzMatrix.Print();
+      if( m_debug > 3 ) {
+         cerr << "[DEBUG] (ParticleMatcher): Full DistanzMatrix:" << endl;
+         DistanzMatrix.Print();
+      }
 
       //define value in dR used as matching criterion
       double DeltaRMatching = m_DeltaR_Particles;
@@ -245,7 +263,10 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
       for (unsigned int irow = 0; irow < num_gen; irow++) {
          int matched = SmallestRowElement(&DistanzMatrix, &DeltaPtoPtMatrix, &DeltaChargeMatrix, irow, DeltaRMatching, DeltaChargeMatching, DeltaPtoPtMatching);
          gen_particles[irow]->setUserRecord<int>(Match, matched);
-         if( m_debug > 0 ) cout << "GenObject " << irow << " is matched with " << matched << endl;
+         if( m_debug > 1 ) {
+            cerr << "[INFO] (ParticleMatcher):" << endl;
+            cerr << "GenObject " << irow << " is matched with " << matched << endl;
+         }
 
          if (matched != -1){
             gen_particles[ irow ]->setUserRecord< int >( "Charge"+Match, DeltaChargeMatrix( irow, matched ) );
@@ -253,7 +274,10 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
             gen_particles[irow]->linkSoft(rec_particles[matched], linkname);
 
             rec_particles[matched]->setUserRecord<bool>(hctaM, true);
-            if( m_debug > 0 ) cout << "RecObject " << matched << " has matching Gen " << endl;
+            if( m_debug > 1 ) {
+               cerr << "[INFO] (ParticleMatcher):" << endl;
+               cerr << "RecObject " << matched << " has matching Gen " << endl;
+            }
          }
       }
 
@@ -261,14 +285,20 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
          //define value in dR which defines matching
          int matched = SmallestColumnElement(&DistanzMatrix, &DeltaPtoPtMatrix, &DeltaChargeMatrix, icol, DeltaRMatching, DeltaChargeMatching, DeltaPtoPtMatching);
          rec_particles[icol]->setUserRecord<int>(Match, matched);
-         if( m_debug > 0 ) cout << "RecObject " << icol << " is matched with " << matched << endl;
+         if( m_debug > 1 ) {
+            cerr << "[INFO] (ParticleMatcher):" << endl;
+            cerr << "RecObject " << icol << " is matched with " << matched << endl;
+         }
 
          if (matched != -1) {
             rec_particles[ icol ]->setUserRecord< int >( "Charge"+Match, DeltaChargeMatrix( matched, icol ) );
             //redundant information with softlink, should replace the UserRecords after testing
             rec_particles[icol]->linkSoft(gen_particles[matched], linkname);
             gen_particles[matched]->setUserRecord<bool>(hctaM, true);
-            if( m_debug > 0 ) cout << "GenObject " << matched << " has matching Rec " << endl;
+            if( m_debug > 1 ) {
+               cerr << "[INFO] (ParticleMatcher):" << endl;
+               cerr << "GenObject " << matched << " has matching Rec " << endl;
+            }
          }
       }
    }

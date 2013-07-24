@@ -11,7 +11,6 @@ declared to have no match. For unmatched particles Match UserRecord is set to -1
 
 #include "Tools/PXL/PXL.hh"
 #include "Tools/PXL/JetSubtypeCriterion.hh"
-#include <iostream>
 #include "TMatrixT.h"
 #include <string>
 #include <vector>
