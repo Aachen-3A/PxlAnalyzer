@@ -1,10 +1,10 @@
 #ifndef JETRESOLUTION
 #define JETRESOLUTION
 
-#include "TH1D.h"
 #include "TRandom3.h"
 
 #include "Tools/MConfig.hh"
+#include "BinnedMapping.hh"
 
 namespace pxl {
    class Particle;
@@ -21,17 +21,11 @@ class JetResolution {
                                  );
 
    private:
-      TH1D initHisto();
-
       Tools::MConfig const m_jet_res_config;
 
-      bool const m_abs_eta;
       double const m_sigma_MC;
 
-      bool m_use_overflow;
-      bool m_use_underflow;
-
-      TH1D m_ratios;
+      BinnedMapping const m_eta_corr_map;
 
       TRandom3 m_rand;
 };
