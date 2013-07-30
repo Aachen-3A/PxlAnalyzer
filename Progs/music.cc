@@ -43,6 +43,27 @@ int main( int argc, char* argv[] ) {
    int numberOfEvents = -1;
    string XSectionsFile( "$MUSIC_BASE/ConfigFiles/XSections.txt" );
    string PlotConfigFile( "$MUSIC_BASE/ConfigFiles/ControlPlots2.cfg" );
+
+   // Debug levels are:
+   //    - 0: Display only ERRORS/EXCEPTIONS
+   //    - 1: Display also WARNINGS
+   //    - 2: Display also INFO
+   //    - 3: Display also DEBUG
+   //    - 4: Display also verbose DEBUG
+   //
+   // By default, debug = 1, means only WARNINGS will be displayed.
+   // (ERRORS should always be handled with help of exceptions!)
+   //
+   // The debug information is meant to be written to stderr.
+   // Additionally there is "normal" program output that goes to stdout.
+   //
+   // The output formatting should be the following:
+   // "[<LEVEL>] (<invoking_class>): <message>"
+   // e.g.:
+   // "[DEBUG] (ParticleMatcher): Something's fishy!"
+   // Please keep to that.
+   int debug = 1;
+
    bool useOldECMerger = false;
    bool NoCcControl    = false;
    bool NoCcEventClass = false;
@@ -56,6 +77,7 @@ int main( int argc, char* argv[] ) {
       >> parameter( 'N', "Num", numberOfEvents, "Number of events to analyze.", false )
       >> parameter( 'x', "XSections", XSectionsFile, "Path to cross-sections file.", false )
       >> parameter( 'p', "PlotConfig", PlotConfigFile, "Path to the plot-config file.", false )
+      >> parameter(      "debug", debug, "Set the debug level. 0 = WARNINGS, 1 = INFO, 2 = DEBUG, 3 = EVEN MORE DEBUG", false )
       >> option(    'M', "oldECMerger", useOldECMerger, "Use ECMerger instead of ECMerger2." )
       >> option(         "NoCcEventClass", NoCcEventClass, "Do NOT create EventClass file. (Not allowed if --NoCcControl specified!)" )
       >> option(         "NoCcControl",  NoCcControl, "Do NOT make ControlPlots. (Not allowed if --NoCcEventClass specified!)" )
