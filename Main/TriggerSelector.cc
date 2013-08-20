@@ -8,7 +8,7 @@ TriggerSelector::TriggerSelector( Tools::MConfig const &cfg ) :
    m_runOnData(     cfg.GetItem< bool   >( "General.RunOnData" ) ),
    m_ignoreL1(      cfg.GetItem< bool   >( "Trigger.IgnoreL1" ) ),
    m_ignoreHLT(     cfg.GetItem< bool   >( "Trigger.IgnoreHL" ) ),
-   m_triggerPrefix( cfg.GetItem< string >( "Trigger.Name" ) + "_" ),   // This will be "HLT" in general.
+   m_triggerPrefix( cfg.GetItem< string >( "Trigger.Prefix" ) + "_" ),   // This will be "HLT" in general.
 
    m_triggerGroups( initTriggerGroups( cfg ) ),
 
