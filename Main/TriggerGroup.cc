@@ -249,7 +249,7 @@ TriggerGroup::TriggerResults TriggerGroup::getTriggerResults( pxl::EventView con
 
    if( not any_trigger_found ) {
       std::stringstream err;
-      err << "In TriggerSelection::passHLTrigger(...): ";
+      err << "In TriggerSelector::passHLTrigger(...): ";
       err << "None of the specified triggers in trigger group '";
       err << m_name;
       err << "' found!";

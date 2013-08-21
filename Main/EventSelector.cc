@@ -166,7 +166,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_matcher(),
    m_duplicate(),
 
-   m_triggerSelection( cfg ),
+   m_triggerSelector( cfg ),
 
    m_rho25( 0.0 )
 {
@@ -1102,7 +1102,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    const bool filterAccept = passFilterSelection( EvtView, isRec );
    EvtView->setUserRecord< bool >( "filter_accept", filterAccept );
 
-   const bool L1_accept = m_triggerSelection.passL1Trigger( EvtView, isRec );
+   const bool L1_accept = m_triggerSelector.passL1Trigger( EvtView, isRec );
    EvtView->setUserRecord< bool >( "L1_accept", L1_accept );
 
    // rho is only available in Rec.
@@ -1174,26 +1174,26 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    applyCutsOnVertex( EvtView, vertices, isRec );
 
    //check if the events must be vetoed
-   bool const vetoed = m_triggerSelection.checkVeto( isRec,
-                                                     muons,
-                                                     eles,
-                                                     taus,
-                                                     gammas,
-                                                     jets,
-                                                     mets,
-                                                     EvtView
-                                                     );
+   bool const vetoed = m_triggerSelector.checkVeto( isRec,
+                                                    muons,
+                                                    eles,
+                                                    taus,
+                                                    gammas,
+                                                    jets,
+                                                    mets,
+                                                    EvtView
+                                                    );
    EvtView->setUserRecord< bool >( "Veto", vetoed );
 
-   bool const HLT_accept = m_triggerSelection.passHLTrigger( isRec,
-                                                             muons,
-                                                             eles,
-                                                             taus,
-                                                             gammas,
-                                                             jets,
-                                                             mets,
-                                                             EvtView
-                                                             );
+   bool const HLT_accept = m_triggerSelector.passHLTrigger( isRec,
+                                                            muons,
+                                                            eles,
+                                                            taus,
+                                                            gammas,
+                                                            jets,
+                                                            mets,
+                                                            EvtView
+                                                            );
    EvtView->setUserRecord< bool >( "HLT_accept", HLT_accept );
 
    bool const triggerAccept = HLT_accept and L1_accept;
@@ -1248,13 +1248,13 @@ bool EventSelector::passEventTopology( int const numMuo,
                                        int const numJet,
                                        int const numMET
                                        ) const {
-   return m_triggerSelection.passEventTopology( numMuo,
-                                                numEle,
-                                                numTau,
-                                                numGam,
-                                                numJet,
-                                                numMET
-                                                );
+   return m_triggerSelector.passEventTopology( numMuo,
+                                               numEle,
+                                               numTau,
+                                               numGam,
+                                               numJet,
+                                               numMET
+                                               );
 }
 
 

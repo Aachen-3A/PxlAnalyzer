@@ -11,7 +11,7 @@ Decision.
 #include "Tools/PXL/PXL.hh"
 #include "Tools/MConfig.hh"
 #include "ParticleMatcher.hh"
-#include "TriggerSelection.hh"
+#include "TriggerSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
@@ -52,7 +52,7 @@ public:
                            int const numMET
                            ) const;
    void adaptMuons( const pxl::EventView *EvtView );
-   TriggerSelection const &getTriggerSelection() const { return m_triggerSelection; }
+   TriggerSelector const &getTriggerSelector() const { return m_triggerSelector; }
 
 
 private:
@@ -283,7 +283,7 @@ private:
    ParticleMatcher m_matcher;
    DuplicateObjects m_duplicate;
 
-   TriggerSelection const m_triggerSelection;
+   TriggerSelector const m_triggerSelector;
 
    // Event variables:
    double m_rho25;

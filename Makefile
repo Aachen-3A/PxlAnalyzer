@@ -122,7 +122,7 @@ PXL := Tools/PXL/PXL.o
 # Objects for EventClass(Factory):
 SRCS := $(wildcard EventClassFactory/*.cc)
 TEC  := $(patsubst %.cc,%.o,$(SRCS))
-TEVENTCLASS        := EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/Resolutions.o Main/TriggerSelection.o Main/TriggerGroup.o $(TOOLS) $(PXL)
+TEVENTCLASS        := EventClassFactory/TEventClass.o EventClassFactory/TEventClassDict.o EventClassFactory/Resolutions.o Main/TriggerSelector.o Main/TriggerGroup.o $(TOOLS) $(PXL)
 TEVENTCLASSFACTORY := $(TEVENTCLASS) $(TEC)
 
 # Define rules:
