@@ -227,22 +227,44 @@ double TriggerSelector::getSumptMin( int const numMuo,
 }
 
 
-double TriggerSelector::getMETMin() const {
+double TriggerSelector::getMETMin( int const numMuo,
+                                   int const numEle,
+                                   int const numTau,
+                                   int const numGam,
+                                   int const numJet,
+                                   int const numMET,
+                                   bool const inclusive
+                                   ) const {
+   // Nothing to do here!
+   if( numMET == 0 ) return 0.0;
+
+   // If we have anything+MET+X, than MET can go down to the selection cut value.
+   if( inclusive ) return m_metPtMin;
+
    std::vector< double > mets;
+
+   // In general, the same event topology can pass different TriggerGroups and
+   // in general, you can have different MET cuts for different TriggerGroups
+   // (e.g. tau+MET trigger will be different from a hypothetical mu+MET
+   // trigger or a single MET trigger).
+   // If the topology passes a TriggerGroup but there is no MET in that group,
+   // the MET selection cut is stored.
+   // The smallest of these values is returned.
 
    TriggerGroupCollection::const_iterator group;
    for( group = m_triggerGroups.begin(); group != m_triggerGroups.end(); ++group ) {
-      TriggerGroup this_group = *group;
-      if( this_group.getNCuts( "MET" ) > 0 ) {
-         mets.push_back( this_group.getMETMin() );
+      TriggerGroup const &this_group = *group;
+
+      if( this_group.checkTopology( numMuo, numEle, numTau, numGam, numJet, numMET ) ) {
+         if( this_group.getNCuts( "MET" ) > 0 ) {
+            mets.push_back( this_group.getMETMin() );
+         } else {
+            mets.push_back( m_metPtMin );
+         }
       }
    }
 
-   mets.push_back( m_metPtMin );
-
    std::sort( mets.begin(), mets. end() );
-
-   if( not mets.size() > 0 ) return 0.0;
 
    // Return the smallest value.
    return mets.at( 0 );

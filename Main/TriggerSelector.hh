@@ -74,7 +74,14 @@ class TriggerSelector {
 
       // Compute the minimal possible value for MET with the given trigger groups and
       // pt cuts.
-      double getMETMin() const;
+      double getMETMin( int const numMuo,
+                        int const numEle,
+                        int const numTau,
+                        int const numGam,
+                        int const numJet,
+                        int const numMET,
+                        bool const inclusive
+                        ) const;
 
       std::string const &getTriggerPrefix() const { return m_triggerPrefix; }
       TriggerGroupCollection const &getTriggerGroups() const { return m_triggerGroups; }

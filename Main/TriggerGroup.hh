@@ -91,7 +91,7 @@ class TriggerGroup {
                           int const numMET,
                           bool const inclusive
                           ) const;
-      double getMETMin();
+      double getMETMin() const;
 
    private:
       // Each trigger group (in the config file) can define one oder more

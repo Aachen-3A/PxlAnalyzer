@@ -222,7 +222,7 @@ double TriggerGroup::getSumptMin( int const numMuo,
 }
 
 
-double TriggerGroup::getMETMin() {
+double TriggerGroup::getMETMin() const {
    TriggerCuts cuts;
    bool const cutsSet = getCuts( "MET", cuts );
 
