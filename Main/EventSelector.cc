@@ -1029,7 +1029,14 @@ bool EventSelector::passGam( pxl::Particle const *gam,
    if( gamPt < m_gam_pt_min ) return false;
 
    // eta
-   double const abseta = fabs( gam->getEta() );
+   // TODO: Always use SCeta for Rec (try block) as soon as all samples have
+   // been skimmed with the updated Skimmer.
+   double abseta = 0;
+   try {
+      abseta = isRec ? fabs( gam->findUserRecord< double >( "SCeta" ) ) : fabs( gam->getEta() );
+   } catch( std::runtime_error ) {
+      abseta = fabs( gam->getEta() );
+   }
 
    //out of endcap ?
    if( abseta > m_gam_eta_endcap_max ) return false;
