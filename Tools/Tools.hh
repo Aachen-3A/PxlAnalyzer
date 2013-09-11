@@ -114,9 +114,19 @@ namespace Tools {
       return result;
    }
 
-   // this is just a shortcut to the ROOT function
-   inline std::string ExpandPath( const std::string &path ) { return ( std::string )gSystem->ExpandPathName( path.c_str() ); }
-   inline std::string AbsolutePath( const std::string &path ) { Path AbsPath( ExpandPath( path ) ); return complete( AbsPath ).string(); }
+   // This is just a wrapper for the ROOT function.
+   // If you pass a 'std::string' it's implicitly converted to a
+   // 'boost::filesystem::path', so both are accepted as input here.
+   inline
+   std::string ExpandPath( Path const &path ) {
+      return std::string( gSystem->ExpandPathName( path.string().c_str() ) );
+   }
+
+   inline
+   std::string AbsolutePath( Path const &path ) {
+      Path const AbsPath( ExpandPath( path ) );
+      return complete( AbsPath ).string();
+   }
 }
 
 #endif /*MUSIC_TOOLS*/
