@@ -1114,8 +1114,34 @@ bool EventSelector::passGam( pxl::Particle const *gam,
       //do we care about gamma ID?
       if( m_gam_ID_use and not gam->findUserRecord< bool >( m_gam_ID_name ) ) return false;
    } else {
-      //we presume the track iso is roughly equivalent to the gen iso
-      double const maxIso = m_gam_barrel_TrkIso_offset + m_gam_barrel_TrkIso_slope * gamPt;
+      double maxIso = 0;
+      if( m_gam_Vgamma2011PhotonID_use ) {
+         // Take the track iso (without the term including rho, since this is
+         // only available in Rec) to be roughly equivalent to the gen iso
+         // calculated in MUSiCSkimmer::IsoGenSum. The gen iso only includes
+         // stable, changed particles.
+         if( barrel ){
+            maxIso = m_gam_barrel_TrkIso_offset
+                   + m_gam_barrel_TrkIso_slope * gamPt;
+         }
+         if( endcap ){
+            maxIso = m_gam_endcap_TrkIso_offset
+                   + m_gam_endcap_TrkIso_slope * gamPt;
+         }
+      }
+
+      if( m_gam_CutBasedPhotonID2012_use ) {
+         // Take the charged hadron isolation to be roughly equivalent to the gen
+         // iso calculated in MUSiCSkimmer::IsoGenSum. The gen iso only includes
+         // stable, changed particles. Ideally one should calculate the PF
+         // isolations for gen and compare these with the reco.
+         if( barrel ){
+            maxIso = m_gam_barrel_PFIsoChargedHadron_max;
+         }
+         if( endcap ){
+            maxIso = m_gam_endcap_PFIsoChargedHadron_max;
+         }
+      }
 
       if( gam->findUserRecord< double >( "GenIso" ) > maxIso ) return false;
    }
