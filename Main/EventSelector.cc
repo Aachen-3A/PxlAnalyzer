@@ -573,6 +573,8 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          throw;
       }
 
+      if( m_ele_rejectOutOfTime and ele->findUserRecord< unsigned int >( "recoFlag", 0 ) == 2 ) return false;
+
       //ele in barrel
       if( barrel ) {
          //delta eta between SC and track
@@ -621,8 +623,6 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          if( ele_innerLayerLostHits > m_ele_barrel_NInnerLayerLostHits_max ) return false;
 
          if( ele->findUserRecord< double >( "Dxy" ) > m_ele_barrel_dxy_max ) return false;
-
-         if( m_ele_rejectOutOfTime and ele->findUserRecord< unsigned int >( "recoFlag", 0 ) == 2 ) return false;
       }
 
       //ele in endcap
