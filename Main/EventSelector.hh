@@ -172,6 +172,7 @@ private:
    double const m_ele_barrel_HcalD1_slope;
    double const m_ele_barrel_HcalD1_rhoSlope;
    double const m_ele_barrel_NInnerLayerLostHits_max;
+   double const m_ele_barrel_dxy_max;
    double const m_ele_barrel_swissCross_max;
    double const m_ele_barrel_r19_max;
    double const m_ele_barrel_r29_max;
@@ -186,6 +187,7 @@ private:
    double const m_ele_endcap_HcalD1_slope;
    double const m_ele_endcap_HcalD1_rhoSlope;
    double const m_ele_endcap_NInnerLayerLostHits_max;
+   double const m_ele_endcap_dxy_max;
    double const m_ele_endcap_sigmaIetaIeta_max;
    // ID:
    bool const m_ele_ID_use;

@@ -51,6 +51,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_barrel_HcalD1_slope(            cfg.GetItem< double >( "Ele.Barrel.HcalD1.Slope" ) ),
    m_ele_barrel_HcalD1_rhoSlope(         cfg.GetItem< double >( "Ele.Barrel.HcalD1.RhoSlope" ) ),
    m_ele_barrel_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.Barrel.NInnerLayerLostHits.max" ) ),
+   m_ele_barrel_dxy_max(                 cfg.GetItem< double >( "Ele.Barrel.dxy.max" ) ),
    m_ele_barrel_swissCross_max(          cfg.GetItem< double >( "Ele.Barrel.SwissCross.max" ) ),
    m_ele_barrel_r19_max(                 cfg.GetItem< double >( "Ele.Barrel.R19.max" ) ),
    m_ele_barrel_r29_max(                 cfg.GetItem< double >( "Ele.Barrel.R29.max" ) ),
@@ -64,6 +65,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_endcap_HcalD1_slope(            cfg.GetItem< double >( "Ele.Endcap.HcalD1.Slope" ) ),
    m_ele_endcap_HcalD1_rhoSlope(         cfg.GetItem< double >( "Ele.Endcap.HcalD1.RhoSlope" ) ),
    m_ele_endcap_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.Endcap.NInnerLayerLostHits.max" ) ),
+   m_ele_endcap_dxy_max(                 cfg.GetItem< double >( "Ele.Endcap.dxy.max" ) ),
    m_ele_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.Endcap.SigmaIetaIeta.max" ) ),
    m_ele_ID_use(                         cfg.GetItem< bool   >( "Ele.ID.use" ) ),
    m_ele_ID_name(                        cfg.GetItem< string >( "Ele.ID.name" ) ),
@@ -618,6 +620,8 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
 
          if( ele_innerLayerLostHits > m_ele_barrel_NInnerLayerLostHits_max ) return false;
 
+         if( ele->findUserRecord< double >( "Dxy" ) > m_ele_barrel_dxy_max ) return false;
+
          if( m_ele_rejectOutOfTime and ele->findUserRecord< unsigned int >( "recoFlag", 0 ) == 2 ) return false;
       }
 
@@ -651,6 +655,8 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          if( !iso_ok ) return false;
 
          if( ele_innerLayerLostHits > m_ele_endcap_NInnerLayerLostHits_max ) return false;
+
+         if( ele->findUserRecord< double >( "Dxy" ) > m_ele_endcap_dxy_max ) return false;
       }
 
       //ID cuts
