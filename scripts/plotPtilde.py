@@ -37,6 +37,8 @@ def main():
     import ROOT
     global ROOT
 
+    ROOT.gStyle.SetOptStat(0)
+
     if options.dist.isdigit():
         options.dist_plain = options.dist
         if int( options.dist ) == 0:
