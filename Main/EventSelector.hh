@@ -396,6 +396,7 @@ private:
    // To access the JEC uncertainties from file.
    // New recipe:
    // https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources?rev=19#Code_example
+   std::string const m_jecType;
    JetCorrectorParameters const m_jecPara;
    JetCorrectionUncertainty m_jecUnc;
 
