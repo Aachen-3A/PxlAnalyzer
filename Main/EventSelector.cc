@@ -98,6 +98,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    // Taus:
    m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
+   m_tau_type(    cfg.GetItem< string >( "Tau.Type" ) ),
    m_tau_pt_min(  cfg.GetItem< double >( "Tau.pt.min" ) ),
    m_tau_eta_max( cfg.GetItem< double >( "Tau.Eta.max" ) ),
    //Get Tau-Discriminators and save them
@@ -1273,7 +1274,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
       // the event cleaning.
       if(      m_muo_use and name == "Muon"     ) muons.push_back( *part );
       else if( m_ele_use and name == "Ele"      ) eles.push_back( *part );
-      else if( m_tau_use and name == "Tau"      ) taus.push_back( *part );
+      else if( m_tau_use and name == m_tau_type ) taus.push_back( *part );
       else if( m_gam_use and name == "Gamma"    ) gammas.push_back( *part );
       else if( m_jet_use and name == m_jet_algo ) jets.push_back( *part );
       else if( m_met_use and name == m_met_type ) mets.push_back( *part );

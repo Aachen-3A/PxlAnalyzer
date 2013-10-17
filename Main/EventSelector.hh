@@ -220,9 +220,10 @@ private:
    double const      m_muo_globalChi2_max;
 
    // Taus:
-   const bool   m_tau_use;
-   const double m_tau_pt_min;
-   const double m_tau_eta_max;
+   bool const        m_tau_use;
+   std::string const m_tau_type;
+   double const      m_tau_pt_min;
+   double const      m_tau_eta_max;
    // Discriminators:
    const std::vector< std::string > m_tau_discriminators;
 
