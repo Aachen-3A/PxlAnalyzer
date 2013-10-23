@@ -51,6 +51,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_requireEcalDriven(              cfg.GetItem< bool   >( "Ele.RequireEcalDriven" ) ),
    m_ele_rejectOutOfTime(                cfg.GetItem< bool   >( "Ele.RejectOutOfTime" ) ),
    m_ele_EoP_max(                        cfg.GetItem< double >( "Ele.EoP.max" ) ),
+   m_ele_rho_label(                      cfg.GetItem< string >( "Ele.Rho.Label" ) ),
+   m_ele_rho( 0.0 ),
    m_ele_barrel_deltaEta_max(            cfg.GetItem< double >( "Ele.Barrel.DEta.max" ) ),
    m_ele_barrel_deltaPhi_max(            cfg.GetItem< double >( "Ele.Barrel.DPhi.max" ) ),
    m_ele_barrel_HoEM_max(                cfg.GetItem< double >( "Ele.Barrel.HoEM.max" ) ),
@@ -120,6 +122,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // CutBasedPhotonID2012:
    m_gam_CutBasedPhotonID2012_use( cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012.use" ) ),
    m_gam_EA( cfg ),
+   m_gam_rho_label( cfg.GetItem< string >( "Gamma.Rho.Label" ) ),
+   m_gam_rho( 0.0 ),
    // Barrel:
    m_gam_barrel_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Barrel.ElectronVeto.Require" ) ),
    m_gam_barrel_HoEm2012_max(              cfg.GetItem< double >( "Gamma.Barrel.HoEm2012.max" ) ),
@@ -605,7 +609,10 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          //Isolation
          bool iso_ok = true;
          //HCAL iso depth 1
-         double const maxIso = m_ele_barrel_HcalD1_offset + m_ele_barrel_HcalD1_slope * ele->getEt() + m_ele_barrel_HcalD1_rhoSlope * m_rho25;
+         double const maxIso = m_ele_barrel_HcalD1_offset +
+                               m_ele_barrel_HcalD1_slope * ele->getEt() +
+                               m_ele_barrel_HcalD1_rhoSlope * m_ele_rho;
+
          if( iso_ok && ele->findUserRecord< double >( "HCALIso03d1" ) > maxIso ) iso_ok = false;
          //Track iso
          if( iso_ok && ele_TrkIso > m_ele_barrel_trackiso_max ) iso_ok = false;
@@ -651,7 +658,9 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          //Isolation
          bool iso_ok = true;
          //HCAL iso depth 1
-         double maxIso = m_ele_endcap_HcalD1_offset + m_ele_endcap_HcalD1_rhoSlope * m_rho25;
+         double maxIso = m_ele_endcap_HcalD1_offset +
+                         m_ele_endcap_HcalD1_rhoSlope * m_ele_rho;
+
          //add a slope for high energy electrons
          if( ele->getEt() > 50.0 ) maxIso += m_ele_endcap_HcalD1_slope * ( ele->getEt() - 50.0 );
          //now test
@@ -964,9 +973,18 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
    // Correct the isolation variables accrding to:
    // https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012#Effective_Areas_for_rho_correcti
    // (r20: 2013-01-10)
-   double const chargedIsoCorr = max( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) - m_rho25 * chargedHadronEA, 0.0 );
-   double const neutralIsoCorr = max( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) - m_rho25 * neutralHadronEA, 0.0 );
-   double const photonIsoCorr  = max( gam->findUserRecord< double >( "PFIso03Photon" ) - m_rho25 * photonEA, 0.0 );
+   double const chargedIsoCorr = max( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) -
+                                      m_gam_rho * chargedHadronEA,
+                                      0.0
+                                      );
+   double const neutralIsoCorr = max( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) -
+                                      m_gam_rho * neutralHadronEA,
+                                      0.0
+                                      );
+   double const photonIsoCorr = max( gam->findUserRecord< double >( "PFIso03Photon" ) -
+                                     m_gam_rho * photonEA,
+                                     0.0
+                                     );
 
    if( chargedIsoCorr > PFIsoChargedHadron_max ) return false;
 
@@ -1271,6 +1289,11 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    // rho is only available in Rec.
    // It defaults to 0!
    if( isRec ) {
+      if( m_gam_CutBasedPhotonID2012_use )
+         m_gam_rho = EvtView->findUserRecord< double >( m_gam_rho_label );
+
+      m_ele_rho = EvtView->findUserRecord< double >( m_ele_rho_label );
+
       m_rho25 = EvtView->findUserRecord< double >( "rho25" );
       // TODO: Remove this block once corrected.
       // In the current version of the Skimmer, the wrong number value is stored

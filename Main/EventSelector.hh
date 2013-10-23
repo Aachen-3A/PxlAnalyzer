@@ -164,8 +164,10 @@ private:
    bool const   m_ele_invertIso;
    bool const   m_ele_requireEcalDriven;
    bool const   m_ele_rejectOutOfTime;
-   // Barrel:
    double const m_ele_EoP_max;
+   std::string const m_ele_rho_label;
+   double m_ele_rho;
+   // Barrel:
    double const m_ele_barrel_deltaEta_max;
    double const m_ele_barrel_deltaPhi_max;
    double const m_ele_barrel_HoEM_max;
@@ -237,6 +239,8 @@ private:
    // CutBasedPhotonID2012:
    bool const m_gam_CutBasedPhotonID2012_use;
    PhotonEffectiveArea const m_gam_EA;
+   std::string const m_gam_rho_label;
+   double m_gam_rho;
    // Barrel:
    bool const   m_gam_barrel_electronVeto_require;
    double const m_gam_barrel_HoEm2012_max;
