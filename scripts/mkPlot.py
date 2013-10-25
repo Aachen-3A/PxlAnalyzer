@@ -127,6 +127,18 @@ def plot( options, Class, canvas ):
                 roi = getROI( options, pad, xy_lines )
                 roi.Draw()
 
+                if options.sig:
+                    x_1 = roi.GetX1()
+                    x_2 = roi.GetX2()
+
+                    sig = r.TPaveLabel( x_1 - 0.07, 0.65, x_2 + 0.07, 0.70, 'not significant', 'brNDC' )
+                    sig.SetFillColor( r.kWhite )
+                    sig.SetLineColor( r.kRed )
+                    sig.SetTextColor( r.kRed )
+                    sig.SetTextFont( 102 )
+                    sig.SetTextSize( 1 )
+                    sig.Draw()
+
         canvas.cd()
         canvas.Update()
 
@@ -397,6 +409,8 @@ def commandLineParsing():
                        help = 'Set drawing option for y-Axis of the ratio plot (choices: ' + ', '.join( log_ratio_choices ) + '). [default = %default]' )
     parser.add_option( '-r', '--roi', action = 'store_true', default = False,
                        help = "Plot a label in the middle of the 'Region of Interest'. [default = %default]" )
+    parser.add_option(       '--sig', action = 'store_true', default = False,
+                       help = "Plot a label: 'not significant' in the middle of the 'Region of Interest'. Only True if the 'RoI' label is also plotted. [default = %default]" )
     parser.add_option(       '--pb', action = 'store_true', default = False,
                        help = "Do not convert Lumi from pb^-1 to fb^-1. [default = %default]" )
     parser.add_option(       '--ptildeNA', action = 'store_true', default = False,
