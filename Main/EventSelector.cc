@@ -122,7 +122,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_requireIsGlobal(            cfg.GetItem< bool   >( "Muon.RequireIsGlobal" ) ),
    m_muo_requireIsTracker(           cfg.GetItem< bool   >( "Muon.RequireIsTracker" ) ),
    m_muo_requireIsPF(                cfg.GetItem< bool   >( "Muon.RequireIsPF" ) ),
-   m_muo_dPtRelTrack_max(            cfg.GetItem< double >( "Muon.dPtRelTrack.max" ) ),
    m_muo_iso_type(                   cfg.GetItem< string >( "Muon.Iso.Type" ) ),
    m_muo_iso_max(                    cfg.GetItem< double >( "Muon.Iso.max" ) ),
    m_muo_NPixelHits_min(             cfg.GetItem< int    >( "Muon.NPixelHits.min" ) ),
@@ -132,6 +131,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_XYImpactParameter_max(      cfg.GetItem< double >( "Muon.XYImpactParameter.max" ) ),
    m_muo_ZImpactParameter_max(       cfg.GetItem< double >( "Muon.ZImpactParameter.max" ) ),
    m_muo_globalChi2_max(             cfg.GetItem< double >( "Muon.GlobalChi2.max" ) ),
+   m_muo_HighPtMuonID_use(           cfg.GetItem< bool   >( "Muon.HighPtMuonID.use" ) ),
+   m_muo_dPtRelTrack_max(            cfg.GetItem< double >( "Muon.dPtRelTrack.max" ) ),
 
    // Taus:
    m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
@@ -485,19 +486,14 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
 
    // Reconstructed muons cuts.
    // According to:
-   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId#Basline_muon_selections_for_2011
+   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#Tight_Muon_selection
+   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#New_Version_recommended
    if( isRec ) {
-      //relative pt error
-      if( muon->findUserRecord< double >( "dPtRelTrack_off" ) > m_muo_dPtRelTrack_max ) return false;
-
       //is the muon global? do we care?
       if( m_muo_requireIsGlobal && !muon->findUserRecord< bool >( "isGlobalMuon" ) ) return false;
 
       //is it a Tracker muon? do we care ?
       if( m_muo_requireIsTracker && !muon->findUserRecord< bool >( "isTrackerMuon" ) ) return false;
-
-      //is it a PF muon? do we care ?
-      if( m_muo_requireIsPF && !muon->findUserRecord< bool >( "isPFMuon" ) ) return false;
 
       // Muon isolation.
       double muon_iso;
@@ -530,15 +526,6 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
       //number of hits in the pixel detector
       if( muon->findUserRecord< int >( "VHitsPixel" ) < m_muo_NPixelHits_min ) return false;
 
-      // Mouns tracker track has a transverse impact parameter dxy < 2 mm w.r.t. the primary vertex.
-      if( muon->findUserRecord< double >( "dB" ) > m_muo_XYImpactParameter_max ) return false;
-
-      // Mouns tracker track has a longitudinal impact parameter dz < 5 mm w.r.t. the primary vertex.
-      if( muon->findUserRecord< double >( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
-
-      //normalised chisquare of the global track
-      if( muon->findUserRecord< double >( "NormChi2" ) > m_muo_globalChi2_max ) return false;
-
       // Muon segments in at least two muon stations. (TODO: Typo in Skimmer already corrected, so remove the try block.)
       try {
          if( muon->findUserRecord< int >( "NMachedStations" ) < m_muo_NMatchedStations_min ) return false;
@@ -551,6 +538,50 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
 
       //number of muon hits surviving in the global fit
       if( muon->findUserRecord< int >( "VHitsMuonSys" ) < m_muo_NMuonHits_min ) return false;
+
+      if( m_muo_HighPtMuonID_use && muonPt > 200. ) {
+         // Apply dedicated cuts for the High Pt Muon Selection.
+
+         //FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
+         try {
+            // Transverse impact parameter dxy of the muon's picky cocktail track w.r.t. the primary vertex.
+            if( muon->findUserRecord< double >( "DxyCocktail" ) > m_muo_XYImpactParameter_max ) return false;
+
+            // Longitudinal impact parameter dz of the muon's picky cocktail track  w.r.t. the primary vertex.
+            if( muon->findUserRecord< double >( "DzCocktail" ) > m_muo_ZImpactParameter_max ) return false;
+
+            // Relative pT error on the muon's picky cocktail track.
+            if( ( muon->findUserRecord< double >( "ptErrorCocktail" ) / muonPt ) > m_muo_dPtRelTrack_max ) return false;
+
+         } catch( std::runtime_error ) {
+            // Transverse impact parameter dxy of the muon's tracker track w.r.t. the primary vertex.
+            if( muon->findUserRecord< double >( "dB" ) > m_muo_XYImpactParameter_max ) return false;
+
+            // Longitudinal impact parameter dz of the muon's tracker track  w.r.t. the primary vertex.
+            if( muon->findUserRecord< double >( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
+         }
+
+      } else {
+         // Apply dedicated cuts for the Tight Muon Selection.
+
+         // Is it a PF muon? Do we care?
+         if( m_muo_requireIsPF && !muon->findUserRecord< bool >( "isPFMuon" ) ) return false;
+
+         // Normalised chisquare of the global track.
+         if( muon->findUserRecord< double >( "NormChi2" ) > m_muo_globalChi2_max ) return false;
+
+         // Transverse impact parameter dxy of the muon's BestTrack w.r.t. the primary vertex.
+         if( muon->findUserRecord< double >( "dB" ) > m_muo_XYImpactParameter_max ) return false;
+
+         //FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
+         try {
+            // Longitudinal impact parameter dz of the muon's BestTrack w.r.t. the primary vertex.
+            if( muon->findUserRecord< double >( "DzBT" ) > m_muo_ZImpactParameter_max ) return false;
+         } catch( std::runtime_error ) {
+            // Longitudinal impact parameter dz of the muon's tracker track w.r.t. the primary vertex.
+            if( muon->findUserRecord< double >( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
+         }
+      }
 
    //generator muon cuts
    } else {

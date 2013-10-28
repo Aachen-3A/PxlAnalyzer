@@ -268,7 +268,6 @@ private:
    bool const        m_muo_requireIsGlobal;
    bool const        m_muo_requireIsTracker;
    bool const        m_muo_requireIsPF;
-   double const      m_muo_dPtRelTrack_max;
    std::string const m_muo_iso_type;
    double const      m_muo_iso_max;
    int const         m_muo_NPixelHits_min;
@@ -278,6 +277,8 @@ private:
    double const      m_muo_XYImpactParameter_max;
    double const      m_muo_ZImpactParameter_max;
    double const      m_muo_globalChi2_max;
+   bool const        m_muo_HighPtMuonID_use;
+   double const      m_muo_dPtRelTrack_max;
 
    // Taus:
    bool const   m_tau_use;
