@@ -68,8 +68,12 @@ CMSSW_INC_PATHS += -I$(CMSSW_DCAP_BASE)/include
 CMSSW_INC_PATHS += -I$(CMSSW_BOOST_BASE)/include
 CMSSW_INC_PATHS += -I$(CMSSW_GSL_BASE)/include
 
-EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS)
-EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS)
+LHAPDF_LIB_PATH := -L$(MUSIC_BASE)/local/lib
+LHAPDF_INC_PATH := -I$(MUSIC_BASE)/local/include
+LHAPDF_LIB := -lLHAPDF
+
+EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH)
+EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LIB)
 
 CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
 LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
@@ -175,6 +179,7 @@ install-python: | $(BINDIR)
 	@ln -sf ../scripts/renameProcess.py $(BINDIR)/renameProcess
 	@ln -sf ../scripts/handleGridOutput.py $(BINDIR)/handleGridOutput
 	@ln -sf ../scripts/plotPileUp.py $(BINDIR)/plotPileUp
+	@ln -sf ../scripts/installLHAPDF.py $(BINDIR)/installLHAPDF
 	@ln -sf ../python/listFiles.py $(BINDIR)/listFiles
 	@ln -sf ../python/radio.py $(BINDIR)/radio
 
