@@ -16,6 +16,7 @@
 #include "Main/EventAdaptor.hh"
 #include "Main/EventSelector.hh"
 #include "Main/ParticleMatcher.hh"
+#include "Main/PDFTool.hh"
 #include "Main/ReWeighter.hh"
 #include "Main/RunLumiRanges.hh"
 #include "Main/SkipEvents.hh"
@@ -183,6 +184,16 @@ int main( int argc, char* argv[] ) {
    // Initialize the ParticleMatcher.
    ParticleMatcher Matcher( config, debug );
 
+   // When running on data, we do not want to initialize the PDFSets as this
+   // takes lots of resources.
+   pdf::PDFTool *pdfTool = 0;
+   if( not runOnData ) pdfTool = new pdf::PDFTool( config, debug );
+
+   // When running on data, there is no PDF information. Thus, we cannot use
+   // PDFTool to get the PDFInfo, so initialize it empty.
+   // (This way, we can keep the same structure for data and MC in filling etc.)
+   pdf::PDFInfo const pdfInfo = runOnData ? pdf::PDFInfo() : pdfTool->getPDFInfo();
+
    // configure processes:
    if( runCcControl ){
       cp2::RecControl *plots = new cp2::RecControl( config, PlotConfig, &Selector );
@@ -199,15 +210,33 @@ int main( int argc, char* argv[] ) {
       }
    }
    if (runCcEventClass){
-      CcEventClass *cc_event = new CcEventClass( config, XSections, 0, &Selector, DumpECHistos );
+      CcEventClass *cc_event = new CcEventClass( config,
+                                                 XSections,
+                                                 0,
+                                                 pdfInfo,
+                                                 &Selector,
+                                                 DumpECHistos
+                                                 );
       fork.setObject( cc_event );
       fork.setIndex( "CcEventClass", cc_event );
 
       if( not runOnData ){
-         CcEventClass *cc_event_up = new CcEventClass( config, XSections, +1, &Selector, DumpECHistos );
+         CcEventClass *cc_event_up = new CcEventClass( config,
+                                                       XSections,
+                                                       +1,
+                                                       pdfInfo,
+                                                       &Selector,
+                                                       DumpECHistos
+                                                       );
          fork.setObject( cc_event_up );
          fork.setIndex( "CcEventClass_JES_UP", cc_event_up );
-         CcEventClass *cc_event_down = new CcEventClass( config, XSections, -1, &Selector, DumpECHistos );
+         CcEventClass *cc_event_down = new CcEventClass( config,
+                                                         XSections,
+                                                         -1,
+                                                         pdfInfo,
+                                                         &Selector,
+                                                         DumpECHistos
+                                                         );
          fork.setObject( cc_event_down );
          fork.setIndex( "CcEventClass_JES_DOWN", cc_event_down );
       }
@@ -324,6 +353,9 @@ int main( int argc, char* argv[] ) {
             //for data we just need to run the selection
             Selector.performSelection(RecEvtView, 0);
          } else {
+            // Don't do this on data, haha!
+            pdfTool->setPDFWeights( event );
+
             reweighter.ReWeightEvent( event );
             pxl::EventView* GenEvtView = event.getObjectOwner().findObject<pxl::EventView>("Gen");
 
@@ -411,6 +443,10 @@ int main( int argc, char* argv[] ) {
       delete input;
       ++file_iter;
    }
+
+   // Don't need the PDFTool any more after file loop!
+   delete pdfTool;
+   pdfTool = 0;
 
    double dTime2 = pxl::getCpuTime();
    cout << "Analyzed " << e << " Events, skipped " << skipped << ", elapsed CPU time: " << dTime2-dTime1 << " ("<< double(e)/(dTime2-dTime1) <<" evts per sec)" << endl;

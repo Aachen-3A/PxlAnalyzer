@@ -279,7 +279,7 @@ endif
 
 EventClassFactory/TEventClassDict.cc: EventClassFactory/TEventClass.hh EventClassFactory/TEventClassLinkDef.h
 	@echo "Generating TEventClass dictionary ..."
-	@rootcint -v -f $@ -c $^
+	@rootcint -v2 -f $@ -c $^ # -v2: Display error and warning messages.
 	@sed -e "s@#include \"EventClassFactory/TEventClass.hh\"@#include \"TEventClass.hh\"@" EventClassFactory/TEventClassDict.h > EventClassFactory/TEventClassDict.tmp
 	@mv EventClassFactory/TEventClassDict.tmp EventClassFactory/TEventClassDict.h
 
