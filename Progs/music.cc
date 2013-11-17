@@ -65,7 +65,10 @@ int main( int argc, char* argv[] ) {
    // Please keep to that.
    int debug = 1;
 
-   bool useOldECMerger = false;
+   // When running on the local T2, the output of a classification job can
+   // become too large for the output SandBox. When switching off the JES
+   // merging, the output is effectively reduced by almost a factor of 2.
+   unsigned int ECMerger = 2;
    bool NoCcControl    = false;
    bool NoCcEventClass = false;
    bool DumpECHistos   = false;
@@ -79,7 +82,7 @@ int main( int argc, char* argv[] ) {
       >> parameter( 'x', "XSections", XSectionsFile, "Path to cross-sections file.", false )
       >> parameter( 'p', "PlotConfig", PlotConfigFile, "Path to the plot-config file.", false )
       >> parameter(      "debug", debug, "Set the debug level. 0 = WARNINGS, 1 = INFO, 2 = DEBUG, 3 = EVEN MORE DEBUG", false )
-      >> option(    'M', "oldECMerger", useOldECMerger, "Use ECMerger instead of ECMerger2." )
+      >> parameter( 'M', "ECMerger", ECMerger, "Which ECMerger to use: 0 = Don't merge JES files, 1 = use ECMerger, 2 = use ECMerger2.", false )
       >> option(         "NoCcEventClass", NoCcEventClass, "Do NOT create EventClass file. (Not allowed if --NoCcControl specified!)" )
       >> option(         "NoCcControl",  NoCcControl, "Do NOT make ControlPlots. (Not allowed if --NoCcEventClass specified!)" )
       >> option(         "DumpECHistos", DumpECHistos, "Write out all histograms into a separate file (slow!)." )
@@ -426,13 +429,12 @@ int main( int argc, char* argv[] ) {
    fork.endRun();
    fork.endJob();
 
-   if( runCcEventClass and not runOnData ) {
-      if( useOldECMerger ) {
+   if( ECMerger > 0 and runCcEventClass and not runOnData ) {
+      if( ECMerger == 1 ) {
          cout << "Calling ECMerger..." << endl;
          chdir( ".." );
          system( ( Tools::musicAbsPath( "bin/ECMerger" ) + " " + outputDirectory + "/EC_*.root -o " + outputDirectory +  "/EC_Final.root" ).c_str() );
-      }
-      else {
+      } else if( ECMerger == 2 ) {
          cout << "Calling ECMerger2 ..." << endl;
          chdir( ".." );
          system( ( Tools::musicAbsPath( "bin/ECMerger.py" ) + " --jes " + outputDirectory + "/EC_*.root -o " + outputDirectory + "/EC_Final.root" ).c_str() );
