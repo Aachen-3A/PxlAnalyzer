@@ -115,7 +115,7 @@ def plot( options, Class, canvas ):
 
             updateLegend( options, primitives, ratio=True )
 
-            tex = getWIP( ratio=True )
+            tex = getWIP( options, ratio=True )
             tex.Draw()
 
             sqrt_s = getSqrtS( options.sqrt_s )
@@ -208,7 +208,7 @@ def oldPlot( options, Class, canvas ):
         pl.SetFillColor( 0 )
         pl.Draw()
 
-    tex = getWIP()
+    tex = getWIP( options )
     tex.Draw()
 
     return canvas.Clone( canvas.GetName() )
@@ -411,6 +411,8 @@ def commandLineParsing():
                        help = "Plot a label in the middle of the 'Region of Interest'. [default = %default]" )
     parser.add_option(       '--sig', action = 'store_true', default = False,
                        help = "Plot a label: 'not significant' in the middle of the 'Region of Interest'. Only True if the 'RoI' label is also plotted. [default = %default]" )
+    parser.add_option(       '--wip', action = 'store_true', default = False,
+                       help = "Write a label 'CMS Preliminary' instead of 'Work in Progress'. Use this for plots approved by CMS. [default = %default]" )
     parser.add_option(       '--pb', action = 'store_true', default = False,
                        help = "Do not convert Lumi from pb^-1 to fb^-1. [default = %default]" )
     parser.add_option(       '--ptildeNA', action = 'store_true', default = False,
@@ -580,11 +582,16 @@ def commandLineParsing():
     return ( options, Class )
 
 
-def getWIP( ratio=False ):
-    if ratio:
-        tex = r.TLatex( 0.15, 0.86, 'CMS work in progress' )
+def getWIP( options, ratio=False ):
+    if options.wip:
+        wipText = 'CMS Preliminary'
     else:
-        tex = r.TLatex( 0.12, 0.88, 'CMS work in progress' )
+        wipText = 'Work in Progress'
+
+    if ratio:
+        tex = r.TLatex( 0.15, 0.86, wipText )
+    else:
+        tex = r.TLatex( 0.12, 0.88, wipText )
     tex.SetNDC()
     tex.SetLineWidth( 2 )
 
