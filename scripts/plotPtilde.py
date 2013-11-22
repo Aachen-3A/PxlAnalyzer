@@ -29,6 +29,8 @@ def main():
                        help='Set to make a square p-tilde plot. [default = %default]' )
     parser.add_option( '-V', '--vec-sumpt', action = 'store_true', default = False,
                        help = "Replace 'Sum p_t' by 'Sum |vec(p_t)|'. [default = %default]" )
+    parser.add_option( '-l', '--linY', action='store_true', default=False,
+                       help='Draw the y-axis with a linear scale. [default = %default]' )
     parser.add_option( '-g', '--grid', action='store_true', default=False,
                        help='Draw grid lines along the x and y-axis. [default = %default]' )
     parser.add_option(       '--no-interact', action = 'store_true', default = False,
@@ -106,7 +108,9 @@ def main():
         else:
             canvas = ROOT.TCanvas( 'c_p-tilde', 'canvas for p_tilde', 1000, 750 )
 
-        canvas.SetLogy( True )
+        if not options.linY:
+            canvas.SetLogy( True )
+
         canvas.cd()
 
         canvas.SetTopMargin( 0.06 )
@@ -129,6 +133,12 @@ def main():
         else:
             p_tilde.Draw( 'axis same' )
 
+        if options.linY:
+            p_tilde_stack.SetMinimum( -5 )
+            canvas.Update()
+            lines[0].SetY1( ROOT.gPad.GetUymin() )
+            lines[0].SetY2( ROOT.gPad.GetUymax() )
+
         y_min = lines[0].GetY1()
         y_max = lines[0].GetY2()
 
@@ -145,11 +155,17 @@ def main():
             if logprob > max_value:
                 break
             line.DrawLine( logprob, y_min, logprob, y_max )
-            text.DrawLatex( logprob - 0.15, 1.3 * y_max, '%s#sigma' % sigma )
+            if options.linY:
+                text.DrawLatex( logprob - 0.15, 1.01 * y_max, '%s#sigma' % sigma )
+            else:
+                text.DrawLatex( logprob - 0.15, 1.3 * y_max, '%s#sigma' % sigma )
 
         legend.Draw()
 
-        label = ROOT.TPaveLabel( 0.17, 0.18, 0.37, 0.32, options.dist, 'brNDC' )
+        if options.linY:
+            label = ROOT.TPaveLabel( 0.43, 0.78, 0.63, 0.92, options.dist, 'brNDC' )
+        else:
+            label = ROOT.TPaveLabel( 0.17, 0.18, 0.37, 0.32, options.dist, 'brNDC' )
         label.SetFillColor( 0 )
         label.SetTextSize( 0.5 )
         label.Draw()
@@ -283,7 +299,8 @@ def printHistos( options, p_tilde_hist, bg_p_tilde_hist, bg_p_tilde_hist_weight 
     else:
         canvas = ROOT.TCanvas( 'c_p-tilde', 'canvas for p_tilde', 1128, 780 )
 
-    canvas.SetLogy( True )
+    if not options.linY:
+        canvas.SetLogy( True )
     canvas.cd()
 
     legend = ROOT.TLegend( 0.54, 0.73, 0.79, 0.92 )
