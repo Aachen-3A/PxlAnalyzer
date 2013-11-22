@@ -31,6 +31,8 @@ def main():
                        help = "Replace 'Sum p_t' by 'Sum |vec(p_t)|'. [default = %default]" )
     parser.add_option( '-g', '--grid', action='store_true', default=False,
                        help='Draw grid lines along the x and y-axis. [default = %default]' )
+    parser.add_option(       '--no-interact', action = 'store_true', default = False,
+                       help = "Do not use the interactive mode. [default = %default]" )
 
     ( options, args ) = parser.parse_args()
     del parser
@@ -38,6 +40,8 @@ def main():
     sys.argv = []
     import ROOT
     global ROOT
+
+    ROOT.gROOT.SetBatch( options.no_interact )
 
     ROOT.gStyle.SetOptStat(0)
 
@@ -112,9 +116,9 @@ def main():
             p_tilde_overflow.Draw( 'e1 same' )
 
         if options.grid:
-            p_tilde_stack.Draw( 'axis axig same' )
+            p_tilde.Draw( 'axis axig same' )
         else:
-            p_tilde_stack.Draw( 'axis same' )
+            p_tilde.Draw( 'axis same' )
 
         y_min = lines[0].GetY1()
         y_max = lines[0].GetY2()
@@ -145,7 +149,8 @@ def main():
         canvas.RedrawAxis()
         canvas.Update()
 
-        code.interact()
+        if not options.no_interact:
+            code.interact()
 
         if options.pdf:
             canvas.SaveAs( options.pdf + '.pdf' )
