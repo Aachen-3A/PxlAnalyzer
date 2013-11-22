@@ -70,10 +70,11 @@ def main():
         for prim in c_p_tilde.GetListOfPrimitives():
             if prim.ClassName() == 'TLegend':
                 legend = prim
-                legend.SetX1NDC( 0.83 )
-                legend.SetY1NDC( 0.77 )
+                legend.SetX1NDC( 0.76 )
+                legend.SetY1NDC( 0.74 )
                 legend.SetX2NDC( 1.0 )
                 legend.SetY2NDC( 1.0 )
+                legend.SetTextSize( 0.04 )
             if prim.ClassName() == 'TLine':
                 lines.append( prim )
 
@@ -114,6 +115,9 @@ def main():
 
         if p_tilde_overflow:
             p_tilde_overflow.Draw( 'e1 same' )
+        else:
+            legend.SetX1NDC( 0.79 )
+            legend.SetY1NDC( 0.80 )
 
         if options.grid:
             p_tilde.Draw( 'axis axig same' )
