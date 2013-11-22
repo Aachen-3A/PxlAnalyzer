@@ -75,6 +75,11 @@ def main():
                 legend.SetX2NDC( 1.0 )
                 legend.SetY2NDC( 1.0 )
                 legend.SetTextSize( 0.04 )
+                for legEntry in legend.GetListOfPrimitives():
+                    if legEntry.GetLabel() == 'MC':
+                        legEntry.SetLabel( 'MC vs. MC' )
+                    if legEntry.GetLabel() == 'Data':
+                        legEntry.SetLabel( 'Data vs. MC' )
             if prim.ClassName() == 'TLine':
                 lines.append( prim )
 
