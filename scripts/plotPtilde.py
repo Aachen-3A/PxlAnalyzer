@@ -27,6 +27,8 @@ def main():
                        help='Set the actual results-pickle file or p-tilde rootfile (only used if INPUTPICKLE is not found). [default = %default]' )
     parser.add_option( '-s', '--square', action = 'store_true', default=False,
                        help='Set to make a square p-tilde plot. [default = %default]' )
+    parser.add_option( '-V', '--vec-sumpt', action = 'store_true', default = False,
+                       help = "Replace 'Sum p_t' by 'Sum |vec(p_t)|'. [default = %default]" )
     parser.add_option( '-g', '--grid', action='store_true', default=False,
                        help='Draw grid lines along the x and y-axis. [default = %default]' )
 
@@ -42,7 +44,10 @@ def main():
     if options.dist.isdigit():
         options.dist_plain = options.dist
         if int( options.dist ) == 0:
-            options.dist = '#scale[1.3]{#Sigma} p_{T}'
+            if options.vec_sumpt:
+                options.dist = '#scale[1.3]{#Sigma} |#vec{p}_{T}|'
+            else:
+                options.dist = '#scale[1.3]{#Sigma} p_{T}'
         elif int( options.dist ) == 1:
             options.dist = 'M_{inv}^{(T)}'
         elif int( options.dist ) == 2:
