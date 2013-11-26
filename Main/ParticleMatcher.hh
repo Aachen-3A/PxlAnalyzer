@@ -33,6 +33,7 @@ class ParticleMatcher {
       // Match method
       void matchObjects( pxl::EventView const *GenEvtView,
                          pxl::EventView const *RecEvtView,
+                         std::string const defaultLinkName = "priv-gen-rec",
                          bool const CustomMatch = false
                          ) const;
       void makeMatching(std::vector<pxl::Particle*>& gen_particles,

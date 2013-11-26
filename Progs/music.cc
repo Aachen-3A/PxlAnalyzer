@@ -132,6 +132,7 @@ int main( int argc, char* argv[] ) {
    string RunConfigFile;
 
    bool const muoCocktailUse = config.GetItem< bool >( "Muon.UseCocktail" );
+   bool const jetResCorrUse = config.GetItem< bool >( "Jet.Resolutions.Corr.use" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
@@ -325,6 +326,23 @@ int main( int argc, char* argv[] ) {
 
             Selector.preSynchronizeGenRec( GenEvtView, RecEvtView );
 
+            // (Pre)Matching must be done before selection, because the matches
+            // will be used to adapt the event. We only need the jets matched,
+            // so no "custom" matching.
+            // We use a different link name here, so the "normal" matching after
+            // all selection cuts can go ahead without changes.
+            // This link name is only used for the matching before cuts and to
+            // adapt the events (jet/met smearing).
+            std::string const linkName = "pre-priv-gen-rec";
+            Matcher.matchObjects( GenEvtView, RecEvtView, linkName, false );
+
+            if( jetResCorrUse ) {
+               // Change event properties according to official recommendations.
+               // (Also used for JES UP/DOWN!)
+               // Don't do this on data!
+               Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
+            }
+
             // create Copys of the original Event View and modify the JES
             pxl::EventView *GenEvtView_JES_UP = event.create< pxl::EventView >( GenEvtView );
             event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
@@ -339,8 +357,8 @@ int main( int argc, char* argv[] ) {
             Selector.performSelection(GenEvtView, 0);
             Selector.performSelection(RecEvtView, 0);
 
-            // Redo matching.
-            Matcher.matchObjects( GenEvtView, RecEvtView, true );
+            // Redo the matching, because the selection can remove particles.
+            Matcher.matchObjects( GenEvtView, RecEvtView, "priv-gen-rec", true );
 
             //synchronize some user records
             Selector.synchronizeGenRec( GenEvtView, RecEvtView );

@@ -26,6 +26,7 @@ ParticleMatcher::ParticleMatcher( Tools::MConfig const &cfg,
 
 void ParticleMatcher::matchObjects( EventView const *GenEvtView,
                                     EventView const *RecEvtView,
+                                    std::string const defaultLinkName,
                                     bool const customMatch
                                     ) const {
    // containers to keep the filtered gen/rec particles
@@ -43,7 +44,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       ParticleFilter::apply( RecEvtView->getObjectOwner(), rec_particles, critRec );
       ParticleFilter::apply( GenEvtView->getObjectOwner(), gen_particles, critGen );
 
-      makeMatching( gen_particles, rec_particles, "Match", "hctaM", "priv-gen-rec" );
+      makeMatching( gen_particles, rec_particles, "Match", "hctaM", defaultLinkName );
    }
 
    // jet-subtype-matching:
