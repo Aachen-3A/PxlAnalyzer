@@ -13,6 +13,7 @@
 
 #include <boost/filesystem/path.hpp>
 
+#include "Main/EventAdaptor.hh"
 #include "Main/EventSelector.hh"
 #include "Main/ParticleMatcher.hh"
 #include "Main/ReWeighter.hh"
@@ -130,6 +131,7 @@ int main( int argc, char* argv[] ) {
    //
    string RunConfigFile;
 
+   bool const muoCocktailUse = config.GetItem< bool >( "Muon.UseCocktail" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
@@ -170,6 +172,9 @@ int main( int argc, char* argv[] ) {
 
    //initialize the EventSelector
    EventSelector Selector( config );
+
+   // Initialize the EventAdaptor.
+   EventAdaptor Adaptor( config, debug );
 
    // Initialize the ParticleMatcher.
    ParticleMatcher Matcher( config );
@@ -305,10 +310,11 @@ int main( int argc, char* argv[] ) {
 
          pxl::EventView *RecEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Rec" );
 
-         // Switch to cocktail muons.
-         // (Use the four momentum from TeV-optimised reconstructors.)
-         //
-         Selector.adaptMuons( RecEvtView );
+         if( muoCocktailUse ) {
+            // Switch to cocktail muons (use the four momentum from
+            // TeV-optimised reconstructors.)
+            Adaptor.applyCocktailMuons( RecEvtView );
+         }
 
          if( runOnData ){
             //for data we just need to run the selection

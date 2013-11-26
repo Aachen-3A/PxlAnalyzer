@@ -41,7 +41,6 @@ public:
                            int const numJet,
                            int const numMET
                            ) const;
-   void adaptMuons( const pxl::EventView *EvtView );
    TriggerSelector const &getTriggerSelector() const { return m_triggerSelector; }
 
 
@@ -201,7 +200,6 @@ private:
    double const      m_muo_pt_min;
    double const      m_muo_eta_max;
    bool const        m_muo_invertIso;
-   bool const        m_muo_useCocktail;
    bool const        m_muo_requireIsGlobal;
    bool const        m_muo_requireIsTracker;
    double const      m_muo_dPtRelTrack_max;

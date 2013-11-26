@@ -83,7 +83,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_pt_min(                     cfg.GetItem< double >( "Muon.pt.min" ) ),
    m_muo_eta_max(                    cfg.GetItem< double >( "Muon.eta.max" ) ),
    m_muo_invertIso(                  cfg.GetItem< bool   >( "Muon.InvertIsolation" ) ),
-   m_muo_useCocktail(                cfg.GetItem< bool   >( "Muon.UseCocktail" ) ),
    m_muo_requireIsGlobal(            cfg.GetItem< bool   >( "Muon.RequireIsGlobal" ) ),
    m_muo_requireIsTracker(           cfg.GetItem< bool   >( "Muon.RequireIsTracker" ) ),
    m_muo_dPtRelTrack_max(            cfg.GetItem< double >( "Muon.dPtRelTrack.max" ) ),
@@ -1484,38 +1483,3 @@ bool EventSelector::passEventTopology( int const numMuo,
    ////this record steers if event is globally accepted by event topology criteria
    //cout << "      Topo accept?   : " << EvtView->findUserRecord<bool>("Topo_accept", false) << endl;
 //}
-
-// This function changes the Muon quantities from "normal" to cocktail".
-// (Only doing this for the four momentum of the muon atm. To be extended in the
-// future.)
-//
-void EventSelector::adaptMuons( const EventView* EvtView ) {
-   // Do we even want to use cocktail muons?
-   //
-   if( ! m_muo_useCocktail ) return;
-
-   // Get all particles in this event.
-   //
-   vector< pxl::Particle* > allparticles;
-   EvtView->getObjectsOfType< pxl::Particle >( allparticles );
-   pxl::sortParticles( allparticles );
-
-   for( vector< pxl::Particle* >::iterator part = allparticles.begin(); part != allparticles.end(); ++part ) {
-      pxl::Particle* thisPart = ( *part );
-      // We are only interested in muons here.
-      //
-      if( thisPart->getName() == "Muon" ) {
-         if( thisPart->findUserRecord< bool >( "validCocktail" ) ) {
-            double m  = thisPart->getMass();
-
-            double pxCocktail = thisPart->findUserRecord< double >( "pxCocktail" );
-            double pyCocktail = thisPart->findUserRecord< double >( "pyCocktail" );
-            double pzCocktail = thisPart->findUserRecord< double >( "pzCocktail" );
-
-            double E = sqrt( m * m + pxCocktail * pxCocktail + pyCocktail * pyCocktail + pzCocktail * pzCocktail );
-
-            thisPart->setP4( pxCocktail, pyCocktail, pzCocktail, E );
-         }
-      }
-   }
-}
