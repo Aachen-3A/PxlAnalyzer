@@ -59,20 +59,38 @@ private:
    //ATTENTION: changes particle vector!
    void applyCutsOnMuon( pxl::EventView *EvtView, std::vector< pxl::Particle* > &muons, const bool& isRec );
    bool passMuon( pxl::Particle *muon, const bool& isRec );
-   void applyCutsOnEle( pxl::EventView *EvtView, std::vector< pxl::Particle* > &eles, const bool &isRec );
-   bool passEle( pxl::Particle *ele, const bool& isRec );
+
+   void applyCutsOnEle( std::vector< pxl::Particle* > &eles,
+                        double const eleRho,
+                        bool const isRec
+                        ) const;
+   bool passEle( pxl::Particle const *ele,
+                 double const eleRho,
+                 bool const isRec
+                 ) const;
+
    void applyCutsOnTau( pxl::EventView *EvtView, std::vector< pxl::Particle* > &taus, const bool& isRec );
    bool passTau( pxl::Particle *tau, const bool& isRec );
-   bool passGamma( pxl::Particle *gam, const bool& isRec );
+
+   void applyCutsOnGam( std::vector< pxl::Particle* > &gammas,
+                        double const gamRho,
+                        bool const isRec
+                        ) const;
+   bool passGam( pxl::Particle const *gam,
+                 double const gamRho,
+                 bool const isRec
+                 ) const;
    bool passVgamma2011PhotonID( pxl::Particle const *gam,
+                                double const gamRho,
                                 bool const barrel,
                                 bool const endcap
                                 ) const;
    bool passCutBasedPhotonID2012( pxl::Particle const *gam,
+                                  double const gamRho,
                                   bool const barrel,
                                   bool const endcap
                                   ) const;
-   void applyCutsOnGamma( pxl::EventView *EvtView, std::vector< pxl::Particle* > &gammas, const bool &isRec );
+
    void applyCutsOnJet( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
    bool passJet( pxl::Particle *jet, const bool &isRec ) const;
 
@@ -167,7 +185,6 @@ private:
    bool const   m_ele_rejectOutOfTime;
    double const m_ele_EoP_max;
    std::string const m_ele_rho_label;
-   double m_ele_rho;
    // Barrel:
    double const m_ele_barrel_deltaEta_max;
    double const m_ele_barrel_deltaPhi_max;
@@ -241,7 +258,6 @@ private:
    bool const m_gam_CutBasedPhotonID2012_use;
    PhotonEffectiveArea const m_gam_EA;
    std::string const m_gam_rho_label;
-   double m_gam_rho;
    // Barrel:
    bool const   m_gam_barrel_electronVeto_require;
    double const m_gam_barrel_HoEm2012_max;
@@ -260,7 +276,7 @@ private:
    double const m_gam_endcap_PFIsoPhoton_slope;
 
    // Vgamma2011PhotonID:
-   bool const   m_gam_Vgamma2012PhotonID_use;
+   bool const   m_gam_Vgamma2011PhotonID_use;
    bool const   m_gam_useSeedVeto;
    double const m_gam_HoEm_max;
    // Barrel:
@@ -344,9 +360,5 @@ private:
    EventCleaning const m_eventCleaning;
 
    TriggerSelector const m_triggerSelector;
-
-   // Event variables:
-   double m_rho;
-   double m_rho25;
 };
 #endif

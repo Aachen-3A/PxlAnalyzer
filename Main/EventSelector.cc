@@ -52,7 +52,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_rejectOutOfTime(                cfg.GetItem< bool   >( "Ele.RejectOutOfTime" ) ),
    m_ele_EoP_max(                        cfg.GetItem< double >( "Ele.EoP.max" ) ),
    m_ele_rho_label(                      cfg.GetItem< string >( "Ele.Rho.Label" ) ),
-   m_ele_rho( 0.0 ),
    m_ele_barrel_deltaEta_max(            cfg.GetItem< double >( "Ele.Barrel.DEta.max" ) ),
    m_ele_barrel_deltaPhi_max(            cfg.GetItem< double >( "Ele.Barrel.DPhi.max" ) ),
    m_ele_barrel_HoEM_max(                cfg.GetItem< double >( "Ele.Barrel.HoEM.max" ) ),
@@ -123,7 +122,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gam_CutBasedPhotonID2012_use( cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012.use" ) ),
    m_gam_EA( cfg ),
    m_gam_rho_label( cfg.GetItem< string >( "Gamma.Rho.Label" ) ),
-   m_gam_rho( 0.0 ),
    // Barrel:
    m_gam_barrel_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Barrel.ElectronVeto.Require" ) ),
    m_gam_barrel_HoEm2012_max(              cfg.GetItem< double >( "Gamma.Barrel.HoEm2012.max" ) ),
@@ -142,7 +140,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gam_endcap_PFIsoPhoton_slope(         cfg.GetItem< double >( "Gamma.Endcap.PFIsoPhoton.Slope" ) ),
 
    // Vgamma2011PhotonID:
-   m_gam_Vgamma2012PhotonID_use(   cfg.GetItem< bool   >( "Gamma.Vgamma2011PhotonID.use" ) ),
+   m_gam_Vgamma2011PhotonID_use(   cfg.GetItem< bool   >( "Gamma.Vgamma2011PhotonID.use" ) ),
    m_gam_useSeedVeto(              cfg.GetItem< bool   >( "Gamma.UseSeedVeto" ) ),
    m_gam_HoEm_max(                 cfg.GetItem< double >( "Gamma.HoEm.max" ) ),
    // Barrel:
@@ -221,12 +219,9 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_GenMETName( m_gen_rec_map.get( "MET" ).GenName ),
 
    m_eventCleaning( cfg ),
-   m_triggerSelector( cfg ),
-
-   m_rho( 0.0 ),
-   m_rho25( 0.0 )
+   m_triggerSelector( cfg )
 {
-   if( not m_gam_Vgamma2012PhotonID_use xor m_gam_CutBasedPhotonID2012_use ) {
+   if( not m_gam_Vgamma2011PhotonID_use xor m_gam_CutBasedPhotonID2012_use ) {
       stringstream error;
       error << "In config file: ";
       error << "'" << cfg.GetConfigFilePath() << "': ";
@@ -511,11 +506,14 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 //ATTENTION: ele-vector is changed!
-void EventSelector::applyCutsOnEle( pxl::EventView* EvtView, std::vector< pxl::Particle* > &eles, const bool &isRec ) {
+void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
+                                    double const eleRho,
+                                    bool const isRec
+                                    ) const {
    vector<pxl::Particle*> elesAfterCut;
 
    for( vector< Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ) {
-      if( passEle( *ele, isRec ) ) {
+      if( passEle( *ele, eleRho, isRec ) ) {
          elesAfterCut.push_back( *ele );
       } else {
          (*ele)->owner()->remove(*ele);
@@ -530,9 +528,11 @@ void EventSelector::applyCutsOnEle( pxl::EventView* EvtView, std::vector< pxl::P
 // This function returns true, if the given electron passes the HEEP Selection.
 // See:
 // https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
-bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
+bool EventSelector::passEle( pxl::Particle const *ele,
+                             double const eleRho,
+                             bool const isRec
+                             ) const {
    double const elePt = ele->getPt();
-
    // Updated transverse energy in Skimmer for HEEP selection (Supercluster
    // based transverse energy).
    // TODO: Remove try-block once everything is reskimmed.
@@ -628,7 +628,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          //HCAL iso depth 1
          double const maxIso = m_ele_barrel_HcalD1_offset +
                                m_ele_barrel_HcalD1_slope * eleEt +
-                               m_ele_barrel_HcalD1_rhoSlope * m_ele_rho;
+                               m_ele_barrel_HcalD1_rhoSlope * eleRho;
 
          if( iso_ok and ele_CaloIso > maxIso ) iso_ok = false;
          //Track iso
@@ -676,7 +676,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          bool iso_ok = true;
          //HCAL iso depth 1
          double maxIso = m_ele_endcap_HcalD1_offset +
-                         m_ele_endcap_HcalD1_rhoSlope * m_ele_rho;
+                         m_ele_endcap_HcalD1_rhoSlope * eleRho;
 
          //add a slope for high energy electrons
          if( eleEt > 50.0 ) maxIso += m_ele_endcap_HcalD1_slope * ( eleEt - 50.0 );
@@ -769,11 +769,14 @@ bool EventSelector::passTau( pxl::Particle *tau, const bool &isRec ) {
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 //ATTENTION: gamma-vector is changed!
-void EventSelector::applyCutsOnGamma( pxl::EventView* EvtView, std::vector<pxl::Particle* > &gammas, const bool &isRec ) {
+void EventSelector::applyCutsOnGam( std::vector< pxl::Particle* > &gammas,
+                                    double const gamRho,
+                                    bool const isRec
+                                    ) const {
    vector< pxl::Particle* > gammasAfterCut;
 
    for( vector< Particle* >::const_iterator gamma = gammas.begin(); gamma != gammas.end(); ++gamma ) {
-      if( passGamma( *gamma, isRec ) ) {
+      if( passGam( *gamma, gamRho, isRec ) ) {
          gammasAfterCut.push_back( *gamma );
       } else {
          (*gamma)->owner()->remove( *gamma );
@@ -785,7 +788,10 @@ void EventSelector::applyCutsOnGamma( pxl::EventView* EvtView, std::vector<pxl::
 }
 
 
-bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
+bool EventSelector::passGam( pxl::Particle const *gam,
+                             double const gamRho,
+                             bool const isRec
+                             ) const {
    double const gamPt = gam->getPt();
    //pt cut
    if( gamPt < m_gam_pt_min ) return false;
@@ -836,13 +842,13 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
          if( gam_sigma_ieta_ieta > m_gam_endcap_sigmaIetaIeta_max ) return false;
       }
 
-      if( m_gam_Vgamma2012PhotonID_use ) {
-         bool const passed = passVgamma2011PhotonID( gam, barrel, endcap );
+      if( m_gam_Vgamma2011PhotonID_use ) {
+         bool const passed = passVgamma2011PhotonID( gam, gamRho, barrel, endcap );
          if( not passed ) return false;
       }
 
       if( m_gam_CutBasedPhotonID2012_use ) {
-         bool const passed = passCutBasedPhotonID2012( gam, barrel, endcap );
+         bool const passed = passCutBasedPhotonID2012( gam, gamRho, barrel, endcap );
          if( not passed ) return false;
       }
 
@@ -888,6 +894,7 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
 
 
 bool EventSelector::passVgamma2011PhotonID( pxl::Particle const *gam,
+                                            double const gamRho,
                                             bool const barrel,
                                             bool const endcap
                                             ) const {
@@ -900,28 +907,28 @@ bool EventSelector::passVgamma2011PhotonID( pxl::Particle const *gam,
 
    double maxTrackIso = m_gam_barrel_TrkIso_offset
                       + m_gam_barrel_TrkIso_slope * gamPt
-                      + m_gam_barrel_TrkIso_rhoSlope * m_rho25;
+                      + m_gam_barrel_TrkIso_rhoSlope * gamRho;
 
    double maxEcalIso  = m_gam_barrel_EcalIso_offset
                       + m_gam_barrel_EcalIso_slope * gamPt
-                      + m_gam_barrel_EcalIso_rhoSlope * m_rho25;
+                      + m_gam_barrel_EcalIso_rhoSlope * gamRho;
 
    double maxHcalIso  = m_gam_barrel_HcalIso_offset
                       + m_gam_barrel_HcalIso_slope * gamPt
-                      + m_gam_barrel_HcalIso_rhoSlope * m_rho25;
+                      + m_gam_barrel_HcalIso_rhoSlope * gamRho;
 
    if( endcap ) {
       maxTrackIso = m_gam_endcap_TrkIso_offset
                   + m_gam_endcap_TrkIso_slope * gamPt
-                  + m_gam_endcap_TrkIso_rhoSlope * m_rho25;
+                  + m_gam_endcap_TrkIso_rhoSlope * gamRho;
 
       maxEcalIso  = m_gam_endcap_EcalIso_offset
                   + m_gam_endcap_EcalIso_slope * gamPt
-                  + m_gam_endcap_EcalIso_rhoSlope * m_rho25;
+                  + m_gam_endcap_EcalIso_rhoSlope * gamRho;
 
       maxHcalIso  = m_gam_endcap_HcalIso_offset
                   + m_gam_endcap_HcalIso_slope * gamPt
-                  + m_gam_endcap_HcalIso_rhoSlope * m_rho25;
+                  + m_gam_endcap_HcalIso_rhoSlope * gamRho;
    }
 
    // New (uniform) naming convention in Skimmer.
@@ -947,6 +954,7 @@ bool EventSelector::passVgamma2011PhotonID( pxl::Particle const *gam,
 
 
 bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
+                                              double const gamRho,
                                               bool const barrel,
                                               bool const endcap
                                               ) const {
@@ -991,15 +999,15 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
    // https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012#Effective_Areas_for_rho_correcti
    // (r20: 2013-01-10)
    double const chargedIsoCorr = max( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) -
-                                      m_gam_rho * chargedHadronEA,
+                                      gamRho * chargedHadronEA,
                                       0.0
                                       );
    double const neutralIsoCorr = max( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) -
-                                      m_gam_rho * neutralHadronEA,
+                                      gamRho * neutralHadronEA,
                                       0.0
                                       );
    double const photonIsoCorr = max( gam->findUserRecord< double >( "PFIso03Photon" ) -
-                                     m_gam_rho * photonEA,
+                                     gamRho * photonEA,
                                      0.0
                                      );
 
@@ -1312,26 +1320,43 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    const bool L1_accept = m_triggerSelector.passL1Trigger( EvtView, isRec );
    EvtView->setUserRecord< bool >( "L1_accept", L1_accept );
 
+   double eleRho = 0.0;
+   double gamRho = 0.0;
    // rho is only available in Rec.
-   // It defaults to 0!
    if( isRec ) {
-      if( m_gam_CutBasedPhotonID2012_use )
-         m_gam_rho = EvtView->findUserRecord< double >( m_gam_rho_label );
+      eleRho = EvtView->findUserRecord< double >( m_ele_rho_label );
 
-      m_ele_rho = EvtView->findUserRecord< double >( m_ele_rho_label );
-
-      m_rho25 = EvtView->findUserRecord< double >( "rho25" );
+      double rho25 = EvtView->findUserRecord< double >( "rho25" );
       // TODO: Remove this block once corrected.
       // In the current version of the Skimmer, the wrong number value is stored
       // in the rho25 variable. Until the correct values are available, the
       // "wrong" one will be corrected.
+      // In future, the following variables will be available:
+      // "rho": rho value with eta_max = 5.0
+      // "rho25": rho value with eta_max = 2.5
+      // "rho44": rho value with eta_max = 4.4
       try {
-         m_rho = EvtView->findUserRecord< double >( "rho" );
+         EvtView->findUserRecord< double >( "rho" );
       } catch( std::runtime_error &e ) {
          // The correction factor is purley empirical and extracted from a very
          // limited set of MC (DY) and SingleMu events. This is only a temporary
          // solution!
-         m_rho25 *= 0.9;
+         rho25 *= 0.9;
+      }
+
+      // Always use rho25 for Vgamma2011PhotonID!
+      if( m_gam_Vgamma2011PhotonID_use )
+         gamRho = rho25;
+      else {
+         // The recommended 'rho' for CutBasedPhotonID2012 is
+         // rho(eta_max = 4.4). But in an earlier version of the Skimmer, it was
+         // saved in the variable 'rho' rather than 'rho44'. So make sure
+         // rho(eta_max = 4.4) is always used here.
+         try {
+            gamRho = EvtView->findUserRecord< double >( m_gam_rho_label );
+         } catch( std::runtime_error ) {
+            gamRho = EvtView->findUserRecord< double >( "rho" );
+         }
       }
    }
 
@@ -1388,9 +1413,9 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    EvtView->getObjectsOfType< pxl::Vertex >( vertices );
 
    applyCutsOnMuon( EvtView, muons, isRec );
-   applyCutsOnEle( EvtView, eles, isRec );
+   applyCutsOnEle( eles, eleRho, isRec );
    applyCutsOnTau( EvtView, taus, isRec );
-   applyCutsOnGamma( EvtView, gammas, isRec );
+   applyCutsOnGam( gammas, gamRho, isRec );
    //first vary JES and then check corrected jets to pass cuts
    varyJES(jets, JES, isRec);
    applyCutsOnJet( EvtView, jets, isRec );     //distribution into jets and b-jets
