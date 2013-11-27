@@ -583,10 +583,14 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
 
       if( ele->findUserRecord< double >( "EoP" ) > m_ele_EoP_max ) return false;
 
+      // These variables are checked in the barrel as well as in the endcaps.
       double const ele_absDeltaEta = fabs( ele->findUserRecord< double >( "DEtaSCVtx" ) );
       double const ele_absDeltaPhi = fabs( ele->findUserRecord< double >( "DPhiSCVtx" ) );
       double const ele_HoEM        = ele->findUserRecord< double >( "HoEm" );
       double const ele_TrkIso      = ele->findUserRecord< double >( "TrkIso03" );
+      double const ele_ECALIso     = ele->findUserRecord< double >( "ECALIso03" );
+      double const ele_HCALIso     = ele->findUserRecord< double >( "HCALIso03d1" );
+      double const ele_CaloIso     = ele_ECALIso + ele_HCALIso;
 
       // TODO: Remove this construct when FA11 or older samples are not used anymore.
       // (Typo in skimmer already fixed. UserRecord: NinnerLayerLostHits.)
@@ -626,7 +630,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
                                m_ele_barrel_HcalD1_slope * eleEt +
                                m_ele_barrel_HcalD1_rhoSlope * m_ele_rho;
 
-         if( iso_ok && ele->findUserRecord< double >( "HCALIso03d1" ) > maxIso ) iso_ok = false;
+         if( iso_ok and ele_CaloIso > maxIso ) iso_ok = false;
          //Track iso
          if( iso_ok && ele_TrkIso > m_ele_barrel_trackiso_max ) iso_ok = false;
 
@@ -677,7 +681,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          //add a slope for high energy electrons
          if( eleEt > 50.0 ) maxIso += m_ele_endcap_HcalD1_slope * ( eleEt - 50.0 );
          //now test
-         if( iso_ok && ele->findUserRecord< double >( "HCALIso03d1" ) > maxIso ) iso_ok = false;
+         if( iso_ok and ele_CaloIso > maxIso ) iso_ok = false;
          //Track iso
          if( iso_ok and ele_TrkIso > m_ele_endcap_trackiso_max ) iso_ok = false;
          //turn around for iso-inversion
