@@ -527,11 +527,23 @@ void EventSelector::applyCutsOnEle( pxl::EventView* EvtView, std::vector< pxl::P
 }
 
 
-
+// This function returns true, if the given electron passes the HEEP Selection.
+// See:
+// https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
 bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
    double const elePt = ele->getPt();
 
-   //pt cut
+   // Updated transverse energy in Skimmer for HEEP selection (Supercluster
+   // based transverse energy).
+   // TODO: Remove try-block once everything is reskimmed.
+   double eleEt = ele->getEt();
+   try {
+      eleEt = ele->findUserRecord< double >( "SCEt" );
+   } catch( std::runtime_error ) {
+      // Do nothing, simply use the Et from the pxl::Particle.
+   }
+
+   // Transverse energy cut.
    if( elePt < m_ele_pt_min ) return false;
 
    // eta
@@ -556,6 +568,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
       warning << "electron should be in barrel or endcap. But:" << endl;
       warning << "eta = " << abseta << endl;
       warning << "pt  = " << elePt << endl;
+      warning << "Et  = " << eleEt << endl;
       warning << "Ignoring this particle!" << endl;
 
       cerr << warning.str();
@@ -610,7 +623,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
          bool iso_ok = true;
          //HCAL iso depth 1
          double const maxIso = m_ele_barrel_HcalD1_offset +
-                               m_ele_barrel_HcalD1_slope * ele->getEt() +
+                               m_ele_barrel_HcalD1_slope * eleEt +
                                m_ele_barrel_HcalD1_rhoSlope * m_ele_rho;
 
          if( iso_ok && ele->findUserRecord< double >( "HCALIso03d1" ) > maxIso ) iso_ok = false;
@@ -662,7 +675,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
                          m_ele_endcap_HcalD1_rhoSlope * m_ele_rho;
 
          //add a slope for high energy electrons
-         if( ele->getEt() > 50.0 ) maxIso += m_ele_endcap_HcalD1_slope * ( ele->getEt() - 50.0 );
+         if( eleEt > 50.0 ) maxIso += m_ele_endcap_HcalD1_slope * ( eleEt - 50.0 );
          //now test
          if( iso_ok && ele->findUserRecord< double >( "HCALIso03d1" ) > maxIso ) iso_ok = false;
          //Track iso
