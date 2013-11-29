@@ -558,7 +558,7 @@ bool EventSelector::passEle( pxl::Particle *ele, const bool& isRec ) {
       warning << "pt  = " << elePt << endl;
       warning << "Ignoring this particle!" << endl;
 
-      cerr << warning;
+      cerr << warning.str();
 
       return false;
    }
@@ -800,7 +800,7 @@ bool EventSelector::passGamma( pxl::Particle *gam, const bool& isRec ) {
       warning << "pt  = " << gamPt << endl;
       warning << "Ignoring this particle!" << endl;
 
-      cerr << warning;
+      cerr << warning.str();
 
       return false;
    }

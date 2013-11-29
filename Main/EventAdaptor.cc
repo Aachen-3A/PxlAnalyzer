@@ -93,7 +93,7 @@ void EventAdaptor::applyJETMETSmearing( pxl::EventView const *GenEvtView,
          warn << "'Jet.Resolutions.Corr.use = " << m_jet_res_corr_use << "'";
          warn << std::endl << std::endl;
 
-         std::cerr << warn;
+         std::cerr << warn.str();
       }
    }
    // Get all Rec jets with the specified name in the config file.
