@@ -182,6 +182,16 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_jet_ID_name(              cfg.GetItem< string >( "Jet.ID.name" ) ),
    m_jet_gen_hadOverEm_min(    cfg.GetItem< double >( "Jet.Gen.HadOverEm.min" ) ),
    m_jet_gen_hadEFrac_min(     cfg.GetItem< double >( "Jet.Gen.HadEFrac.min" ) ),
+
+   // In case we do the ID on our own:
+   m_jet_nHadEFrac_max(       cfg.GetItem< double >( "Jet.NeutralHadronEnergyFraction.max" ) ),
+   m_jet_nEMEFrac_max(        cfg.GetItem< double >( "Jet.NeutralEMEnergyFraction.max" ) ),
+   m_jet_numConstituents_min( cfg.GetItem< int    >( "Jet.NumConstituents.min" ) ),
+   // Only for |eta| > 2.4:
+   m_jet_cHadEFrac_min(     cfg.GetItem< double >( "Jet.ChargedHadronEnergyFraction.min" ) ),
+   m_jet_cEMEFrac_max(      cfg.GetItem< double >( "Jet.ChargedEMEnergyFraction.max" ) ),
+   m_jet_cMultiplicity_min( cfg.GetItem< int    >( "Jet.chargedMultiplicity.min" ) ),
+
    // bJets?
    m_jet_bJets_use(            cfg.GetItem< bool   >( "Jet.BJets.use" ) ),
    m_jet_bJets_algo(           cfg.GetItem< string >( "Jet.BJets.Algo" ) ),
@@ -1059,12 +1069,34 @@ void EventSelector::applyCutsOnJet( pxl::EventView* EvtView, std::vector< pxl::P
 
 
 bool EventSelector::passJet( pxl::Particle *jet, const bool &isRec ) const {
-   if( jet->getPt() < m_jet_pt_min )           return false;
-   if( fabs( jet->getEta() ) > m_jet_eta_max ) return false;
+   double const absEta = std::abs( jet->getEta() );
+   if( absEta > m_jet_eta_max )
+      return false;
+   if( jet->getPt() < m_jet_pt_min )
+      return false;
 
    if( isRec ) {
       if( m_jet_ID_use ) {
          if( not jet->findUserRecord< bool >( m_jet_ID_name ) ) return false;
+      } else {
+         // We do it ourselves!
+         if( not jet->findUserRecord< double >( "neutralHadronEnergyFraction" ) < m_jet_nHadEFrac_max )
+            return false;
+         if( not jet->findUserRecord< double >( "neutralEmEnergyFraction" ) < m_jet_nEMEFrac_max )
+            return false;
+         // This variable is unnecessarily stored as a double!
+         if( jet->findUserRecord< double >( "nconstituents" ) < m_jet_numConstituents_min )
+            return false;
+         // Additional cuts if |eta|>2.4:
+         if( absEta > 2.4 ) {
+            if( not jet->findUserRecord< double >( "chargedHadronEnergyFraction" ) > m_jet_cHadEFrac_min )
+               return false;
+            if( not jet->findUserRecord< double >( "chargedEmEnergyFraction" ) < m_jet_cEMEFrac_max )
+               return false;
+            // This variable is unnecessarily stored as a double!
+            if( jet->findUserRecord< double >( "chargedMultiplicity" ) < m_jet_cMultiplicity_min )
+               return false;
+         }
       }
    } else {
       double const HadOverEm = jet->findUserRecord< double >( "HadE" ) / jet->findUserRecord< double >( "EmE" );

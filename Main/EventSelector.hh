@@ -318,6 +318,15 @@ private:
    std::string const m_jet_ID_name;
    double const      m_jet_gen_hadOverEm_min;
    double const      m_jet_gen_hadEFrac_min;
+
+   // In case we do the ID on our own:
+   double const m_jet_nHadEFrac_max;
+   double const m_jet_nEMEFrac_max;
+   int const    m_jet_numConstituents_min;
+   double const m_jet_cHadEFrac_min;
+   double const m_jet_cEMEFrac_max;
+   int const    m_jet_cMultiplicity_min;
+
    bool const        m_jet_bJets_use;
    std::string const m_jet_bJets_algo;
    double const      m_jet_bJets_discr_min;
