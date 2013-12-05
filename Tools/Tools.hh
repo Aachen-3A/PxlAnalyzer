@@ -28,6 +28,11 @@ namespace Tools {
          config_error( std::string const &msg ): std::runtime_error( msg ) {}
    };
 
+   class unsorted_error: public std::runtime_error {
+      public:
+         unsorted_error( std::string const &msg ): std::runtime_error( msg ) {}
+   };
+
    class file_not_found: public std::exception {
       public:
          file_not_found( std::string const &filename, std::string const &filetype = "" ) : m_filename( filename ), m_filetype( filetype ) {}

@@ -1246,20 +1246,29 @@ bool EventSelector::applyGeneratorCuts( pxl::EventView* EvtView, std::vector< px
 
 
 
-void checkOrder( std::vector< pxl::Particle *> &particles ) {
+void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles
+                                ) const {
    if( particles.size() < 2 ) return;
-   std::vector< pxl::Particle *>::const_iterator part = particles.begin();
+   std::vector< pxl::Particle* >::const_iterator part = particles.begin();
    double first_pt = (*part)->getPt();
    ++part;
    for( ; part != particles.end(); ++part ) {
-      double pt = (*part)->getPt();
+      double const pt = (*part)->getPt();
       if( pt > first_pt ) {
-         cout << "ERROR: Unsorted particle " << part-particles.begin() << ": " << (*part)->getName() << endl;
-         cout << "first pt: " << first_pt << endl;
-         for( std::vector< pxl::Particle *>::const_iterator part2 = particles.begin(); part2 != particles.end(); ++part2 ) {
-            cout << "Pt: " << (*part2)->getPt() << " (" << pt << ")" << endl;
+         std::stringstream exc;
+         exc << "[ERROR] (EventSelector): ";
+         exc << "Unsorted particle no. " << part - particles.begin();
+         exc << " of type: " << (*part)->getName() << "!" << std::endl;
+         exc << "Full info of unsorted particle:" << std::endl;
+         (*part)->print( 1, exc );
+         exc << "pt of previous particle: " << first_pt << std::endl;
+         exc << "pt of all particles: " << std::endl;
+
+         std::vector< pxl::Particle* >::const_iterator part2 = particles.begin();
+         for( part2 = particles.begin(); part2 != particles.end(); ++part2 ) {
+            exc << "pt: " << (*part2)->getPt() << std::endl;
          }
-         exit(1);
+         throw Tools::unsorted_error( exc.str() );
       } else {
          first_pt = pt;
       }

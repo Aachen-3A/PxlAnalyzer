@@ -42,6 +42,7 @@ public:
                            int const numMET
                            ) const;
    TriggerSelector const &getTriggerSelector() const { return m_triggerSelector; }
+   void checkOrder( std::vector< pxl::Particle* > const &particles ) const;
 
 
 private:

@@ -353,9 +353,21 @@ int main( int argc, char* argv[] ) {
             pxl::EventView *RecEvtView_JES_DOWN = event.create< pxl::EventView >( RecEvtView );
             event.setIndex( "Rec_JES_DOWN", RecEvtView_JES_DOWN );
 
-            // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-            Selector.performSelection(GenEvtView, 0);
-            Selector.performSelection(RecEvtView, 0);
+            // Sometimes a particle is unsorted in an event, where it should be
+            // sorted by pt. This seems to be a PXL problem.
+            // Best idea until now is to skip the whole event.
+            // Do this only for MC at the moment. If this ever happens for data,
+            // you should investigate!
+            try {
+               // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
+               Selector.performSelection(GenEvtView, 0);
+               Selector.performSelection(RecEvtView, 0);
+            } catch( Tools::unsorted_error &exc ) {
+               cerr << "[WARNING] (main): ";
+               cerr << "Found unsorted particle in event no. " << e << ". ";
+               cerr << "Skipping this event!" << std::endl;
+               continue;
+            }
 
             // Redo the matching, because the selection can remove particles.
             Matcher.matchObjects( GenEvtView, RecEvtView, "priv-gen-rec", true );
