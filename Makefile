@@ -168,6 +168,7 @@ endif
 install-python: | $(BINDIR)
 	@ln -sf ../MISv2/MISMaster/MISMaster.py $(BINDIR)/MISMaster
 	@ln -sf ../MISv2/MISMaster/MISPrinter.py $(BINDIR)/MISPrinter
+	@ln -sf ../scripts/aix3adb2music.py $(BINDIR)/aix3adb2music
 	@ln -sf ../scripts/ECMerger.py $(BINDIR)/ECMerger2
 	@ln -sf ../scripts/ECMerger.py $(BINDIR)/ECMerger.py
 	@ln -sf ../scripts/jukebox.py $(BINDIR)/jukebox
