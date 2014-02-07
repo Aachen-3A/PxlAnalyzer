@@ -147,7 +147,8 @@ ifndef VERBOSE
 	@echo -e "$(RED)Removing all objects...$(NO_COLOR)"
 	@find . -name '*.o' -exec rm {} \;
 	@echo -e "$(RED)Removing all ROOT dictionaries...$(NO_COLOR)"
-	@find . -name '*Dict*' -exec rm {} \;
+	@find . -name '*Dict.h' -exec rm {} \;
+	@find . -name '*Dict.cc' -exec rm {} \;
 	@echo -e "$(RED)Removing $(LIBDIR) $(DEPDIR) $(BINDIR)...$(NO_COLOR)"
 	@rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
 	@echo -e "$(RED)Removing python relics...$(NO_COLOR)"
@@ -158,7 +159,8 @@ else
 	@echo -e "$(RED)Removing all objects...$(NO_COLOR)"
 	find . -name '*.o' -exec rm {} \;
 	@echo -e "$(RED)Removing all ROOT dictionaries...$(NO_COLOR)"
-	find . -name '*Dict*' -exec rm {} \;
+	find . -name '*Dict.h' -exec rm {} \;
+	find . -name '*Dict.cc' -exec rm {} \;
 	@echo -e "$(RED)Removing $(LIBDIR) $(DEPDIR) $(BINDIR)...$(NO_COLOR)"
 	rm -rf $(LIBDIR) $(DEPDIR) $(BINDIR)
 	@echo -e "$(RED)Removing python relics...$(NO_COLOR)"
@@ -178,6 +180,7 @@ install-python: | $(BINDIR)
 	@ln -sf ../scripts/remix.py $(BINDIR)/remix
 	@ln -sf ../scripts/rebinEventClasses.py $(BINDIR)/rebinEventClasses
 	@ln -sf ../scripts/renameProcess.py $(BINDIR)/renameProcess
+	@ln -sf ../scripts/submitClassification.py $(BINDIR)/submitClassification
 	@ln -sf ../scripts/handleGridOutput.py $(BINDIR)/handleGridOutput
 	@ln -sf ../scripts/plotPileUp.py $(BINDIR)/plotPileUp
 	@ln -sf ../scripts/installLHAPDF.py $(BINDIR)/installLHAPDF

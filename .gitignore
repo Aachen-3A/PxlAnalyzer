@@ -4,7 +4,8 @@
 *~
 \#*\#
 *.tar.gz
-*Dict*
+*Dict.cc
+*Dict.h
 music
 ECCrossSectionRescaler
 ECFileUtil
