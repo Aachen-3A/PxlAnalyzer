@@ -58,6 +58,7 @@ CMSSW_LIBS += -ldcap
 CMSSW_LIBS += -lgsl
 CMSSW_LIBS += -lgslcblas
 CMSSW_LIBS += -lboost_filesystem
+CMSSW_LIBS += -lboost_date_time
 CMSSW_LIBS += -lz
 
 # For the headers there are symlinks.
