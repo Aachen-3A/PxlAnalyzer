@@ -55,6 +55,29 @@ def main():
     if not options.no_interactive:
         raw_input( "Press ENTER to exit." )
 
+        # Before closing get the updated coordinates and print them.
+        canvas.Update()
+        for pad in canvas.GetListOfPrimitives():
+            if 'ratio' in pad.GetName():
+                pad.SetLogy( False )
+                pad.Update()
+                ratio_xMin = pad.GetUxmin()
+                ratio_xMax = pad.GetUxmax()
+                ratio_yMin = pad.GetUymin()
+                ratio_yMax = pad.GetUymax()
+            else:
+                pad.SetLogy( False )
+                pad.Update()
+                main_xMin = pad.GetUxmin()
+                main_xMax = pad.GetUxmax()
+                main_yMin = pad.GetUymin()
+                main_yMax = pad.GetUymax()
+
+        # Syntax --coordinates 'main_xMin'--'main_xMax'x
+        #                      'main_yMin'--'main_yMax'x
+        #                      'ratio_yMin'--'ratio_yMax'
+        log.info( '-c %s--%sx%s--%sx%s--%s' % ( main_xMin,main_xMax, main_yMin, main_yMax, ratio_yMin, ratio_yMax ) )
+
 
 def plot( options, Class, canvas ):
     canvas.cd()
