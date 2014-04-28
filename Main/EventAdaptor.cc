@@ -177,8 +177,11 @@ void EventAdaptor::applyJETMETSmearing( pxl::EventView const *GenEvtView,
 
       // Reuse iterator from above!
       for( part = recMETs.begin(); part != recMETs.end(); ++part ) {
-         double const newPx = (*part)->getPx() + fullCorrPx;
-         double const newPy = (*part)->getPy() + fullCorrPy;
+         // NOTE: The MET components and the sum of the corrections (fullCorr)
+         // are both signed numbers. The minus sign in the following equations
+         // takes all four combinations into account.
+         double const newPx = (*part)->getPx() - fullCorrPx;
+         double const newPy = (*part)->getPy() - fullCorrPy;
 
          // Changing the MET in the event!
          (*part)->setP4( newPx,
