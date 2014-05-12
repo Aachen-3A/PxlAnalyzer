@@ -19,11 +19,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_runOnFastSim( not m_data and cfg.GetItem< bool >( "General.FastSim" ) ),
 
    // Generator selection:
-   m_binningValue_max( cfg.GetItem< double >( "Generator.BinningValue.max" ) ),
-   m_mass_min(         cfg.GetItem< double >( "Generator.Mass.min", 0 ) ),
-   m_mass_max(         cfg.GetItem< double >( "Generator.Mass.max", 0 ) ),
-   m_massIDs(       Tools::splitString< int >( cfg.GetItem< string >( "Generator.Mass.IDs" ), true ) ),
-   m_massMotherIDs( Tools::splitString< int >( cfg.GetItem< string >( "Generator.Mass.mothers" ), true ) ),
+   m_gen_use( cfg.GetItem< bool >( "Generator.use" ) ),
+   m_gen_accept( cfg ),
 
    // Filters:
    m_filterSet_name( cfg.GetItem< string >( "FilterSet.Name" ) ),
@@ -310,7 +307,7 @@ void EventSelector::preSynchronizeGenRec( pxl::EventView *GenEvtView, pxl::Event
 
 
 void EventSelector::synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventView* RecEvtView ) {
-   bool binning_accept = GenEvtView->findUserRecord< bool >( "binning_accept" );
+   bool generator_accept = GenEvtView->findUserRecord< bool >( "generator_accept" );
    bool gen_non_topo_accepted = GenEvtView->findUserRecord< bool >( "non_topo_accept" );
    bool rec_non_topo_accepted = RecEvtView->findUserRecord< bool >( "non_topo_accept" );
    bool gen_accepted = GenEvtView->findUserRecord< bool >( "accepted" );
@@ -318,10 +315,10 @@ void EventSelector::synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventVie
    bool gen_filter_accepted = GenEvtView->findUserRecord< bool >( "filter_accept" );
 
    //gen and rec are both only accepted when the binning value is accepted, too
-   GenEvtView->setUserRecord< bool >( "non_topo_accept", gen_non_topo_accepted && binning_accept && gen_filter_accepted );
-   RecEvtView->setUserRecord< bool >( "non_topo_accept", rec_non_topo_accepted && binning_accept && gen_filter_accepted );
-   GenEvtView->setUserRecord< bool >( "accepted", gen_accepted && binning_accept && gen_filter_accepted );
-   RecEvtView->setUserRecord< bool >( "accepted", rec_accepted && binning_accept && gen_filter_accepted );
+   GenEvtView->setUserRecord< bool >( "non_topo_accept", gen_non_topo_accepted && generator_accept && gen_filter_accepted );
+   RecEvtView->setUserRecord< bool >( "non_topo_accept", rec_non_topo_accepted && generator_accept && gen_filter_accepted );
+   GenEvtView->setUserRecord< bool >( "accepted", gen_accepted && generator_accept && gen_filter_accepted );
+   RecEvtView->setUserRecord< bool >( "accepted", rec_accepted && generator_accept && gen_filter_accepted );
 }
 
 
@@ -1549,47 +1546,6 @@ bool EventSelector::applyGlobalEventCuts( pxl::EventView* EvtView,
 }
 
 
-bool EventSelector::applyGeneratorCuts( pxl::EventView* EvtView, std::vector< pxl::Particle *> &particles ) {
-   //check binning value
-   if( m_binningValue_max > 0 && EvtView->findUserRecord< double >( "binScale" ) > m_binningValue_max ) {
-      return false;
-   }
-
-   //check invariant mass
-   //do we actually need to do something?
-   if( m_mass_min <= 0 and m_mass_max <= 0 ) return true;
-   //apparently we do
-   if( particles.size() < 2 ) {
-      for( std::vector< pxl::Particle *>::const_iterator part = particles.begin(); part != particles.end(); ++part ) {
-         cerr << "ID=" << (*part)->findUserRecord< int >( "id" ) << " mother=" << (*part)->findUserRecord< int >( "mother_id" ) << endl;
-      }
-      throw std::length_error( "Can't calculate invariant mass with less than 2 particles." );
-   }
-   else if( particles.size() > 3 ) {
-      for( std::vector< pxl::Particle *>::const_iterator part = particles.begin(); part != particles.end(); ++part ) {
-         cerr << "ID=" << (*part)->findUserRecord< int >( "id" ) << " mother=" << (*part)->findUserRecord< int >( "mother_id" ) << endl;
-      }
-      throw std::length_error( "More than 2 particles to calculate invariant mass." );
-   }
-   else {
-      pxl::LorentzVector sum;
-      sum += particles.at( 0 )->getVector();
-      sum += particles.at( 1 )->getVector();
-
-      if( m_mass_min <= 0 && m_mass_max > 0 ) {
-         return sum.getMass() <= m_mass_max;
-      }
-      else if( m_mass_min > 0 && m_mass_max <= 0 ) {
-         return sum.getMass() >= m_mass_min;
-      }
-      else {   // m_mass_min > 0 && m_mass_max > 0
-         return ( sum.getMass() >= m_mass_min && sum.getMass() <= m_mass_max );
-      }
-   }
-}
-
-
-
 void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles
                                 ) const {
    if( particles.size() < 2 ) return;
@@ -1684,7 +1640,15 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    EvtView->getObjectsOfType<pxl::Particle>(allparticles);
    pxl::sortParticles( allparticles );
 
-   vector< pxl::Particle* > muons, eles, taus, gammas, jets, mets, doc_particles;     // no 'bJets' because jets is only filled into varyJESMET, where all jets are treated exactly the same way
+   // No 'bJets' are filled because 'jets' is only used in 'varyJESMET', where
+   // all jets are treated exactly the same way.
+   vector< pxl::Particle* > muons,
+                            eles,
+                            taus,
+                            gammas,
+                            jets,
+                            mets,
+                            s3_particles;
    for (vector<pxl::Particle*>::const_iterator part = allparticles.begin(); part != allparticles.end(); ++part) {
       string name = (*part)->getName();
       // Only fill the collection if we want to use the particle!
@@ -1705,17 +1669,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
          else if( m_gam_use and name == m_GenGamName ) gammas.push_back( *part );
          else if( m_jet_use and name == m_GenJetName ) jets.push_back( *part );
          else if( m_met_use and name == m_GenMETName ) mets.push_back( *part );
-         //no need to store the status 3  particles if we're not going to check them anyway
-         else if( ( m_mass_min > 0 || m_mass_max > 0 ) && name == "S3" ) {
-            if( ( m_massIDs.size() == 0
-                  || std::find( m_massIDs.begin(), m_massIDs.end(), (*part)->findUserRecord< int >( "id" ) ) != m_massIDs.end() )
-                &&
-                ( m_massMotherIDs.size() == 0
-                  || std::find( m_massMotherIDs.begin(), m_massMotherIDs.end(), (*part)->findUserRecord< int >( "mother_id" ) ) != m_massMotherIDs.end() )
-                ) {
-               doc_particles.push_back(*part);
-            }
-         }
+         else if( m_gen_use and name == "S3" ) s3_particles.push_back(*part);
       }
    }
 
@@ -1813,9 +1767,9 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
       EvtView->setUserRecord< bool >( "accepted", false );
    }
 
-   //for gen: check the binning value
+   // For gen: check if generator cuts are fulfilled.
    if( !isRec ) {
-      EvtView->setUserRecord< bool >( "binning_accept", applyGeneratorCuts( EvtView, doc_particles ) );
+      EvtView->setUserRecord< bool >( "generator_accept", m_gen_accept.passGeneratorCuts( EvtView, s3_particles ) );
    }
 }
 

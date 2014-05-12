@@ -15,6 +15,7 @@ Decision.
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 
+#include "Main/GenSelector.hh"
 #include "Main/EventCleaning.hh"
 #include "Main/GenRecNameMap.hh"
 #include "Main/PhotonEffectiveArea.hh"
@@ -133,9 +134,6 @@ private:
                              std::vector< pxl::Particle* > const &mets
                              );
 
-   //cut on binning value
-   bool applyGeneratorCuts( pxl::EventView* EvtView, std::vector< pxl::Particle *> &particles );
-
    // debug method
    void dumpEventView(const pxl::EventView* EvtView);
    // vary Jet Energy Scale
@@ -162,15 +160,8 @@ private:
    bool const m_runOnFastSim;
 
    // Generator selection:
-
-   // Maximal accepted binning value (e.g. pt-hat).
-   double const m_binningValue_max;
-   // Minimal accepted resonance mass.
-   double const m_mass_min;
-   // Maximal accepted resonance mass.
-   double const m_mass_max;
-   // IDs of the particle used for mass calculation.
-   std::vector< int > m_massIDs, m_massMotherIDs;
+   bool const m_gen_use;
+   GenSelector const m_gen_accept;
 
    // Filters
    std::string const                m_filterSet_name;
