@@ -82,7 +82,7 @@ int main( int argc, char* argv[] ) {
       >> parameter( 'N', "Num", numberOfEvents, "Number of events to analyze.", false )
       >> parameter( 'x', "XSections", XSectionsFile, "Path to cross-sections file.", false )
       >> parameter( 'p', "PlotConfig", PlotConfigFile, "Path to the plot-config file.", false )
-      >> parameter(      "debug", debug, "Set the debug level. 0 = WARNINGS, 1 = INFO, 2 = DEBUG, 3 = EVEN MORE DEBUG", false )
+      >> parameter(      "debug", debug, "Set the debug level. 0 = ERRORS, 1 = WARNINGS, 2 = INFO, 3 = DEBUG, 4 = EVEN MORE DEBUG", false )
       >> parameter( 'M', "ECMerger", ECMerger, "Which ECMerger to use: 0 = Don't merge JES files, 1 = use ECMerger, 2 = use ECMerger2.", false )
       >> option(         "NoCcEventClass", NoCcEventClass, "Do NOT create EventClass file. (Not allowed if --NoCcControl specified!)" )
       >> option(         "NoCcControl",  NoCcControl, "Do NOT make ControlPlots. (Not allowed if --NoCcEventClass specified!)" )
