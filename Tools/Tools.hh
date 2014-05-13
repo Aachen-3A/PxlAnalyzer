@@ -53,6 +53,9 @@ namespace Tools {
    //returns the given path if it is already absolute (starts with a /)
    std::string musicAbsPath( std::string relPath );
 
+   // Remove comment from line.
+   std::string removeComment( std::string line, char const commentChar = '#' );
+
    //return everything you can << into an ostream as a string
    template< class T > std::string toString( T &input ) {
       std::stringstream out;

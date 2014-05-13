@@ -94,7 +94,7 @@ namespace Tools {
          while( configFile.good() && !configFile.eof() ) {
             std::string line;
             getline( configFile, line );
-            line = RemoveComments( line, m_commentChar );
+            line = Tools::removeComment( line, m_commentChar );
             ++lineNum;
 
             ScanForImports( line, lineNum, absPath );
@@ -277,15 +277,6 @@ namespace Tools {
          m_configInit = true;
 
          return absPath;
-      }
-
-      std::string RemoveComments( std::string line, const char commentChar ) {
-         if( line.empty() ) return line;
-
-         std::string::size_type pos = line.find_first_of( commentChar );
-         if( pos != std::string::npos ) line.erase( pos );
-
-         return line;
       }
 
       void ScanForImports( std::string &line, const unsigned int lineNum, const Path &filePath ) {

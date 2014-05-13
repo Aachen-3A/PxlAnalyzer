@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
+
 std::string Tools::musicAbsPath( std::string relPath ){
    if( relPath.substr(0,1) == "/" ) return relPath;
    std::string output;
@@ -15,4 +17,16 @@ std::string Tools::musicAbsPath( std::string relPath ){
       output = "";
    }
    return output;
+}
+
+
+std::string Tools::removeComment( std::string line, char const commentChar ) {
+   if( line.empty() ) return line;
+
+   std::string::size_type pos = line.find_first_of( commentChar );
+   if( pos != std::string::npos ) line.erase( pos );
+
+   boost::trim( line );
+
+   return line;
 }
