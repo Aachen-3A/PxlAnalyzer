@@ -344,6 +344,12 @@ int main( int argc, char* argv[] ) {
 
          if( skipEvents.skip( run, LS, eventNum ) ) {
             ++skipped;
+
+            if( debug > 1 ) {
+               std::cerr << "[INFO] (SkipEvents): " << std::endl;
+               std::cerr << "Skipping Run/LS/Event: ";
+               std::cerr <<  run << ":" <<  LS << ":" <<  eventNum << std::endl;
+            }
             continue;
          }
 
