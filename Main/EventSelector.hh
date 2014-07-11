@@ -261,6 +261,7 @@ private:
    bool const        m_muo_requireIsPF;
    std::string const m_muo_iso_type;
    double const      m_muo_iso_max;
+   bool const        m_muo_iso_useDeltaBetaCorr;
    int const         m_muo_NPixelHits_min;
    int const         m_muo_NMuonHits_min;
    int const         m_muo_NMatchedStations_min;

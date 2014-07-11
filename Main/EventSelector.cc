@@ -121,6 +121,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_muo_requireIsPF(                cfg.GetItem< bool   >( "Muon.RequireIsPF" ) ),
    m_muo_iso_type(                   cfg.GetItem< string >( "Muon.Iso.Type" ) ),
    m_muo_iso_max(                    cfg.GetItem< double >( "Muon.Iso.max" ) ),
+   m_muo_iso_useDeltaBetaCorr(       cfg.GetItem< bool   >( "Muon.Iso.UseDeltaBetaCorr" ) ),
    m_muo_NPixelHits_min(             cfg.GetItem< int    >( "Muon.NPixelHits.min" ) ),
    m_muo_NMuonHits_min(              cfg.GetItem< int    >( "Muon.NMuonHits.min" ) ),
    m_muo_NMatchedStations_min(       cfg.GetItem< int    >( "Muon.NMatchedStations.min" ) ),
@@ -485,6 +486,8 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
    // According to:
    // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#Tight_Muon_selection
    // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#New_Version_recommended
+   // For delta beta (pile-up) corrections:
+   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49#Accessing_PF_Isolation_from_AN1
    if( isRec ) {
       //is the muon global? do we care?
       if( m_muo_requireIsGlobal && !muon->findUserRecord< bool >( "isGlobalMuon" ) ) return false;
@@ -501,13 +504,31 @@ bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
       } else if( m_muo_iso_type == "Tracker" ) {
          muon_iso = muon->findUserRecord< double >( "TrkIso" );
       } else if( m_muo_iso_type == "PFCombined03" ) {
-         muon_iso = muon->findUserRecord< double >( "PFIsoR03ChargedHadrons" )
-                  + muon->findUserRecord< double >( "PFIsoR03NeutralHadrons" )
-                  + muon->findUserRecord< double >( "PFIsoR03Photons" );
+         if( m_muo_iso_useDeltaBetaCorr ) {
+            muon_iso = muon->findUserRecord< double >( "PFIsoR03ChargedHadrons" )
+                     + max( 0.,
+                            muon->findUserRecord< double >( "PFIsoR03NeutralHadrons" )
+                            + muon->findUserRecord< double >( "PFIsoR03Photons" )
+                            - 0.5 * muon->findUserRecord< double >( "PFIsoR03PU" )
+                            );
+         } else {
+            muon_iso = muon->findUserRecord< double >( "PFIsoR03ChargedHadrons" )
+                     + muon->findUserRecord< double >( "PFIsoR03NeutralHadrons" )
+                     + muon->findUserRecord< double >( "PFIsoR03Photons" );
+         }
       } else if( m_muo_iso_type == "PFCombined04" ) {
-         muon_iso = muon->findUserRecord< double >( "PFIsoR04ChargedHadrons" )
-                  + muon->findUserRecord< double >( "PFIsoR04NeutralHadrons" )
-                  + muon->findUserRecord< double >( "PFIsoR04Photons" );
+         if( m_muo_iso_useDeltaBetaCorr ) {
+            muon_iso = muon->findUserRecord< double >( "PFIsoR04ChargedHadrons" )
+                     + max( 0.,
+                            muon->findUserRecord< double >( "PFIsoR04NeutralHadrons" )
+                            + muon->findUserRecord< double >( "PFIsoR04Photons" )
+                            - 0.5 * muon->findUserRecord< double >( "PFIsoR04PU" )
+                            );
+         } else {
+            muon_iso = muon->findUserRecord< double >( "PFIsoR04ChargedHadrons" )
+                     + muon->findUserRecord< double >( "PFIsoR04NeutralHadrons" )
+                     + muon->findUserRecord< double >( "PFIsoR04Photons" );
+         }
       } else {
          throw Tools::config_error( "In passMuon(...): Invalid isolation type: '" + m_muo_iso_type + "'" );
       }
