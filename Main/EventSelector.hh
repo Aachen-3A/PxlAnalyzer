@@ -158,6 +158,9 @@ private:
    bool const m_ignoreOverlaps;
    // Running on FASTSIM?
    bool const m_runOnFastSim;
+   //Use the music triiger system?
+   bool const m_useTrigger;
+
 
    // Generator selection:
    bool const m_gen_use;
@@ -173,6 +176,8 @@ private:
    double const m_PV_z_max;
    double const m_PV_rho_max;
    double const m_PV_ndof_min;
+
+   std::string const m_rho_use;
 
    // Tracks:
    bool const         m_tracks_use;
@@ -231,9 +236,6 @@ private:
    double const m_ele_heepid_barrel_HcalD1_rhoSlope;
    int const    m_ele_heepid_barrel_NInnerLayerLostHits_max;
    double const m_ele_heepid_barrel_dxy_max;
-   double const m_ele_heepid_barrel_swissCross_max;
-   double const m_ele_heepid_barrel_r19_max;
-   double const m_ele_heepid_barrel_r29_max;
    double const m_ele_heepid_barrel_e1x5_min;
    double const m_ele_heepid_barrel_e2x5_min;
    // Endcap:
@@ -294,6 +296,10 @@ private:
    double const m_gam_barrel_sigmaIetaIeta_max;
    double const m_gam_endcap_sigmaIetaIeta_max;
 
+   bool const   m_gam_CutBasedPhotonID2012Flag_use;
+   std::string const m_gam_IDFlag;
+
+
    // CutBasedPhotonID2012:
    bool const m_gam_CutBasedPhotonID2012_use;
    PhotonEffectiveArea const m_gam_EA;
@@ -343,11 +349,6 @@ private:
    // ID:
    bool const        m_gam_ID_use;
    std::string const m_gam_ID_name;
-   // SwissCross, R19, R29 are ignored if AdditionalSpikeCleaning = True.
-   bool const        m_gam_addSpikeCleaning;
-   double const      m_gam_swissCross_max;
-   double const      m_gam_r19_max;
-   double const      m_gam_r29_max;
 
    // Jets:
    bool const        m_jet_use;
@@ -362,10 +363,10 @@ private:
    // In case we do the ID on our own:
    double const m_jet_nHadEFrac_max;
    double const m_jet_nEMEFrac_max;
-   int const    m_jet_numConstituents_min;
+   unsigned long const    m_jet_numConstituents_min;
    double const m_jet_cHadEFrac_min;
    double const m_jet_cEMEFrac_max;
-   int const    m_jet_cMultiplicity_min;
+   unsigned long const    m_jet_cMultiplicity_min;
 
    bool const        m_jet_bJets_use;
    std::string const m_jet_bJets_algo;

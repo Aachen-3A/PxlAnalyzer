@@ -21,6 +21,8 @@
 #include "Main/RunLumiRanges.hh"
 #include "Main/SkipEvents.hh"
 
+#include "specialAna/specialAna.hh"
+
 namespace fs = boost::filesystem;
 
 using namespace std;
@@ -71,6 +73,7 @@ int main( int argc, char* argv[] ) {
    // merging, the output is effectively reduced by almost a factor of 2.
    unsigned int ECMerger = 2;
    bool NoCcControl    = false;
+   bool NoSpecialAna   = false;
    bool NoCcEventClass = false;
    bool DumpECHistos   = false;
    vector< string > arguments;
@@ -86,16 +89,17 @@ int main( int argc, char* argv[] ) {
       >> parameter( 'M', "ECMerger", ECMerger, "Which ECMerger to use: 0 = Don't merge JES files, 1 = use ECMerger, 2 = use ECMerger2.", false )
       >> option(         "NoCcEventClass", NoCcEventClass, "Do NOT create EventClass file. (Not allowed if --NoCcControl specified!)" )
       >> option(         "NoCcControl",  NoCcControl, "Do NOT make ControlPlots. (Not allowed if --NoCcEventClass specified!)" )
+      >> option(         "NoSpecialAna",  NoSpecialAna, "Do NOT perform dedicated analysis." )
       >> option(         "DumpECHistos", DumpECHistos, "Write out all histograms into a separate file (slow!)." )
       >> values< string >( back_inserter( arguments ), "CONFIG_FILE and PXLIO_FILE(S)." );
 
    as.defaultErrorHandling();
 
-   if( NoCcEventClass and NoCcControl ) {
-      cerr << "ERROR: Options: --NoCcControl and --NoCcEventClass not allowed simultaneously!" << endl;
-      cout << as.usage() << endl;
-      exit( 1 );
-   }
+   //if( NoCcEventClass and NoCcControl ) {
+      //cerr << "ERROR: Options: --NoCcControl and --NoCcEventClass not allowed simultaneously!" << endl;
+      //cout << as.usage() << endl;
+      //exit( 1 );
+   //}
 
    if( arguments.size() < 2 ) {
       cerr << "ERROR: At least CONFIG_FILE and one PXLIO_FILE needed as arguments!" << endl << endl;
@@ -130,6 +134,7 @@ int main( int argc, char* argv[] ) {
 
    const bool runCcEventClass = not NoCcEventClass;
    const bool runCcControl    = not NoCcControl;
+   const bool runSpecialAna   = not NoSpecialAna;
 
    // Get the run config file from config file.
    //
@@ -187,12 +192,15 @@ int main( int argc, char* argv[] ) {
    // When running on data, we do not want to initialize the PDFSets as this
    // takes lots of resources.
    pdf::PDFTool *pdfTool = 0;
-   if( not runOnData ) pdfTool = new pdf::PDFTool( config, debug );
+   if( not runOnData && NoSpecialAna ){
+       pdfTool = new pdf::PDFTool( config, debug );
 
+   }
    // When running on data, there is no PDF information. Thus, we cannot use
    // PDFTool to get the PDFInfo, so initialize it empty.
    // (This way, we can keep the same structure for data and MC in filling etc.)
-   pdf::PDFInfo const pdfInfo = runOnData ? pdf::PDFInfo() : pdfTool->getPDFInfo();
+   pdf::PDFInfo const pdfInfo = (runOnData || !NoSpecialAna) ? pdf::PDFInfo() : pdfTool->getPDFInfo();
+
 
    // configure processes:
    if( runCcControl ){
@@ -242,6 +250,12 @@ int main( int argc, char* argv[] ) {
       }
    }
 
+   specialAna *ana;
+   if ( runSpecialAna ){
+      ana = new specialAna( config );
+      fork.setObject( ana );
+      fork.setIndex( "specialAna", ana );
+   }
    // begin analysis
    fork.beginJob();
    fork.beginRun();
@@ -250,6 +264,7 @@ int main( int argc, char* argv[] ) {
    double dTime1 = pxl::getCpuTime();    // Start Time
    int    e = 0;                         // Event counter
    unsigned int skipped=0; //number of events skipped from run/LS config
+
 
    ReWeighter reweighter = ReWeighter( config );
 
@@ -365,9 +380,10 @@ int main( int argc, char* argv[] ) {
             //for data we just need to run the selection
             Selector.performSelection(RecEvtView, 0);
          } else {
-            // Don't do this on data, haha!
-            pdfTool->setPDFWeights( event );
-
+            // Don't do this on data, haha! And also not for special Ana hoho
+            if (NoSpecialAna){
+                pdfTool->setPDFWeights( event );
+            }
             reweighter.ReWeightEvent( event );
             pxl::EventView* GenEvtView = event.getObjectOwner().findObject<pxl::EventView>("Gen");
 
@@ -415,7 +431,6 @@ int main( int argc, char* argv[] ) {
                cerr << "Skipping this event!" << std::endl;
                continue;
             }
-
             // Redo the matching, because the selection can remove particles.
             Matcher.matchObjects( GenEvtView, RecEvtView, "priv-gen-rec", true );
 
@@ -473,6 +488,8 @@ int main( int argc, char* argv[] ) {
       throw runtime_error( "No event analayzed!" );
    }
    cout << "\n\n\n" << endl;
+
+   ana -> SetEvents(e);
 
    fork.endRun();
    fork.endJob();

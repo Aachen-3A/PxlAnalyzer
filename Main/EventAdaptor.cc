@@ -99,7 +99,8 @@ void EventAdaptor::applyJETMETSmearing( pxl::EventView const *GenEvtView,
    // Get all Rec jets with the specified name in the config file.
    pxlParticles recJets;
    pxl::ParticlePtEtaNameCriterion const critJet( m_jet_RecName );
-   pxl::ParticleFilter::apply( RecEvtView->getObjectOwner(), recJets, critJet );
+   pxl::ParticleFilter particleFilter;
+   particleFilter.apply( RecEvtView->getObjectOwner(), recJets, critJet );
 
    if( m_debug > 2 ) {
       std::cerr << "[DEBUG] (EventAdaptor): RecEvtView before:" << std::endl;
@@ -170,7 +171,7 @@ void EventAdaptor::applyJETMETSmearing( pxl::EventView const *GenEvtView,
       // Get all Rec METs with the specified name in the config file.
       pxlParticles recMETs;
       pxl::ParticlePtEtaNameCriterion const critMET( m_met_RecName );
-      pxl::ParticleFilter::apply( RecEvtView->getObjectOwner(),
+      particleFilter.apply( RecEvtView->getObjectOwner(),
                                   recMETs,
                                   critMET
                                   );

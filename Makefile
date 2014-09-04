@@ -118,6 +118,10 @@ CP2  := $(patsubst %.cc,%.o,$(SRCS))
 SRCS := $(wildcard Main/*.cc)
 MAIN := $(patsubst %.cc,%.o,$(SRCS))
 
+# Sources and objects for specialAna:
+SRCS  := $(wildcard specialAna/*.cc)
+SANA := $(patsubst %.cc,%.o,$(SRCS))
+
 # Sources and objects for MISv2:
 SRCS  := $(wildcard MISv2/*.cc)
 MISV2 := $(patsubst %.cc,%.o,$(SRCS))
@@ -199,7 +203,7 @@ $(DEPDIR):
 	@mkdir $(DEPDIR)
 
 # Main music build:
-$(BINDIR)/music: $(PROGSDIR)/music.o $(MAIN) $(TEVENTCLASSFACTORY) $(PXL) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR)
+$(BINDIR)/music: $(PROGSDIR)/music.o $(MAIN) $(SANA) $(TEVENTCLASSFACTORY) $(PXL) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR)
 ifndef VERBOSE
 	$(ECHO)
 	@$(BUILDBIN)

@@ -34,7 +34,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
    // containers to keep the filtered gen/rec particles
    vector< Particle* > gen_particles;
    vector< Particle* > rec_particles;
-
+   pxl::ParticleFilter particleFilter;
    for( GenRecNameMap::const_iterator objType = m_gen_rec_map.begin(); objType != m_gen_rec_map.end(); ++objType ) {
       gen_particles.clear();
       rec_particles.clear();
@@ -42,9 +42,9 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       // Choose name filter criterion
       ParticlePtEtaNameCriterion const critRec( (*objType).second.RecName );
       ParticlePtEtaNameCriterion const critGen( (*objType).second.GenName );
-
-      ParticleFilter::apply( RecEvtView->getObjectOwner(), rec_particles, critRec );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(), gen_particles, critGen );
+      
+      particleFilter.apply( RecEvtView->getObjectOwner(), rec_particles, critRec );
+      particleFilter.apply( GenEvtView->getObjectOwner(), gen_particles, critGen );
 
       makeMatching( gen_particles, rec_particles, "Match", "hctaM", defaultLinkName );
    }
@@ -54,7 +54,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       // Get all Gen b-jets.
       gen_particles.clear();
       JetSubtypeCriterion const critBJetGen( m_gen_rec_map.get( "Jet" ).GenName, m_jet_bJets_gen_label );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critBJetGen
                              );
@@ -62,7 +62,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       // Get all Rec b-jets.
       rec_particles.clear();
       JetSubtypeCriterion const critBJetRec( m_gen_rec_map.get( "Jet" ).RecName, m_jet_bJets_algo );
-      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+      particleFilter.apply( RecEvtView->getObjectOwner(),
                              rec_particles,
                              critBJetRec
                              );
@@ -77,14 +77,14 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       // nonBJet(rec)-nonBjet(gen)-matching:
       gen_particles.clear();
       JetSubtypeCriterion const critJetGen( m_gen_rec_map.get( "Jet" ).GenName, "nonB" );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critJetGen
                              );
 
       rec_particles.clear();
       JetSubtypeCriterion const critJetRec( m_gen_rec_map.get( "Jet" ).RecName, "nonB" );
-      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+      particleFilter.apply( RecEvtView->getObjectOwner(),
                              rec_particles,
                              critJetRec
                              );
@@ -101,14 +101,14 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       //Make matching for estimation of fake rate for gammas
       rec_particles.clear();
       ParticlePtEtaNameCriterion const critGamRec( m_gen_rec_map.get( "Gam" ).RecName );
-      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+      particleFilter.apply( RecEvtView->getObjectOwner(),
                              rec_particles,
                              critGamRec
                              );
 
       gen_particles.clear();
       ParticlePtEtaNameCriterion const critEleGen( m_gen_rec_map.get( "Ele" ).GenName );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critEleGen
                              );
@@ -122,7 +122,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
 
       gen_particles.clear();
       ParticlePtEtaNameCriterion const critJetGen( m_gen_rec_map.get( "Jet" ).GenName );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critJetGen
                              );
@@ -137,7 +137,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       //match SIM converted photons to GEN photons
       gen_particles.clear();
       ParticlePtEtaNameCriterion const critGamGen( m_gen_rec_map.get( "Gam" ).GenName );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critGamGen
                              );
@@ -145,7 +145,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       // Use Rec particles container here.
       rec_particles.clear();
       ParticlePtEtaNameCriterion const critSIMConv( "SIMConvGamma" );
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              rec_particles,
                              critSIMConv
                              );
@@ -159,13 +159,13 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
 
       //match SIM converted photons to REC photons
       rec_particles.clear();
-      ParticleFilter::apply( RecEvtView->getObjectOwner(),
+      particleFilter.apply( RecEvtView->getObjectOwner(),
                              rec_particles,
                              critGamRec
                              );
 
       gen_particles.clear();
-      ParticleFilter::apply( GenEvtView->getObjectOwner(),
+      particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critSIMConv
                              );

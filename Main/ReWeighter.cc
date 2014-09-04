@@ -25,7 +25,7 @@ void ReWeighter::ReWeightEvent( const pxl::Event &event ) {
    if( not m_useGenWeights ) GenEvtView->setUserRecord< double >( "Weight", 1.0 );
 
    if( m_usePileUpReWeighting ) {
-      int const numVerticesPUTrue = GenEvtView->findUserRecord< int >( "NumVerticesPUTrue" );
+      float const numVerticesPUTrue = GenEvtView->findUserRecord< float >( "NumVerticesPUTrue" );
 
       double const pileupWeight = m_LumiWeights.weight( numVerticesPUTrue );
 

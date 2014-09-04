@@ -186,7 +186,8 @@ void PDFTool::setPDFWeights( pxl::Event &event ) const {
       }
    } catch( std::runtime_error ) {
    }
-
+   
+   
    float const Q  = GenEvtView->findUserRecord< float >( "Q" );
    float const x1 = GenEvtView->findUserRecord< float >( "x1" );
    float const x2 = GenEvtView->findUserRecord< float >( "x2" );
