@@ -1,0 +1,5 @@
+"fetchPxl" copies all required pxl files to the interace/ and src/ directories.
+It also changes "#include" statements within each file in order to satisfy CMSSW standards
+for including files. Simply pass the directory of the pxl repository as an argument: (e.g.)
+
+> ./fetchPxl ~/path/to/pxl

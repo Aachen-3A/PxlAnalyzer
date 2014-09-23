@@ -11,6 +11,7 @@
 # Just for fun:
 NO_COLOR  = \e[0m
 GREEN     = \e[0;32m
+VIOLET    = \e[0;35m
 BOLDGREEN = \e[1;32m
 RED       = \e[0;31m
 YELLOW    = \e[0;33m
@@ -23,7 +24,7 @@ ifdef DEBUG
    # NOTE: For some ominous reasons, these DEBUG flags cause the linker to need
    # 20 min to link everything when linking on NFS. Perhaps this will be better
    # with a newer version?!
-   #CXXFLAGS += -g3 -ggdb
+   CXXFLAGS += -g3 -ggdb
 else
    CXXFLAGS := -O2
 endif
@@ -68,8 +69,13 @@ CMSSW_INC_PATHS += -I$(CMSSW_DCAP_BASE)/include
 CMSSW_INC_PATHS += -I$(CMSSW_BOOST_BASE)/include
 CMSSW_INC_PATHS += -I$(CMSSW_GSL_BASE)/include
 
-LHAPDF_LIB_PATH := -L$(MUSIC_BASE)/local/lib
-LHAPDF_INC_PATH := -I$(MUSIC_BASE)/local/include
+#LHAPDF_LIB_PATH := -L$(MUSIC_BASE)/local/lib
+#LHAPDF_INC_PATH := -I$(MUSIC_BASE)/local/include
+#LHAPDF_LIB := -lLHAPDF
+#no nice way to get this automated
+LHAPDF_BASE := /cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/lhapdf6/6.1.4/
+LHAPDF_LIB_PATH := -L$(LHAPDF_BASE)/lib
+LHAPDF_INC_PATH := -I$(LHAPDF_BASE)/include
 LHAPDF_LIB := -lLHAPDF
 
 EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH)
@@ -92,6 +98,8 @@ DEPDIR = dep
 BINDIR = bin
 # Where are the .cc files for the executables?
 PROGSDIR = Progs
+#pxl needs extra
+PXLDIR = Pxl/Pxl
 
 # Define all targets:
 # List all executables and .so's here.
@@ -105,6 +113,7 @@ TARGETS += $(BINDIR)/printClass
 TARGETS += $(BINDIR)/printData
 TARGETS += $(BINDIR)/scanClass
 TARGETS += $(LIBDIR)/TEventClass.so
+
 
 # Sources and objects for ControlPlotFactory:
 SRCS := $(wildcard ControlPlotFactory/*.cc)
@@ -129,8 +138,12 @@ MISV2 := $(patsubst %.cc,%.o,$(SRCS))
 # Tools obejcts:
 TOOLS := Tools/Tools.o Tools/MConfig.o Tools/SignalHandler.o Tools/dCache/dCacheBuf.o
 
-# PXL stuff:
-PXL := Tools/PXL/PXL.o
+# pxl lib:
+#PXLTARGET	:=Tools/pxl.o
+SRCS 		:= $(wildcard $(PXLDIR)/src/*cc)
+#HEADERS = $(wildcard $(PXLDIR)/interface/pxl*.hh)
+PXL := $(patsubst %.cc,%.o,$(SRCS))
+#TARGETS += $(PXLTARGET)
 
 # Objects for EventClass(Factory):
 SRCS := $(wildcard EventClassFactory/*.cc)
@@ -203,7 +216,7 @@ $(DEPDIR):
 	@mkdir $(DEPDIR)
 
 # Main music build:
-$(BINDIR)/music: $(PROGSDIR)/music.o $(MAIN) $(SANA) $(TEVENTCLASSFACTORY) $(PXL) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR)
+$(BINDIR)/music: $(PROGSDIR)/music.o $(MAIN) $(SANA) $(TEVENTCLASSFACTORY) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR) $(PXL)
 ifndef VERBOSE
 	$(ECHO)
 	@$(BUILDBIN)
@@ -308,7 +321,7 @@ df = $(DEPDIR)/$(subst /,_,$(subst $(suffix $@),,$@))
 
 %.o: %.cc | $(DEPDIR)
 ifndef VERBOSE
-	@echo -e "$(GREEN)Compiling$(NO_COLOR) $< ..."
+	@echo -e "$(VIOLET)Compiling$(NO_COLOR) $< ..."
 	@$(CXX) -MD $(CXXFLAGS) -o $@ $<
 else
 	$(CXX) -MD $(CXXFLAGS) -o $@ $<

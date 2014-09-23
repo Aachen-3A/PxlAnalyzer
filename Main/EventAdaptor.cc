@@ -6,7 +6,9 @@
 #include <vector>
 
 #include "Tools/MConfig.hh"
-#include "Tools/PXL/PXL.hh"
+//PXL
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/PXL/Sort.hh"
 
 EventAdaptor::EventAdaptor( Tools::MConfig const &cfg,
@@ -62,12 +64,12 @@ void EventAdaptor::applyCocktailMuons( pxl::EventView const *RecEvtView
 // future.)
 void EventAdaptor::adaptMuon( pxl::Particle *muon ) const {
    // We are only interested in muons here.
-   if( muon->findUserRecord< bool >( "validCocktail" ) ) {
+   if( muon->getUserRecord( "validCocktail" ) ) {
       double const mass = muon->getMass();
 
-      double const pxCocktail = muon->findUserRecord< double >( "pxCocktail" );
-      double const pyCocktail = muon->findUserRecord< double >( "pyCocktail" );
-      double const pzCocktail = muon->findUserRecord< double >( "pzCocktail" );
+      double const pxCocktail = muon->getUserRecord( "pxCocktail" );
+      double const pyCocktail = muon->getUserRecord( "pyCocktail" );
+      double const pzCocktail = muon->getUserRecord( "pzCocktail" );
 
       double const E = std::sqrt( mass * mass +
                                   pxCocktail * pxCocktail +

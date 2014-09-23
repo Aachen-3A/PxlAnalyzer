@@ -4,12 +4,13 @@
 #include <string>
 #include <iostream>
 
-#include "Tools/PXL/PXL.hh"
+//#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
 #include "Tools/dCache/idCacheStream.hh"
 
 namespace pxl {
-   class dCacheInputFile : public InputHandler {   
-   public: 
+   class dCacheInputFile : public InputHandler {
+   public:
       dCacheInputFile() :
          InputHandler(),
          stream(),

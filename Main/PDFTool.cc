@@ -181,18 +181,18 @@ void PDFTool::setPDFWeights( pxl::Event &event ) const {
          std::stringstream sstream;
          sstream << "w" << i;
          std::string const str_i = sstream.str();
-         GenEvtView->removeUserRecord( str_i );
-         RecEvtView->removeUserRecord( str_i );
+         GenEvtView->eraseUserRecord( str_i );
+         RecEvtView->eraseUserRecord( str_i );
       }
    } catch( std::runtime_error ) {
    }
    
    
-   float const Q  = GenEvtView->findUserRecord< float >( "Q" );
-   float const x1 = GenEvtView->findUserRecord< float >( "x1" );
-   float const x2 = GenEvtView->findUserRecord< float >( "x2" );
-   int const f1   = GenEvtView->findUserRecord< int >( "f1" );
-   int const f2   = GenEvtView->findUserRecord< int >( "f2" );
+   float const Q  = GenEvtView->getUserRecord( "Q" );
+   float const x1 = GenEvtView->getUserRecord( "x1" );
+   float const x2 = GenEvtView->getUserRecord( "x2" );
+   int const f1   = GenEvtView->getUserRecord( "f1" );
+   int const f2   = GenEvtView->getUserRecord( "f2" );
    float const prodWeight = m_pdfProd->xfxQ( f1, x1, Q ) *
                             m_pdfProd->xfxQ( f2, x2, Q );
 
@@ -213,7 +213,7 @@ void PDFTool::setPDFWeights( pxl::Event &event ) const {
 
       std::stringstream stream;
       stream << "w" << count;
-      event.setUserRecord< float >( stream.str(), weight );
+      event.setUserRecord( stream.str(), weight );
       ++count;
    }
 
@@ -228,7 +228,7 @@ void PDFTool::setPDFWeights( pxl::Event &event ) const {
 
       std::stringstream stream;
       stream << "w" << count;
-      event.setUserRecord< float >( stream.str(), weight );
+      event.setUserRecord( stream.str(), weight );
       ++count;
 
    }
@@ -244,7 +244,7 @@ void PDFTool::setPDFWeights( pxl::Event &event ) const {
 
       std::stringstream stream;
       stream << "w" << count;
-      event.setUserRecord< float >( stream.str(), weight );
+      event.setUserRecord( stream.str(), weight );
       ++count;
    }
 }

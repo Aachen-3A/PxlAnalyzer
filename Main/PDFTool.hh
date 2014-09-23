@@ -4,9 +4,13 @@
 #include <string>
 #include <vector>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include "LHAPDF/LHAPDF.h"
+#pragma GCC diagnostic pop
 
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Main/PDFInfo.hh"
 
 namespace Tools {

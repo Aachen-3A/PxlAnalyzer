@@ -42,6 +42,11 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_tracks_type(    cfg.GetItem< string       >( "Tracks.type" ) ),
    m_tracks_num_max( cfg.GetItem< unsigned int >( "Tracks.num.max" ) ),
 
+   //Muons
+   m_muo_use(                        cfg.GetItem< bool   >( "Muon.use" ) ),
+   m_muo_filter(                     cfg.GetItem< bool   >( "Muon.Filter") ),
+   m_muo_selector(cfg),
+
    // Electrons:
    m_ele_use(            cfg.GetItem< bool   >( "Ele.use" ) ),
    m_ele_pt_min(         cfg.GetItem< double >( "Ele.pt.min" ) ),
@@ -112,26 +117,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_ID_use(  cfg.GetItem< bool   >( "Ele.ID.use" ) ),
    m_ele_ID_name( cfg.GetItem< string >( "Ele.ID.name" ) ),
 
-   // Muons:
-   m_muo_use(                        cfg.GetItem< bool   >( "Muon.use" ) ),
-   m_muo_pt_min(                     cfg.GetItem< double >( "Muon.pt.min" ) ),
-   m_muo_eta_max(                    cfg.GetItem< double >( "Muon.eta.max" ) ),
-   m_muo_invertIso(                  cfg.GetItem< bool   >( "Muon.InvertIsolation" ) ),
-   m_muo_requireIsGlobal(            cfg.GetItem< bool   >( "Muon.RequireIsGlobal" ) ),
-   m_muo_requireIsTracker(           cfg.GetItem< bool   >( "Muon.RequireIsTracker" ) ),
-   m_muo_requireIsPF(                cfg.GetItem< bool   >( "Muon.RequireIsPF" ) ),
-   m_muo_iso_type(                   cfg.GetItem< string >( "Muon.Iso.Type" ) ),
-   m_muo_iso_max(                    cfg.GetItem< double >( "Muon.Iso.max" ) ),
-   m_muo_iso_useDeltaBetaCorr(       cfg.GetItem< bool   >( "Muon.Iso.UseDeltaBetaCorr" ) ),
-   m_muo_NPixelHits_min(             cfg.GetItem< int    >( "Muon.NPixelHits.min" ) ),
-   m_muo_NMuonHits_min(              cfg.GetItem< int    >( "Muon.NMuonHits.min" ) ),
-   m_muo_NMatchedStations_min(       cfg.GetItem< int    >( "Muon.NMatchedStations.min" ) ),
-   m_muo_NTrackerLayersWithMeas_min( cfg.GetItem< int    >( "Muon.NTrackerLayersWithMeas.min" ) ),
-   m_muo_XYImpactParameter_max(      cfg.GetItem< double >( "Muon.XYImpactParameter.max" ) ),
-   m_muo_ZImpactParameter_max(       cfg.GetItem< double >( "Muon.ZImpactParameter.max" ) ),
-   m_muo_globalChi2_max(             cfg.GetItem< double >( "Muon.GlobalChi2.max" ) ),
-   m_muo_HighPtMuonID_use(           cfg.GetItem< bool   >( "Muon.HighPtMuonID.use" ) ),
-   m_muo_dPtRelTrack_max(            cfg.GetItem< double >( "Muon.dPtRelTrack.max" ) ),
+
 
    // Taus:
    m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
@@ -164,7 +150,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    // CutBasedPhotonID2012:
    m_gam_CutBasedPhotonID2012_use( cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012.use" ) ),
-   m_gam_EA( cfg ),
+   m_gam_EA( cfg , "Gamma.EffectiveArea.File" ),
    m_gam_rho_label( cfg.GetItem< string >( "Gamma.Rho.Label" ) ),
    // Barrel:
    m_gam_barrel_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Barrel.ElectronVeto.Require" ) ),
@@ -289,6 +275,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
       error << "must be true!";
       throw Tools::config_error( error.str() );
    }
+
 }
 
 //--------------------Destructor-----------------------------------------------------------------
@@ -302,27 +289,27 @@ EventSelector::~EventSelector() {
 void EventSelector::preSynchronizeGenRec( pxl::EventView *GenEvtView, pxl::EventView *RecEvtView ) {
    for( vector< string >::const_iterator filter = m_filterSet_genList.begin(); filter != m_filterSet_genList.end(); ++filter ) {
       const string filterName = m_filterSet_name + "_p_" + *filter;
-      bool filterResult = RecEvtView->findUserRecord< bool >( filterName );
+      bool filterResult = RecEvtView->getUserRecord( filterName );
 
-      GenEvtView->setUserRecord< bool >( filterName, filterResult );
-      RecEvtView->removeUserRecord( filterName );
+      GenEvtView->setUserRecord( filterName, filterResult );
+      RecEvtView->eraseUserRecord( filterName );
    }
 }
 
 
 void EventSelector::synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventView* RecEvtView ) {
-   bool generator_accept = GenEvtView->findUserRecord< bool >( "generator_accept" );
-   bool gen_non_topo_accepted = GenEvtView->findUserRecord< bool >( "non_topo_accept" );
-   bool rec_non_topo_accepted = RecEvtView->findUserRecord< bool >( "non_topo_accept" );
-   bool gen_accepted = GenEvtView->findUserRecord< bool >( "accepted" );
-   bool rec_accepted = RecEvtView->findUserRecord< bool >( "accepted" );
-   bool gen_filter_accepted = GenEvtView->findUserRecord< bool >( "filter_accept" );
+   bool generator_accept = GenEvtView->getUserRecord( "generator_accept" );
+   bool gen_non_topo_accepted = GenEvtView->getUserRecord( "non_topo_accept" );
+   bool rec_non_topo_accepted = RecEvtView->getUserRecord( "non_topo_accept" );
+   bool gen_accepted = GenEvtView->getUserRecord( "accepted" );
+   bool rec_accepted = RecEvtView->getUserRecord( "accepted" );
+   bool gen_filter_accepted = GenEvtView->getUserRecord( "filter_accept" );
 
    //gen and rec are both only accepted when the binning value is accepted, too
-   GenEvtView->setUserRecord< bool >( "non_topo_accept", gen_non_topo_accepted && generator_accept && gen_filter_accepted );
-   RecEvtView->setUserRecord< bool >( "non_topo_accept", rec_non_topo_accepted && generator_accept && gen_filter_accepted );
-   GenEvtView->setUserRecord< bool >( "accepted", gen_accepted && generator_accept && gen_filter_accepted );
-   RecEvtView->setUserRecord< bool >( "accepted", rec_accepted && generator_accept && gen_filter_accepted );
+   GenEvtView->setUserRecord( "non_topo_accept", gen_non_topo_accepted && generator_accept && gen_filter_accepted );
+   RecEvtView->setUserRecord( "non_topo_accept", rec_non_topo_accepted && generator_accept && gen_filter_accepted );
+   GenEvtView->setUserRecord( "accepted", gen_accepted && generator_accept && gen_filter_accepted );
+   RecEvtView->setUserRecord( "accepted", rec_accepted && generator_accept && gen_filter_accepted );
 }
 
 
@@ -337,7 +324,7 @@ bool EventSelector::passFilterSelection( pxl::EventView *EvtView, const bool isR
 
    for( vector< string >::const_iterator filter = list.begin(); filter != list.end(); ++filter ) {
       const string filterName = m_filterSet_name + "_p_" + *filter;
-      bool filterResult = EvtView->findUserRecord< bool >( filterName );
+      bool filterResult = EvtView->getUserRecord( filterName );
 
       //If the filter has not fired this means that the event did not pass the
       //selection criteria and so we don't want it.
@@ -353,7 +340,7 @@ bool EventSelector::passFilterSelection( pxl::EventView *EvtView, const bool isR
 
 double EventSelector::TransverseInvariantMass(EventView* EvtView, const std::string& type1, const std::string& type2) {
    // take the particles with the highest pT of type1 and type2 and calculate transverse invariant mass
-   if (EvtView->findUserRecord<int>("Num"+type1) < 1 || EvtView->findUserRecord<int>("Num"+type2) < 1) return 0.;
+   if (EvtView->getUserRecord("Num"+type1).toInt32() < 1 || EvtView->getUserRecord("Num"+type2).toInt32() < 1) return 0.;
    vector<Particle*> type1_particles;
    vector<Particle*> type2_particles;
    pxl::ParticleFilter particleFilter;
@@ -374,7 +361,7 @@ double EventSelector::TransverseInvariantMass(EventView* EvtView, const std::str
 
 double EventSelector::InvariantMass(EventView* EvtView, const std::string& type1, const std::string& type2) {
    // take the particles with the highest pT of type1 and type2 and calculate transverse invariant mass
-   if (EvtView->findUserRecord<int>("Num"+type1) < 1 || EvtView->findUserRecord<int>("Num"+type2) < 1) return 0;
+   if (EvtView->getUserRecord("Num"+type1).toInt32() < 1 || EvtView->getUserRecord("Num"+type2).toInt32() < 1) return 0;
    vector<Particle*> type1_particles;
    vector<Particle*> type2_particles;
    pxl::ParticleFilter particleFilter;
@@ -384,7 +371,7 @@ double EventSelector::InvariantMass(EventView* EvtView, const std::string& type1
    Particle* part1 = type1_particles.front();
    Particle* part2 = type2_particles.front();
    if (type1 == type2) {
-      if (EvtView->findUserRecord<int>("Num"+type2) > 1) part2 = type1_particles[1];
+      if (EvtView->getUserRecord("Num"+type2).toInt32() > 1) part2 = type1_particles[1];
       else cout << "only one particle of type " << type1 << " available!!!" << endl;
    }
    double InvMass2 =   (part1->getE() + part2->getE())  *(part1->getE() + part2->getE())
@@ -467,158 +454,167 @@ void EventSelector::applyCutsOnMuon( pxl::EventView* EvtView, std::vector< pxl::
 
    for( vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon ) {
       Particle* thisMuon = *muon;
-      if( passMuon( thisMuon, isRec ) ) {
-         muonsAfterCut.push_back( thisMuon );
+      if( m_muo_selector.passMuon(thisMuon,isRec) ) {
+         if (m_muo_filter){
+            muonsAfterCut.push_back( thisMuon );
+         }else{
+            thisMuon->setUserRecord("passed",true);
+         }
       } else {
-         thisMuon->owner()->remove( thisMuon );
+         if (m_muo_filter){
+            thisMuon->owner()->remove( thisMuon );
+         }else{
+            thisMuon->setUserRecord("passed",false);
+         }
       }
    }
-
-   //ATTENTION: changing muon-vector!
-   muons = muonsAfterCut;
+   if (m_muo_filter){
+      //ATTENTION: changing muon-vector!
+      muons = muonsAfterCut;
+   }
 }
 
 
-bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
-   double const muonPt = muon->getPt();
-   // pt cut
-   if( muonPt < m_muo_pt_min ) return false;
+//bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
+   //double const muonPt = muon->getPt();
+   //// pt cut
+   //if( muonPt < m_muo_pt_min ) return false;
 
-   //eta cut
-   if( fabs( muon->getEta() ) > m_muo_eta_max ) return false;
+   ////eta cut
+   //if( fabs( muon->getEta() ) > m_muo_eta_max ) return false;
 
-   // Reconstructed muons cuts.
-   // According to:
-   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#Tight_Muon_selection
-   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#New_Version_recommended
-   // For delta beta (pile-up) corrections:
-   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49#Accessing_PF_Isolation_from_AN1
-   if( isRec ) {
-      //is the muon global? do we care?
-      if( m_muo_requireIsGlobal && !muon->findUserRecord< bool >( "isGlobalMuon" ) ) return false;
+   //// Reconstructed muons cuts.
+   //// According to:
+   //// https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#Tight_Muon_selection
+   //// https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#New_Version_recommended
+   //// For delta beta (pile-up) corrections:
+   //// https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49#Accessing_PF_Isolation_from_AN1
+   //if( isRec ) {
+      ////is the muon global? do we care?
+      //if( m_muo_requireIsGlobal && !muon->getUserRecord( "isGlobalMuon" ) ) return false;
 
-      //is it a Tracker muon? do we care ?
-      if( m_muo_requireIsTracker && !muon->findUserRecord< bool >( "isTrackerMuon" ) ) return false;
-      // Muon isolation.
-      double muon_iso;
-      if( m_muo_iso_type == "Combined" ) {
-         muon_iso = muon->findUserRecord< float >( "TrkIso" )
-                  + muon->findUserRecord< float >( "ECALIso" )
-                  + muon->findUserRecord< float >( "HCALIso" );
-      } else if( m_muo_iso_type == "Tracker" ) {
-         muon_iso = muon->findUserRecord< float >( "TrkIso" );
-      } else if( m_muo_iso_type == "PFCombined03" ) {
-         if( m_muo_iso_useDeltaBetaCorr ) {
-            muon_iso = muon->findUserRecord< float >( "PFIsoR03ChargedHadrons" )
-                     + max( 0.,
-                            muon->findUserRecord< float >( "PFIsoR03NeutralHadrons" )
-                            + muon->findUserRecord< float >( "PFIsoR03Photons" )
-                            - 0.5 * muon->findUserRecord< float >( "PFIsoR03PU" )
-                            );
-         } else {
-            muon_iso = muon->findUserRecord< float >( "PFIsoR03ChargedHadrons" )
-                     + muon->findUserRecord< float >( "PFIsoR03NeutralHadrons" )
-                     + muon->findUserRecord< float >( "PFIsoR03Photons" );
-         }
-      } else if( m_muo_iso_type == "PFCombined04" ) {
-         if( m_muo_iso_useDeltaBetaCorr ) {
-            muon_iso = muon->findUserRecord< float >( "PFIsoR04ChargedHadrons" )
-                     + max( 0.,
-                            muon->findUserRecord< float >( "PFIsoR04NeutralHadrons" )
-                            + muon->findUserRecord< float >( "PFIsoR04Photons" )
-                            - 0.5 * muon->findUserRecord< float >( "PFIsoR04PU" )
-                            );
-         } else {
-            muon_iso = muon->findUserRecord< float >( "PFIsoR04ChargedHadrons" )
-                     + muon->findUserRecord< float >( "PFIsoR04NeutralHadrons" )
-                     + muon->findUserRecord< float >( "PFIsoR04Photons" );
-         }
-      } else {
-         throw Tools::config_error( "In passMuon(...): Invalid isolation type: '" + m_muo_iso_type + "'" );
-      }
+      ////is it a Tracker muon? do we care ?
+      //if( m_muo_requireIsTracker && !muon->getUserRecord( "isTrackerMuon" ) ) return false;
+      //// Muon isolation.
+      //double muon_iso;
+      //if( m_muo_iso_type == "Combined" ) {
+         //muon_iso = muon->getUserRecord( "TrkIso" )
+                  //+ muon->getUserRecord( "ECALIso" )
+                  //+ muon->getUserRecord( "HCALIso" );
+      //} else if( m_muo_iso_type == "Tracker" ) {
+         //muon_iso = muon->getUserRecord( "TrkIso" );
+      //} else if( m_muo_iso_type == "PFCombined03" ) {
+         //if( m_muo_iso_useDeltaBetaCorr ) {
+            //muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" )
+                     //+ max( 0.,
+                            //muon->getUserRecord( "PFIsoR03NeutralHadrons" )
+                            //+ muon->getUserRecord( "PFIsoR03Photons" )
+                            //- 0.5 * muon->getUserRecord( "PFIsoR03PU" )
+                            //);
+         //} else {
+            //muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" )
+                     //+ muon->getUserRecord( "PFIsoR03NeutralHadrons" )
+                     //+ muon->getUserRecord( "PFIsoR03Photons" );
+         //}
+      //} else if( m_muo_iso_type == "PFCombined04" ) {
+         //if( m_muo_iso_useDeltaBetaCorr ) {
+            //muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" )
+                     //+ max( 0.,
+                            //muon->getUserRecord( "PFIsoR04NeutralHadrons" )
+                            //+ muon->getUserRecord( "PFIsoR04Photons" )
+                            //- 0.5 * muon->getUserRecord( "PFIsoR04PU" )
+                            //);
+         //} else {
+            //muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" )
+                     //+ muon->getUserRecord( "PFIsoR04NeutralHadrons" )
+                     //+ muon->getUserRecord( "PFIsoR04Photons" );
+         //}
+      //} else {
+         //throw Tools::config_error( "In passMuon(...): Invalid isolation type: '" + m_muo_iso_type + "'" );
+      //}
 
-      double const muon_rel_iso = muon_iso / muonPt;
+      //double const muon_rel_iso = muon_iso / muonPt;
 
-      bool iso_failed = muon_rel_iso > m_muo_iso_max;
-      //turn around for iso-inversion
-      if( m_muo_invertIso ) iso_failed = !iso_failed;
-      //now check
-      if( iso_failed ) return false;
+      //bool iso_failed = muon_rel_iso > m_muo_iso_max;
+      ////turn around for iso-inversion
+      //if( m_muo_invertIso ) iso_failed = !iso_failed;
+      ////now check
+      //if( iso_failed ) return false;
 
-      //number of hits in the pixel detector
-      if( muon->findUserRecord< int >( "VHitsPixel" ) < m_muo_NPixelHits_min ) return false;
+      ////number of hits in the pixel detector
+      //if( muon->getUserRecord( "VHitsPixel" ) < m_muo_NPixelHits_min ) return false;
 
-      // Muon segments in at least two muon stations. (TODO: Typo in Skimmer already corrected, so remove the try block.)
-      try {
-         if( muon->findUserRecord< int >( "NMachedStations" ) < m_muo_NMatchedStations_min ) return false;
-      } catch( std::runtime_error ) {
-         if( muon->findUserRecord< int >( "NMatchedStations" ) < m_muo_NMatchedStations_min ) return false;
-      }
+      //// Muon segments in at least two muon stations. (TODO: Typo in Skimmer already corrected, so remove the try block.)
+      //try {
+         //if( muon->getUserRecord( "NMachedStations" ) < m_muo_NMatchedStations_min ) return false;
+      //} catch( std::runtime_error ) {
+         //if( muon->getUserRecord( "NMatchedStations" ) < m_muo_NMatchedStations_min ) return false;
+      //}
 
-      // Number of tracker layers with hits.
-      if( muon->findUserRecord< int >( "TrackerLayersWithMeas" ) < m_muo_NTrackerLayersWithMeas_min ) return false;
+      //// Number of tracker layers with hits.
+      //if( muon->getUserRecord( "TrackerLayersWithMeas" ) < m_muo_NTrackerLayersWithMeas_min ) return false;
 
-      //number of muon hits surviving in the global fit
-      if( muon->findUserRecord< int >( "VHitsMuonSys" ) < m_muo_NMuonHits_min ) return false;
+      ////number of muon hits surviving in the global fit
+      //if( muon->getUserRecord( "VHitsMuonSys" ) < m_muo_NMuonHits_min ) return false;
 
-      if( m_muo_HighPtMuonID_use && muonPt > 200. ) {
-         // Apply dedicated cuts for the High Pt Muon Selection.
+      //if( m_muo_HighPtMuonID_use && muonPt > 200. ) {
+         //// Apply dedicated cuts for the High Pt Muon Selection.
 
-         //FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
-         try {
-            // Transverse impact parameter dxy of the muon's picky cocktail track w.r.t. the primary vertex.
-            if( muon->findUserRecord< double >( "DxyCocktail" ) > m_muo_XYImpactParameter_max ) return false;
+         ////FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
+         //try {
+            //// Transverse impact parameter dxy of the muon's picky cocktail track w.r.t. the primary vertex.
+            //if( muon->getUserRecord( "DxyCocktail" ) > m_muo_XYImpactParameter_max ) return false;
 
-            // Longitudinal impact parameter dz of the muon's picky cocktail track  w.r.t. the primary vertex.
-            if( muon->findUserRecord< double >( "DzCocktail" ) > m_muo_ZImpactParameter_max ) return false;
+            //// Longitudinal impact parameter dz of the muon's picky cocktail track  w.r.t. the primary vertex.
+            //if( muon->getUserRecord( "DzCocktail" ) > m_muo_ZImpactParameter_max ) return false;
 
-            // Relative pT error on the muon's picky cocktail track.
-            if( ( muon->findUserRecord< double >( "ptErrorCocktail" ) / muonPt ) > m_muo_dPtRelTrack_max ) return false;
+            //// Relative pT error on the muon's picky cocktail track.
+            //if( ( muon->getUserRecord( "ptErrorCocktail" ) / muonPt ) > m_muo_dPtRelTrack_max ) return false;
 
-         } catch( std::runtime_error ) {
-            // Transverse impact parameter dxy of the muon's tracker track w.r.t. the primary vertex.
-            if( muon->findUserRecord< double >( "dB" ) > m_muo_XYImpactParameter_max ) return false;
+         //} catch( std::runtime_error ) {
+            //// Transverse impact parameter dxy of the muon's tracker track w.r.t. the primary vertex.
+            //if( muon->getUserRecord( "dB" ) > m_muo_XYImpactParameter_max ) return false;
 
-            // Longitudinal impact parameter dz of the muon's tracker track  w.r.t. the primary vertex.
-            if( muon->findUserRecord< double >( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
-         }
+            //// Longitudinal impact parameter dz of the muon's tracker track  w.r.t. the primary vertex.
+            //if( muon->getUserRecord( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
+         //}
 
-      } else {
-         // Apply dedicated cuts for the Tight Muon Selection.
+      //} else {
+         //// Apply dedicated cuts for the Tight Muon Selection.
 
-         // Is it a PF muon? Do we care?
-         if( m_muo_requireIsPF && !muon->findUserRecord< bool >( "isPFMuon" ) ) return false;
+         //// Is it a PF muon? Do we care?
+         //if( m_muo_requireIsPF && !muon->getUserRecord( "isPFMuon" ) ) return false;
 
-         // Normalised chisquare of the global track.
-         if( muon->findUserRecord< double >( "NormChi2" ) > m_muo_globalChi2_max ) return false;
+         //// Normalised chisquare of the global track.
+         //if( muon->getUserRecord( "NormChi2" ) > m_muo_globalChi2_max ) return false;
 
-         // Transverse impact parameter dxy of the muon's BestTrack w.r.t. the primary vertex.
-         if( muon->findUserRecord< double >( "dB" ) > m_muo_XYImpactParameter_max ) return false;
+         //// Transverse impact parameter dxy of the muon's BestTrack w.r.t. the primary vertex.
+         //if( muon->getUserRecord( "dB" ) > m_muo_XYImpactParameter_max ) return false;
 
-         //FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
-         try {
-            // Longitudinal impact parameter dz of the muon's BestTrack w.r.t. the primary vertex.
-            if( muon->findUserRecord< double >( "DzBT" ) > m_muo_ZImpactParameter_max ) return false;
-         } catch( std::runtime_error ) {
-            // Longitudinal impact parameter dz of the muon's tracker track w.r.t. the primary vertex.
-            if( muon->findUserRecord< double >( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
-         }
-      }
+         ////FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
+         //try {
+            //// Longitudinal impact parameter dz of the muon's BestTrack w.r.t. the primary vertex.
+            //if( muon->getUserRecord( "DzBT" ) > m_muo_ZImpactParameter_max ) return false;
+         //} catch( std::runtime_error ) {
+            //// Longitudinal impact parameter dz of the muon's tracker track w.r.t. the primary vertex.
+            //if( muon->getUserRecord( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
+         //}
+      //}
 
-   //generator muon cuts
-   } else {
-      double const muon_rel_iso = muon->findUserRecord< double >( "GenIso" ) / muonPt;
-      // Gen iso cut.
-      bool iso_failed = muon_rel_iso > m_muo_iso_max;
-      //turn around for iso-inversion
-      if( m_muo_invertIso ) iso_failed = !iso_failed;
-      //now check
-      if( iso_failed ) return false;
-   }
+   ////generator muon cuts
+   //} else {
+      //double const muon_rel_iso = muon->getUserRecord( "GenIso" ) / muonPt;
+      //// Gen iso cut.
+      //bool iso_failed = muon_rel_iso > m_muo_iso_max;
+      ////turn around for iso-inversion
+      //if( m_muo_invertIso ) iso_failed = !iso_failed;
+      ////now check
+      //if( iso_failed ) return false;
+   //}
 
-   //no cut failed
-   return true;
-}
+   ////no cut failed
+   //return true;
+//}
 
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
@@ -652,7 +648,7 @@ bool EventSelector::passEle( pxl::Particle const *ele,
    // TODO: Remove try-block once everything is reskimmed.
    double eleEt = ele->getEt();
    try {
-      eleEt = ele->findUserRecord< double >( "SCEt" );
+      eleEt = ele->getUserRecord( "SCEt" );
    } catch( std::runtime_error ) {
       // Do nothing, simply use the Et from the pxl::Particle.
    }
@@ -661,7 +657,7 @@ bool EventSelector::passEle( pxl::Particle const *ele,
    if( elePt < m_ele_pt_min ) return false;
 
    // eta
-   double const abseta = isRec ? fabs( ele->findUserRecord< double >( "SCeta" ) ) : fabs( ele->getEta() );
+   double const abseta = isRec ? fabs( ele->getUserRecord( "SCeta" ).toDouble() ) : fabs( ele->getEta() );
 
    //out of endcap
    if( abseta > m_ele_eta_endcap_max ) return false;
@@ -704,16 +700,16 @@ bool EventSelector::passEle( pxl::Particle const *ele,
       }
 
       //ID cuts
-      if( m_ele_ID_use && !ele->findUserRecord< bool >( m_ele_ID_name ) ) return false;
+      if( m_ele_ID_use && !ele->getUserRecord( m_ele_ID_name ).asBool() ) return false;
    } else {
       //gen ele cuts
       if( barrel ) {
          //ele in barrel
          bool iso_failed = false;
          if( m_ele_heepid_use )
-            iso_failed = ele->findUserRecord< double >( "GenIso" ) > m_ele_heepid_barrel_trackiso_max;
+            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() > m_ele_heepid_barrel_trackiso_max;
          if( m_ele_cbid_use )
-            iso_failed = ele->findUserRecord< double >( "GenIso" ) / elePt > m_ele_cbid_barrel_PFIsoRel_max;
+            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() / elePt > m_ele_cbid_barrel_PFIsoRel_max;
 
          //turn around for iso-inversion
          if( m_ele_invertIso )
@@ -727,9 +723,9 @@ bool EventSelector::passEle( pxl::Particle const *ele,
       if( endcap ) {
          bool iso_failed = false;
          if( m_ele_heepid_use )
-            iso_failed = ele->findUserRecord< double >( "GenIso" ) > m_ele_heepid_barrel_trackiso_max;
+            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() > m_ele_heepid_barrel_trackiso_max;
          if( m_ele_cbid_use )
-            iso_failed = ele->findUserRecord< double >( "GenIso" ) / elePt > m_ele_cbid_barrel_PFIsoRel_max;
+            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() / elePt > m_ele_cbid_barrel_PFIsoRel_max;
 
          //turn around for iso-inversion
          if( m_ele_invertIso )
@@ -756,44 +752,44 @@ bool EventSelector::passCBID( pxl::Particle const *ele,
                               ) const {
    // Retrieve each variable and IMMEDIATELY check if it passes the cut!
 
-   double const DEtaIn = ele->findUserRecord< float >( "DEtaSCVtx" );
+   double const DEtaIn = ele->getUserRecord( "DEtaSCVtx" );
    if( eleBarrel and DEtaIn > m_ele_cbid_barrel_DEtaIn_max )
       return false;
    if( eleEndcap and DEtaIn > m_ele_cbid_endcap_DEtaIn_max )
       return false;
 
-   double const DPhiIn = ele->findUserRecord< float >( "DPhiSCVtx" );
+   double const DPhiIn = ele->getUserRecord( "DPhiSCVtx" );
    if( eleBarrel and DPhiIn > m_ele_cbid_barrel_DPhiIn_max )
       return false;
    if( eleEndcap and DPhiIn > m_ele_cbid_endcap_DPhiIn_max )
       return false;
 
-   double const sigmaIetaIeta = ele->findUserRecord< float >( "sigmaIetaIeta" );
+   double const sigmaIetaIeta = ele->getUserRecord( "sigmaIetaIeta" );
    if( eleBarrel and sigmaIetaIeta > m_ele_cbid_barrel_sigmaIetaIeta_max )
       return false;
    if( eleEndcap and sigmaIetaIeta > m_ele_cbid_endcap_sigmaIetaIeta_max )
       return false;
 
-   double const HoE = ele->findUserRecord< float >( "HoEm" );
+   double const HoE = ele->getUserRecord( "HoEm" );
    if( eleBarrel and HoE > m_ele_cbid_barrel_HoE_max )
       return false;
    if( eleEndcap and HoE > m_ele_cbid_endcap_HoE_max )
       return false;
 
-   double const Dxy = ele->findUserRecord< double >( "Dxy" );
+   double const Dxy = ele->getUserRecord( "Dxy" );
    if( eleBarrel and Dxy > m_ele_cbid_barrel_Dxy_max )
       return false;
    if( eleEndcap and Dxy > m_ele_cbid_endcap_Dxy_max )
       return false;
 
-   double const Dz = ele->findUserRecord< double >( "Dz" );
+   double const Dz = ele->getUserRecord( "Dz" );
    if( eleBarrel and Dz > m_ele_cbid_barrel_Dz_max )
       return false;
    if( eleEndcap and Dz > m_ele_cbid_endcap_Dz_max )
       return false;
 
    double const Energy = ele->getE();
-   double const EoP = ele->findUserRecord< float >( "EoP" );
+   double const EoP = ele->getUserRecord( "EoP" );
    // p_in, the same as 'pat::Electron::trackMomentumAtVtx().p()'
    double const pIn = Energy / EoP;
    double const relInvEpDiff = std::abs( 1.0 / Energy - 1.0/ pIn );
@@ -802,10 +798,10 @@ bool EventSelector::passCBID( pxl::Particle const *ele,
    if( eleEndcap and relInvEpDiff > m_ele_cbid_endcap_RelInvEpDiff_max )
       return false;
 
-   double const effArea = ele->findUserRecord< double >( "EffectiveArea" );
-   double const pfIsoCH = ele->findUserRecord< double >( "PFIso03ChargedHadron" );
-   double const pfIsoNH = ele->findUserRecord< double >( "PFIso03NeutralHadron" );
-   double const pfIsoPH = ele->findUserRecord< double >( "PFIso03Photon" );
+   double const effArea = ele->getUserRecord( "EffectiveArea" );
+   double const pfIsoCH = ele->getUserRecord( "PFIso03ChargedHadron" );
+   double const pfIsoNH = ele->getUserRecord( "PFIso03NeutralHadron" );
+   double const pfIsoPH = ele->getUserRecord( "PFIso03Photon" );
    double const pfIsoPUCorrected = pfIsoCH +
                                    max( 0.0,
                                         ( pfIsoPH + pfIsoNH ) - effArea * eleRho
@@ -823,15 +819,15 @@ bool EventSelector::passCBID( pxl::Particle const *ele,
    if( not iso_ok )
       return false;
 
-   double const NinnerLayerLostHits = ele->findUserRecord< int >( "NinnerLayerLostHits" );
+   double const NinnerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
    if( eleBarrel and NinnerLayerLostHits > m_ele_cbid_barrel_NInnerLayerLostHits_max )
       return false;
    if( eleEndcap and NinnerLayerLostHits > m_ele_cbid_endcap_NInnerLayerLostHits_max )
       return false;
 
-   //double const PFIso03PUCorrected = ele->findUserRecord< double >( "PFIso03PUCorrected" );
+   //double const PFIso03PUCorrected = ele->getUserRecord( "PFIso03PUCorrected" );
 
-   double const hasConversion = ele->findUserRecord< bool >( "hasMatchedConversion" );
+   double const hasConversion = ele->getUserRecord( "hasMatchedConversion" );
    if( eleBarrel and m_ele_cbid_barrel_Conversion_reject and hasConversion )
       return true;
    if( eleEndcap and m_ele_cbid_endcap_Conversion_reject and hasConversion )
@@ -841,7 +837,7 @@ bool EventSelector::passCBID( pxl::Particle const *ele,
    // See also:
    // https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30#E_p_and_fbrem_based_tight_ID_201
 
-   double const fBrem = ele->findUserRecord< double >( "fbrem" );
+   double const fBrem = ele->getUserRecord( "fbrem" );
    // It is OK that fBrem is too small, if we are in the lowEta region and the
    // EoP is large enough!
    double const passfBrem = fBrem > m_ele_cbid_fBrem_min or
@@ -865,19 +861,19 @@ bool EventSelector::passHEEPID( pxl::Particle const *ele,
                                 ) const {
    // Require electron to be ECAL driven?
    if( m_ele_heepid_requireEcalDriven and
-       not ele->findUserRecord< bool >( "ecalDriven" )
+       not ele->getUserRecord( "ecalDriven" )
        ) return false;
 
-   if( ele->findUserRecord< float >( "EoP" ) > m_ele_heepid_EoP_max )
+   if( ele->getUserRecord( "EoP" ).toDouble() > m_ele_heepid_EoP_max )
       return false;
 
    // These variables are checked in the barrel as well as in the endcaps.
-   double const ele_absDeltaEta = fabs( ele->findUserRecord< float >( "DEtaSCVtx" ) );
-   double const ele_absDeltaPhi = fabs( ele->findUserRecord< float >( "DPhiSCVtx" ) );
-   double const ele_HoEM        = ele->findUserRecord< double >( "HoEm" );
-   double const ele_TrkIso      = ele->findUserRecord< float >( "TrkIso03" );
-   double const ele_ECALIso     = ele->findUserRecord< float >( "ECALIso03" );
-   double const ele_HCALIso     = ele->findUserRecord< float >( "HCALIso03d1" );
+   double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
+   double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
+   double const ele_HoEM        = ele->getUserRecord( "HoEm" );
+   double const ele_TrkIso      = ele->getUserRecord( "TrkIso03" );
+   double const ele_ECALIso     = ele->getUserRecord( "ECALIso03" );
+   double const ele_HCALIso     = ele->getUserRecord( "HCALIso03d1" );
    double const ele_CaloIso     = ele_ECALIso + ele_HCALIso;
 
 
@@ -885,15 +881,15 @@ bool EventSelector::passHEEPID( pxl::Particle const *ele,
    // (Typo in skimmer already fixed. UserRecord: NinnerLayerLostHits.)
    int ele_innerLayerLostHits;
    try{
-      ele_innerLayerLostHits = ele->findUserRecord< int >( "NMissingHits: " );
+      ele_innerLayerLostHits = ele->getUserRecord( "NMissingHits: " );
    } catch( std::runtime_error ) {
-      ele_innerLayerLostHits = ele->findUserRecord< int >( "NinnerLayerLostHits" );
+      ele_innerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
    } catch( ... ) {
       throw;
    }
 
    if( m_ele_heepid_rejectOutOfTime and
-       ele->findUserRecord< unsigned int >( "recoFlag", 0 ) == 2
+       ele->getUserRecord_def( "recoFlag",0 ).toInt32() == 2
        ) return false;
 
    //ele in barrel
@@ -910,9 +906,9 @@ bool EventSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_HoEM > m_ele_heepid_barrel_HoEM_max )
          return false;
       //shower shape
-      double const e5x5 = ele->findUserRecord< float >( "e5x5" );
-      double const e1x5 = ele->findUserRecord< float >( "e1x5" );
-      double const e2x5 = ele->findUserRecord< float >( "e2x5" );
+      double const e5x5 = ele->getUserRecord( "e5x5" );
+      double const e1x5 = ele->getUserRecord( "e1x5" );
+      double const e2x5 = ele->getUserRecord( "e2x5" );
 
       if( e1x5/e5x5 < m_ele_heepid_barrel_e1x5_min and
           e2x5/e5x5 < m_ele_heepid_barrel_e2x5_min
@@ -938,7 +934,7 @@ bool EventSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
          return false;
 
-      if( ele->findUserRecord< double >( "Dxy" ) > m_ele_heepid_barrel_dxy_max )
+      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_barrel_dxy_max )
          return false;
    }
 
@@ -957,7 +953,7 @@ bool EventSelector::passHEEPID( pxl::Particle const *ele,
          return false;
 
       //sigma iEta-iEta
-      if( ele->findUserRecord< float >( "sigmaIetaIeta" ) > m_ele_heepid_endcap_sigmaIetaIeta_max )
+      if( ele->getUserRecord( "sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
          return false;
 
       //Isolation
@@ -984,7 +980,7 @@ bool EventSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
          return false;
 
-      if( ele->findUserRecord< double >( "Dxy" ) > m_ele_heepid_endcap_dxy_max )
+      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
          return false;
    }
 
@@ -1027,7 +1023,7 @@ bool EventSelector::passTau( pxl::Particle *tau, const bool &isRec ) {
          // In practice most (or all) discriminators are boolean.
          // See also:
          // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID#Discriminators
-         if( tau->findUserRecord< float >( *discr ) < 0.5 ) {
+         if( tau->getUserRecord( *discr ).toDouble() < 0.5 ) {
             return false;
          }
       }
@@ -1070,7 +1066,7 @@ bool EventSelector::passGam( pxl::Particle const *gam,
    // been skimmed with the updated Skimmer.
    double abseta = 0;
    try {
-      abseta = isRec ? fabs( gam->findUserRecord< double >( "SCeta" ) ) : fabs( gam->getEta() );
+      abseta = isRec ? fabs( gam->getUserRecord( "SCeta" ).toDouble() ) : fabs( gam->getEta() );
    } catch( std::runtime_error ) {
       abseta = fabs( gam->getEta() );
    }
@@ -1106,7 +1102,7 @@ bool EventSelector::passGam( pxl::Particle const *gam,
 
    if( isRec ) {
       //cut on sigmaietaieta ("eta width") which is different for EB and EE
-      double const gam_sigma_ieta_ieta = gam->findUserRecord< float >( "iEta_iEta" );
+      double const gam_sigma_ieta_ieta = gam->getUserRecord( "iEta_iEta" );
 
       if( barrel ) {
          //Additional spike cleaning
@@ -1129,22 +1125,28 @@ bool EventSelector::passGam( pxl::Particle const *gam,
       }
 
       if( m_gam_CutBasedPhotonID2012Flag_use ){
-          if( not gam->findUserRecord< bool >( m_gam_IDFlag ) ) return false;
+          if( not gam->getUserRecord( m_gam_IDFlag ).asBool() ) return false;
       }
 
-      //recoFlag might not be set, assume it fine then
-      if( m_gam_rejectOutOfTime and gam->findUserRecord< unsigned int >( "recoFlag", 0 ) == 2 ) return false;
+      if( m_gam_rejectOutOfTime )
+        try {
+            if( gam->getUserRecord_def( "recoFlag",0 ) == 2 )
+                return false;
+        } catch( std::runtime_error ) {
+            // In case "recoFlag" is not set, we assume, it is *not* out of
+            // time!
+        }
 
       //do we care about converted photons?
-      if( not m_gam_useConverted and gam->findUserRecord< bool >( "Converted" ) ) return false;
+      if( not m_gam_useConverted and gam->getUserRecord( "Converted" ).asBool() ) return false;
 
       if( m_gam_corrFactor_max > 0.0 ) {
          //too large correction factors are not good for photons
-         if( gam->getE() / gam->findUserRecord< double >( "rawEnergy" ) > m_gam_corrFactor_max ) return false;
+         if( gam->getE() / gam->getUserRecord( "rawEnergy" ).toDouble() > m_gam_corrFactor_max ) return false;
       }
 
       //do we care about gamma ID?
-      if( m_gam_ID_use and not gam->findUserRecord< bool >( m_gam_ID_name ) ) return false;
+      if( m_gam_ID_use and not gam->getUserRecord( m_gam_ID_name ).asBool() ) return false;
    } else {
       double maxIso = 0;
       if( m_gam_Vgamma2011PhotonID_use ) {
@@ -1175,7 +1177,7 @@ bool EventSelector::passGam( pxl::Particle const *gam,
          }
       }
 
-      if( gam->findUserRecord< double >( "GenIso" ) > maxIso ) return false;
+      if( gam->getUserRecord( "GenIso" ).toDouble() > maxIso ) return false;
    }
 
    //no cut failed
@@ -1189,9 +1191,9 @@ bool EventSelector::passVgamma2011PhotonID( pxl::Particle const *gam,
                                             bool const endcap
                                             ) const {
    // Track (pixel seed) veto.
-   if( m_gam_useSeedVeto and gam->findUserRecord< bool >( "HasSeed" ) ) return false;
+   if( m_gam_useSeedVeto and gam->getUserRecord( "HasSeed" ).asBool() ) return false;
 
-   if( gam->findUserRecord< double >( "HoEm" ) > m_gam_HoEm_max ) return false;
+   if( gam->getUserRecord( "HoEm" ).toDouble() > m_gam_HoEm_max ) return false;
 
    double const gamPt = gam->getPt();
 
@@ -1225,18 +1227,18 @@ bool EventSelector::passVgamma2011PhotonID( pxl::Particle const *gam,
    // TODO: Remove try-block once no old samples are used anymore.
    try {
       //Jurrasic ECAL Isolation
-      if( gam->findUserRecord< double >( "ID_ECALIso" ) > maxEcalIso ) return false;
+      if( gam->getUserRecord( "ID_ECALIso" ).toDouble() > maxEcalIso ) return false;
       //Tower-based HCAL Isolation
-      if( gam->findUserRecord< double >( "ID_HCALIso" ) > maxHcalIso ) return false;
+      if( gam->getUserRecord( "ID_HCALIso" ).toDouble() > maxHcalIso ) return false;
       //hollow cone track isolation
-      if( gam->findUserRecord< double >( "ID_TrkIso" ) > maxTrackIso ) return false;
+      if( gam->getUserRecord( "ID_TrkIso" ).toDouble() > maxTrackIso ) return false;
    } catch( std::runtime_error ) {
       // Jurrasic ECAL Isolation.
-      if( gam->findUserRecord< double >( "ECALIso" ) > maxEcalIso ) return false;
+      if( gam->getUserRecord( "ECALIso" ).toDouble() > maxEcalIso ) return false;
       // Tower-based HCAL Isolation.
-      if( gam->findUserRecord< double >( "HCALIso" ) > maxHcalIso ) return false;
+      if( gam->getUserRecord( "HCALIso" ).toDouble() > maxHcalIso ) return false;
       // Hollow cone track isolation.
-      if( gam->findUserRecord< double >( "TrkIso" ) > maxTrackIso ) return false;
+      if( gam->getUserRecord( "TrkIso" ).toDouble() > maxTrackIso ) return false;
    }
 
    return true;
@@ -1251,9 +1253,9 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
    double const gamPt  = gam->getPt();
    double const abseta = fabs( gam->getEta() );
 
-   double const chargedHadronEA = m_gam_EA.getEffectiveArea( abseta, PhotonEffectiveArea::chargedHadron );
-   double const neutralHadronEA = m_gam_EA.getEffectiveArea( abseta, PhotonEffectiveArea::neutralHadron );
-   double const photonEA        = m_gam_EA.getEffectiveArea( abseta, PhotonEffectiveArea::photon );
+   double const chargedHadronEA = m_gam_EA.getEffectiveArea( abseta, EffectiveArea::chargedHadron );
+   double const neutralHadronEA = m_gam_EA.getEffectiveArea( abseta, EffectiveArea::neutralHadron );
+   double const photonEA        = m_gam_EA.getEffectiveArea( abseta, EffectiveArea::photon );
 
    bool eleVeto_require = m_gam_barrel_electronVeto_require;
 
@@ -1281,22 +1283,22 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
                       + m_gam_endcap_PFIsoPhoton_slope * gamPt;
    }
 
-   if( eleVeto_require and gam->findUserRecord< bool >( "hasMatchedPromptElectron" ) ) return false;
+   if( eleVeto_require and gam->getUserRecord( "hasMatchedPromptElectron" ).asBool() ) return false;
 
-   if( gam->findUserRecord< double >( "HoverE2012" ) > HoEm2012_max ) return false;
+   if( gam->getUserRecord( "HoverE2012" ).toDouble() > HoEm2012_max ) return false;
 
    // Correct the isolation variables accrding to:
    // https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012#Effective_Areas_for_rho_correcti
    // (r20: 2013-01-10)
-   double const chargedIsoCorr = max( gam->findUserRecord< double >( "PFIso03ChargedHadron" ) -
+   double const chargedIsoCorr = max( gam->getUserRecord( "PFIso03ChargedHadron" ).toDouble() -
                                       gamRho * chargedHadronEA,
                                       0.0
                                       );
-   double const neutralIsoCorr = max( gam->findUserRecord< double >( "PFIso03NeutralHadron" ) -
+   double const neutralIsoCorr = max( gam->getUserRecord( "PFIso03NeutralHadron" ).toDouble() -
                                       gamRho * neutralHadronEA,
                                       0.0
                                       );
-   double const photonIsoCorr = max( gam->findUserRecord< double >( "PFIso03Photon" ) -
+   double const photonIsoCorr = max( gam->getUserRecord( "PFIso03Photon" ).toDouble() -
                                      gamRho * photonEA,
                                      0.0
                                      );
@@ -1322,21 +1324,21 @@ void EventSelector::applyCutsOnJet( pxl::EventView* EvtView, std::vector< pxl::P
       // TODO: Update to use new variable "isPFJet" implemented in Skimmer that
       // should be available in 5XY skimmed samples!
       // If any of the three is false, we don't count the jet as PF.
-      thisJet->setUserRecord< bool >( "isPF", isRec and m_jet_isPF and acceptJet );
+      thisJet->setUserRecord( "isPF", isRec and m_jet_isPF and acceptJet );
 
       // bJet?
       if( m_jet_bJets_use and acceptJet ) {
          if( isRec ) {
-            if( thisJet->findUserRecord< float >( m_jet_bJets_algo ) > m_jet_bJets_discr_min ) {
-               thisJet->setUserRecord< string >( "bJetType", m_jet_bJets_algo );
+            if( thisJet->getUserRecord( m_jet_bJets_algo ).toDouble() > m_jet_bJets_discr_min ) {
+               thisJet->setUserRecord( "bJetType", m_jet_bJets_algo );
             } else {
-               thisJet->setUserRecord< string >( "bJetType", "nonB" );
+               thisJet->setUserRecord( "bJetType", "nonB" );
             }
          } else {
-            if( abs( thisJet->findUserRecord< int >( m_jet_bJets_genFlavourAlgo ) ) == 5 ) {
-               thisJet->setUserRecord< string >( "bJetType", m_jet_bJets_gen_label );
+            if( abs( thisJet->getUserRecord( m_jet_bJets_genFlavourAlgo ).toInt32() ) == 5 ) {
+               thisJet->setUserRecord( "bJetType", m_jet_bJets_gen_label );
             } else {
-               thisJet->setUserRecord< string >( "bJetType", "nonB" );
+               thisJet->setUserRecord( "bJetType", "nonB" );
             }
          }
       }
@@ -1356,30 +1358,30 @@ bool EventSelector::passJet( pxl::Particle *jet, const bool &isRec ) const {
       return false;
    if( isRec ) {
       if( m_jet_ID_use ) {
-         if( not jet->findUserRecord< bool >( m_jet_ID_name ) ) return false;
+         if( not jet->getUserRecord( m_jet_ID_name ).asBool() ) return false;
       } else {
          // We do it ourselves!
-         if( not jet->findUserRecord< float >( "neutralHadronEnergyFraction" ) < m_jet_nHadEFrac_max )
+         if( not jet->getUserRecord( "neutralHadronEnergyFraction" ).toDouble() < m_jet_nHadEFrac_max )
             return false;
-         if( not jet->findUserRecord< float >( "neutralEmEnergyFraction" ) < m_jet_nEMEFrac_max )
+         if( not jet->getUserRecord( "neutralEmEnergyFraction" ).toDouble() < m_jet_nEMEFrac_max )
             return false;
          // This variable is unnecessarily stored as a double! Not any more!!
-         if( jet->findUserRecord< unsigned long >( "nconstituents" ) < m_jet_numConstituents_min )
+         if( jet->getUserRecord( "nconstituents" ).asUInt32() < m_jet_numConstituents_min )
             return false;
          // Additional cuts if |eta|>2.4:
          if( absEta > 2.4 ) {
-            if( not jet->findUserRecord< float >( "chargedHadronEnergyFraction" ) > m_jet_cHadEFrac_min )
+            if( not jet->getUserRecord( "chargedHadronEnergyFraction" ).toDouble() > m_jet_cHadEFrac_min )
                return false;
-            if( not jet->findUserRecord< float >( "chargedEmEnergyFraction" ) < m_jet_cEMEFrac_max )
+            if( not jet->getUserRecord( "chargedEmEnergyFraction" ).toDouble() < m_jet_cEMEFrac_max )
                return false;
             // This variable is unnecessarily stored as a double!
-            if( jet->findUserRecord< unsigned long >( "chargedMultiplicity" ) < m_jet_cMultiplicity_min )
+            if( jet->getUserRecord( "chargedMultiplicity" ).asUInt32() < m_jet_cMultiplicity_min )
                return false;
          }
       }
    } else {
-      double const HadOverEm = jet->findUserRecord< float >( "HadE" ) / jet->findUserRecord< float >( "EmE" );
-      double const HadEFrac  = jet->findUserRecord< float >( "HadE" ) / jet->getE();
+      double const HadOverEm = jet->getUserRecord( "HadE" ).toDouble() / jet->getUserRecord( "EmE" ).toDouble();
+      double const HadEFrac  = jet->getUserRecord( "HadE" ).toDouble() / jet->getE();
 
       if( HadOverEm < m_jet_gen_hadOverEm_min ) return false;
       if( HadEFrac  < m_jet_gen_hadEFrac_min )  return false;
@@ -1400,7 +1402,7 @@ void EventSelector::countParticles( pxl::EventView *EvtView,
    else
       label += m_gen_rec_map.get( name ).GenName;
 
-   EvtView->setUserRecord< int >( label, particles.size() );
+   EvtView->setUserRecord( label, particles.size() );
 }
 
 
@@ -1409,7 +1411,7 @@ void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Partic
    unsigned int numB = 0;
    if( m_jet_bJets_use ) {
       for( vector< Particle* >::const_iterator jet = jets.begin(); jet != jets.end(); ++jet ) {
-         if( (*jet)->findUserRecord< string >( "bJetType" ) == "nonB" ) {
+         if( (*jet)->getUserRecord( "bJetType" ).asString() == "nonB" ) {
             ++numJet;
          } else {
             ++numB;
@@ -1429,8 +1431,8 @@ void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Partic
       labelBJet += m_jet_bJets_gen_label;
    }
 
-   EvtView->setUserRecord< int >( labelJet,  numJet );
-   EvtView->setUserRecord< int >( labelBJet, numB );
+   EvtView->setUserRecord( labelJet,  numJet );
+   EvtView->setUserRecord( labelBJet, numB );
 }
 
 
@@ -1485,7 +1487,7 @@ void EventSelector::applyCutsOnVertex( pxl::EventView* EvtView, std::vector< pxl
       //check quality
       bool quality_OK;
       if( isRec ) {
-         quality_OK = ( !(*PV)->findUserRecord< bool >( "IsFake" ) and (*PV)->findUserRecord< double >( "ndof" ) >= m_PV_ndof_min );
+         quality_OK = ( !(*PV)->getUserRecord( "IsFake" ).asBool() and (*PV)->getUserRecord( "ndof" ).toInt32() >= m_PV_ndof_min );
       } else {
          //gen level quality is alway fine
          quality_OK = true;
@@ -1502,7 +1504,7 @@ void EventSelector::applyCutsOnVertex( pxl::EventView* EvtView, std::vector< pxl
    //ATTENTION: changing PV-vector!
    vertices = PVafterCuts;
 
-   EvtView->setUserRecord< int >( "NumPV", numPV );
+   EvtView->setUserRecord( "NumPV", numPV );
 }
 
 
@@ -1518,23 +1520,26 @@ bool EventSelector::applyGlobalEventCuts( pxl::EventView* EvtView,
    //check that we got enough PVs
    if( numPV < m_PV_num_min ) return false;
 
-   if( EvtView->findUserRecord< std::string >( "Type" ) == "Rec" ){
+   if( EvtView->getUserRecord( "Type" ).asString() == "Rec" ){
       //only HCAL noise ID cut on rec level in the moment
       //return true when empty to disable cut
       if( not m_runOnFastSim )
-         if( m_hcal_noise_ID_use and EvtView->findUserRecord< bool >( m_hcal_noise_ID_name ) ) return false;
+         if( m_hcal_noise_ID_use and EvtView->getUserRecord( m_hcal_noise_ID_name ).asBool() ) return false;
 
       // Use cut on track number?
+      //does not work for miniAOD -- no tracks!
       if( m_tracks_use )
-         if( EvtView->findUserRecord< unsigned int >( "Num" + m_tracks_type ) > m_tracks_num_max ) return false;
+         if( EvtView->getUserRecord( "Num" + m_tracks_type ).asUInt32() > m_tracks_num_max ) return false;
    }
 
-   for( std::vector< pxl::Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ){
-      for( std::vector< pxl::Particle* >::const_iterator met = mets.begin(); met != mets.end(); ++met ){
-         double delta_phi = fabs( (*ele)->getVector().deltaPhi( dynamic_cast< const pxl::Basic3Vector* >( &((*met)->getVector()) ) ) );
-         if( delta_phi < m_met_dphi_ele_min ) return false;
-      }
-   }
+   //this makes no sence at all here!!!
+   //if anythig why only electrons
+   //for( std::vector< pxl::Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ){
+      //for( std::vector< pxl::Particle* >::const_iterator met = mets.begin(); met != mets.end(); ++met ){
+         //double delta_phi = fabs( (*ele)->getVector().deltaPhi( dynamic_cast< const pxl::Basic3Vector* >( &((*met)->getVector()) ) ) );
+         //if( delta_phi < m_met_dphi_ele_min ) return false;
+      //}
+   //}
 
    //nothing went wrong, good event
    return true;
@@ -1574,23 +1579,23 @@ void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles
 
 //--------------------This is the main method to perform the selection-----------------------------------------
 void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //used with either GenEvtView or RecEvtView
-   string process = EvtView->findUserRecord<std::string>("Process");
-   bool isRec = (EvtView->findUserRecord<std::string>("Type") == "Rec");
+   string process = EvtView->getUserRecord("Process");
+   bool isRec = (EvtView->getUserRecord("Type").asString() == "Rec");
    if (JES == -1){
        process += "_JES_DOWN";
-       EvtView->setUserRecord<std::string>("Process", process);
+       EvtView->setUserRecord("Process", process);
     } else if(JES == 1){
        process += "_JES_UP";
-       EvtView->setUserRecord<std::string>("Process", process);
+       EvtView->setUserRecord("Process", process);
     }
 
    const bool filterAccept = passFilterSelection( EvtView, isRec );
-   EvtView->setUserRecord< bool >( "filter_accept", filterAccept );
+   EvtView->setUserRecord( "filter_accept", filterAccept );
 
    const bool L1_accept = m_triggerSelector.passL1Trigger( EvtView, isRec );
-   EvtView->setUserRecord< bool >( "L1_accept", L1_accept );
+   EvtView->setUserRecord( "L1_accept", L1_accept );
    if(!m_useTrigger){
-       EvtView->setUserRecord< bool >( "L1_accept", true );
+       EvtView->setUserRecord( "L1_accept", true );
    }
 
    double eleRho = 0.0;
@@ -1598,9 +1603,9 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    // rho is only available in Rec.
    if( isRec ) {
 
-      eleRho = EvtView->findUserRecord< double >( m_ele_rho_label );
+      eleRho = EvtView->getUserRecord( m_ele_rho_label );
 
-      double rho25 = EvtView->findUserRecord< double >( m_rho_use );
+      double rho25 = EvtView->getUserRecord( m_rho_use );
       // TODO: Remove this block once corrected.
       // In the current version of the Skimmer, the wrong number value is stored
       // in the rho25 variable. Until the correct values are available, the
@@ -1610,7 +1615,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
       // "rho25": rho value with eta_max = 2.5
       // "rho44": rho value with eta_max = 4.4
       try {
-         EvtView->findUserRecord< double >( "rho" );
+         EvtView->getUserRecord( "rho" );
       } catch( std::runtime_error &e ) {
          // The correction factor is purley empirical and extracted from a very
          // limited set of MC (DY) and SingleMu events. This is only a temporary
@@ -1627,9 +1632,9 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
          // saved in the variable 'rho' rather than 'rho44'. So make sure
          // rho(eta_max = 4.4) is always used here.
          try {
-            gamRho = EvtView->findUserRecord< double >( m_gam_rho_label );
+            gamRho = EvtView->getUserRecord( m_gam_rho_label );
          } catch( std::runtime_error ) {
-            gamRho = EvtView->findUserRecord< double >( m_rho_use );
+            gamRho = EvtView->getUserRecord( m_rho_use );
          }
       }
    }
@@ -1715,7 +1720,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    bool global_accept = applyGlobalEventCuts( EvtView, vertices, eles, mets );
 
    bool topo_accept = passEventTopology( muons, eles, taus, gammas, jets, mets );
-   EvtView->setUserRecord< bool >( "topo_accept", topo_accept );
+   EvtView->setUserRecord( "topo_accept", topo_accept );
 
    if(m_useTrigger){
        // Check if there are any unprescaled single muon or single electron
@@ -1733,7 +1738,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
                                                            mets,
                                                            EvtView
                                                            );
-          EvtView->setUserRecord< bool >( "Veto", vetoed );
+          EvtView->setUserRecord( "Veto", vetoed );
 
           bool const HLT_accept = m_triggerSelector.passHLTrigger( isRec,
                                                                    muons,
@@ -1744,35 +1749,35 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
                                                                    mets,
                                                                    EvtView
                                                                    );
-          EvtView->setUserRecord< bool >( "HLT_accept", HLT_accept );
+          EvtView->setUserRecord( "HLT_accept", HLT_accept );
 
           bool const triggerAccept = HLT_accept and L1_accept;
-          EvtView->setUserRecord< bool >( "trigger_accept", triggerAccept );
+          EvtView->setUserRecord( "trigger_accept", triggerAccept );
 
           bool const non_topo_accept = global_accept && filterAccept && triggerAccept && !vetoed;
-          EvtView->setUserRecord< bool >( "non_topo_accept", non_topo_accept );
+          EvtView->setUserRecord( "non_topo_accept", non_topo_accept );
 
           //event accepted after all cuts
           bool accepted = topo_accept && non_topo_accept;
-          EvtView->setUserRecord< bool >( "accepted", accepted );
+          EvtView->setUserRecord( "accepted", accepted );
        } else {
-          EvtView->setUserRecord< bool >( "HLT_accept", false );
-          EvtView->setUserRecord< bool >( "Veto", false );
-          EvtView->setUserRecord< bool >( "trigger_accept", false );
-          EvtView->setUserRecord< bool >( "non_topo_accept", false );
-          EvtView->setUserRecord< bool >( "accepted", false );
+          EvtView->setUserRecord( "HLT_accept", false );
+          EvtView->setUserRecord( "Veto", false );
+          EvtView->setUserRecord( "trigger_accept", false );
+          EvtView->setUserRecord( "non_topo_accept", false );
+          EvtView->setUserRecord( "accepted", false );
        }
    }else{
-       EvtView->setUserRecord< bool >( "HLT_accept", true );
-       EvtView->setUserRecord< bool >( "Veto", true );
-       EvtView->setUserRecord< bool >( "trigger_accept", true );
-       EvtView->setUserRecord< bool >( "non_topo_accept", true );
-       EvtView->setUserRecord< bool >( "accepted", true );
+       EvtView->setUserRecord( "HLT_accept", true );
+       EvtView->setUserRecord( "Veto", true );
+       EvtView->setUserRecord( "trigger_accept", true );
+       EvtView->setUserRecord( "non_topo_accept", true );
+       EvtView->setUserRecord( "accepted", true );
    }
 
    // For gen: check if generator cuts are fulfilled.
    if( !isRec ) {
-      EvtView->setUserRecord< bool >( "generator_accept", m_gen_accept.passGeneratorCuts( EvtView, s3_particles ) );
+      EvtView->setUserRecord( "generator_accept", m_gen_accept.passGeneratorCuts( EvtView, s3_particles ) );
    }
 }
 
@@ -1820,13 +1825,13 @@ bool EventSelector::passEventTopology( int const numMuo,
 
    //cout << endl << "   Starting EventViewDump: " << endl
                 //<< "   ======================= " << endl << endl;
-   //cout << "      in detail : " << " #Ele = " << EvtView->findUserRecord<int>("NumEle")
-                                //<< ", #Mu = " << EvtView->findUserRecord<int>("NumMuon")
-                                //<< ", #Gam = " << EvtView->findUserRecord<int>("NumGamma")
-            //<< ", #" << m_met_type << " = " << EvtView->findUserRecord< int >( "Num" + m_met_type )
-            //<< ", #" << m_jet_algo << " = " << EvtView->findUserRecord< int >( "Num" + m_jet_algo )
-            //<< ", #" << m_jet_bJets_algo  << " = " << EvtView->findUserRecord< int >( "Num" + m_jet_bJets_algo )
-            //<< ", #Vertices = " << EvtView->findUserRecord<int>("NumVertices") << endl;
+   //cout << "      in detail : " << " #Ele = " << EvtView->getUserRecord("NumEle")
+                                //<< ", #Mu = " << EvtView->getUserRecord("NumMuon")
+                                //<< ", #Gam = " << EvtView->getUserRecord("NumGamma")
+            //<< ", #" << m_met_type << " = " << EvtView->getUserRecord( "Num" + m_met_type )
+            //<< ", #" << m_jet_algo << " = " << EvtView->getUserRecord( "Num" + m_jet_algo )
+            //<< ", #" << m_jet_bJets_algo  << " = " << EvtView->getUserRecord( "Num" + m_jet_bJets_algo )
+            //<< ", #Vertices = " << EvtView->getUserRecord("NumVertices") << endl;
    //cout << "      Type      : " <<  EvtView->findUserRecord<string>("Type") << endl;
    //// loop over all particles:
    //vector<Particle*> particles;
@@ -1839,8 +1844,8 @@ bool EventSelector::passEventTopology( int const numMuo,
    //if (EvtView->findUserRecord<string>("Type") == "Rec") {
 
       ////this record steers if event is globally accepted by trigger, depending on "OR" of the HLT-path selected
-      //cout << endl << "      HLT accept?   : " << EvtView->findUserRecord<bool>("HLT_accept", false) << endl;
+      //cout << endl << "      HLT accept?   : " << EvtView->getUserRecord("HLT_accept", false) << endl;
    //}
    ////this record steers if event is globally accepted by event topology criteria
-   //cout << "      Topo accept?   : " << EvtView->findUserRecord<bool>("Topo_accept", false) << endl;
+   //cout << "      Topo accept?   : " << EvtView->getUserRecord("Topo_accept", false) << endl;
 //}

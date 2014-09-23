@@ -38,7 +38,7 @@ bool GenSelector::passGeneratorCuts( pxl::EventView const *EvtView,
 bool GenSelector::passBinningCuts( pxl::EventView const *EvtView ) const {
    // check binning value
    if( m_binningValue_max > 0 and
-       EvtView->findUserRecord< double >( "binScale" ) > m_binningValue_max
+       EvtView->getUserRecord( "binScale" ).toDouble() > m_binningValue_max
        ) {
       return false;
    }
@@ -56,10 +56,10 @@ bool GenSelector::passMassCuts( pxlParticles const &s3_particles ) const {
 
    for( pxlParticles::const_iterator part = s3_particles.begin(); part != s3_particles.end(); ++part ) {
       if( ( m_mass_IDs.size() == 0
-            or std::find( m_mass_IDs.begin(), m_mass_IDs.end(), (*part)->findUserRecord< int >( "id" ) ) != m_mass_IDs.end()
+            or std::find( m_mass_IDs.begin(), m_mass_IDs.end(), (*part)->getUserRecord( "id" ).toInt32() ) != m_mass_IDs.end()
             ) and
           ( m_mass_MotherIDs.size() == 0
-            or std::find( m_mass_MotherIDs.begin(), m_mass_MotherIDs.end(), (*part)->findUserRecord< int >( "mother_id" ) ) != m_mass_MotherIDs.end()
+            or std::find( m_mass_MotherIDs.begin(), m_mass_MotherIDs.end(), (*part)->getUserRecord( "mother_id" ).toInt32() ) != m_mass_MotherIDs.end()
             ) ) {
          s3_particlesSelected.push_back( *part );
       }
@@ -93,10 +93,10 @@ bool GenSelector::passTransverseMomentumCuts( pxlParticles const &s3_particles )
 
    for( pxlParticles::const_iterator part = s3_particles.begin(); part != s3_particles.end(); ++part ) {
       if( ( m_pt_IDs.size() == 0
-            or std::find( m_pt_IDs.begin(), m_pt_IDs.end(), (*part)->findUserRecord< int >( "id" ) ) != m_pt_IDs.end()
+            or std::find( m_pt_IDs.begin(), m_pt_IDs.end(), (*part)->getUserRecord( "id" ).toInt32() ) != m_pt_IDs.end()
             ) and
           ( m_pt_MotherIDs.size() == 0
-            or std::find( m_pt_MotherIDs.begin(), m_pt_MotherIDs.end(), (*part)->findUserRecord< int >( "mother_id" ) ) != m_pt_MotherIDs.end()
+            or std::find( m_pt_MotherIDs.begin(), m_pt_MotherIDs.end(), (*part)->getUserRecord( "mother_id" ).toInt32() ) != m_pt_MotherIDs.end()
             ) ) {
          s3_particlesSelected.push_back( *part );
       }
@@ -124,13 +124,13 @@ bool GenSelector::CheckNumberOfParticles( pxlParticles const &s3_particlesSelect
 
    if( s3_particlesSelected.size() < 2 ) {
       for( pxlParticles::const_iterator part = s3_particlesSelected.begin(); part != s3_particlesSelected.end(); ++part ) {
-         std::cerr << "ID=" << ( *part )->findUserRecord< int >( "id" ) << " mother=" << (*part)->findUserRecord< int >( "mother_id" ) << std::endl;
+         std::cerr << "ID=" << ( *part )->getUserRecord( "id" ).toInt32() << " mother=" << (*part)->getUserRecord( "mother_id" ).toInt32() << std::endl;
       }
       throw std::length_error( "Can't build resonance particle with less than 2 particles." );
    }
    else if( s3_particlesSelected.size() > 3 ) {
       for( pxlParticles::const_iterator part = s3_particlesSelected.begin(); part != s3_particlesSelected.end(); ++part ) {
-         std::cerr << "ID=" << ( *part )->findUserRecord< int >( "id" ) << " mother=" << (*part)->findUserRecord< int >( "mother_id" ) << std::endl;
+         std::cerr << "ID=" << ( *part )->getUserRecord( "id" ).toInt32() << " mother=" << (*part)->getUserRecord( "mother_id" ).toInt32() << std::endl;
       }
       throw std::length_error( "Can't build resonance particle with more than 2 particles." );
    }

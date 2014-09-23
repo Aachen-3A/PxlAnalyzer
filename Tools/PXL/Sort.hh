@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "Tools/PXL/PXL.hh"
+//#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 
 
 namespace pxl {

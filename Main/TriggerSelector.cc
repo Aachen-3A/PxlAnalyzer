@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 
 using std::string;
 
@@ -75,13 +76,13 @@ bool TriggerSelector::passHLTrigger( bool const isRec,
 
       // Do not call passTriggerParticles if none of the triggers in this trigger group fired anyway.
       bool const trigger_particle_accepted = any_trigger_fired ? this_group.passTriggerParticles( isRec, muos, eles, taus, gams, jets, mets ) : false;
-      evtView->setUserRecord< bool >( "trigger_particle_accept", trigger_particle_accepted );
+      evtView->setUserRecord( "trigger_particle_accept", trigger_particle_accepted );
 
       TriggerGroup::TriggerResults::const_iterator triggerResult;
       for( triggerResult = triggerResults.begin(); triggerResult != triggerResults.end(); ++triggerResult ) {
          // The trigger group is accepted if the trigger has fired and we have the
          // right particles in the event.
-         evtView->setUserRecord< bool >( "HLTAccept_" + (*triggerResult).first, (*triggerResult).second and trigger_particle_accepted );
+         evtView->setUserRecord( "HLTAccept_" + (*triggerResult).first, (*triggerResult).second and trigger_particle_accepted );
       }
 
       if( any_trigger_fired and trigger_particle_accepted ) any_group_accepted = true;
@@ -103,7 +104,7 @@ bool TriggerSelector::passL1Trigger( pxl::EventView const *evtView, bool const i
    if( not isRec ) return true;
 
    // Get the bits.
-   bool b0 = evtView->findUserRecord< bool >( m_triggerPrefix + "L1_0" );
+   bool b0 = evtView->getUserRecord( m_triggerPrefix + "L1_0" );
 
    // Bit 0 is not always properly simulated, but it doesn't make sense in MC anyway.
    if( not m_runOnData ) b0 = true;
@@ -185,8 +186,8 @@ bool TriggerSelector::checkHLTMuEle( pxl::EventView const *evtView,
    if( isRec ) {
       // Check if the event contains any unprescaled muon or electron triggers.
       bool validTriggers = false;
-      pxl::UserRecord::const_iterator it = evtView->getUserRecord().begin();
-      for( ; it != evtView->getUserRecord().end(); ++it ) {
+      pxl::UserRecords::const_iterator it = evtView->getUserRecords().begin();
+      for( ; it != evtView->getUserRecords().end(); ++it ) {
          size_t const foundMu  = (*it).first.find( "HLT_HLT_IsoMu" );
          size_t const foundEle = (*it).first.find( "HLT_HLT_Ele" );
 

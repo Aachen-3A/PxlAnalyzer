@@ -191,13 +191,13 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
                                    ) const {
    // First set for Gen all Matches to -1 and reset bools:
    for (std::vector<Particle*>::iterator gen_iter = gen_particles.begin(); gen_iter != gen_particles.end(); gen_iter++) {
-      (*gen_iter)->setUserRecord<int>(Match, -1);
-      (*gen_iter)->setUserRecord<bool>(hctaM, false);
+      (*gen_iter)->setUserRecord(Match, -1);
+      (*gen_iter)->setUserRecord(hctaM, false);
    }
    // same for Rec
    for (std::vector<Particle*>::iterator rec_iter = rec_particles.begin(); rec_iter != rec_particles.end(); rec_iter++) {
-      (*rec_iter)->setUserRecord<int>(Match, -1);
-      (*rec_iter)->setUserRecord<bool>(hctaM, false);
+      (*rec_iter)->setUserRecord(Match, -1);
+      (*rec_iter)->setUserRecord(hctaM, false);
    }
    unsigned int num_gen = gen_particles.size();
    unsigned int num_rec = rec_particles.size();
@@ -262,18 +262,18 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
       // go through every row and pushback index of Rec with smallest Distance
       for (unsigned int irow = 0; irow < num_gen; irow++) {
          int matched = SmallestRowElement(&DistanzMatrix, &DeltaPtoPtMatrix, &DeltaChargeMatrix, irow, DeltaRMatching, DeltaChargeMatching, DeltaPtoPtMatching);
-         gen_particles[irow]->setUserRecord<int>(Match, matched);
+         gen_particles[irow]->setUserRecord(Match, matched);
          if( m_debug > 1 ) {
             cerr << "[INFO] (ParticleMatcher):" << endl;
             cerr << "GenObject " << irow << " is matched with " << matched << endl;
          }
 
          if (matched != -1){
-            gen_particles[ irow ]->setUserRecord< int >( "Charge"+Match, DeltaChargeMatrix( irow, matched ) );
+            gen_particles[ irow ]->setUserRecord( "Charge"+Match, DeltaChargeMatrix( irow, matched ) );
             //redundant information with softlink, should replace the UserRecords after testing
             gen_particles[irow]->linkSoft(rec_particles[matched], linkname);
 
-            rec_particles[matched]->setUserRecord<bool>(hctaM, true);
+            rec_particles[matched]->setUserRecord(hctaM, true);
             if( m_debug > 1 ) {
                cerr << "[INFO] (ParticleMatcher):" << endl;
                cerr << "RecObject " << matched << " has matching Gen " << endl;
@@ -284,17 +284,17 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
       for (unsigned int icol = 0; icol < num_rec; icol++) {
          //define value in dR which defines matching
          int matched = SmallestColumnElement(&DistanzMatrix, &DeltaPtoPtMatrix, &DeltaChargeMatrix, icol, DeltaRMatching, DeltaChargeMatching, DeltaPtoPtMatching);
-         rec_particles[icol]->setUserRecord<int>(Match, matched);
+         rec_particles[icol]->setUserRecord(Match, matched);
          if( m_debug > 1 ) {
             cerr << "[INFO] (ParticleMatcher):" << endl;
             cerr << "RecObject " << icol << " is matched with " << matched << endl;
          }
 
          if (matched != -1) {
-            rec_particles[ icol ]->setUserRecord< int >( "Charge"+Match, DeltaChargeMatrix( matched, icol ) );
+            rec_particles[ icol ]->setUserRecord( "Charge"+Match, DeltaChargeMatrix( matched, icol ) );
             //redundant information with softlink, should replace the UserRecords after testing
             rec_particles[icol]->linkSoft(gen_particles[matched], linkname);
-            gen_particles[matched]->setUserRecord<bool>(hctaM, true);
+            gen_particles[matched]->setUserRecord(hctaM, true);
             if( m_debug > 1 ) {
                cerr << "[INFO] (ParticleMatcher):" << endl;
                cerr << "GenObject " << matched << " has matching Rec " << endl;
