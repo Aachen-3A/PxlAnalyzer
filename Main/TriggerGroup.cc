@@ -5,7 +5,8 @@
 #include <stdexcept>
 
 #include "Tools/Tools.hh"
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 
 using std::string;
 
@@ -240,7 +241,7 @@ TriggerGroup::TriggerResults TriggerGroup::getTriggerResults( pxl::EventView con
       string const triggerName = m_triggerPrefix + *trigger;
 
       try{
-         triggerResults[ triggerName ] = evtView->findUserRecord< bool >( triggerName );
+         triggerResults[ triggerName ] = evtView->getUserRecord( triggerName );
          any_trigger_found = true;
       } catch( std::runtime_error &exc ) {
          continue;

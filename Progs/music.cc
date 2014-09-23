@@ -1,17 +1,24 @@
 #include <time.h>
 
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
 #include <iostream>
 #include <iomanip>
+//#include <chrono>
+//#include <thread>
 #include "ControlPlotFactory/CcControl.hh"
 #include "ControlPlots2/RecControl.hh"
 #include "ControlPlots2/GenControl.hh"
 #include "EventClassFactory/CcEventClass.hh"
-#include "Tools/PXL/PXLdCache.hh"
+//#include "Tools/PXL/PXLdCache.hh"
 #include "Tools/argstream.h"
 #include "Tools/Tools.hh"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include <boost/filesystem/path.hpp>
+//#include <boost/thread/thread.hpp>
+#pragma GCC diagnostic pop
 
 #include "Main/EventAdaptor.hh"
 #include "Main/EventSelector.hh"
@@ -32,7 +39,7 @@ using namespace std;
 void PrintProcessInfo( ProcInfo_t &info );
 
 int main( int argc, char* argv[] ) {
-   if( getenv( "MUSIC_BASE" ) == NULL ) throw runtime_error( "MUSIC_BASE not set!" );
+   if( getenv( "MUSIC_BASE" ) == NULL ) throw std::runtime_error( "MUSIC_BASE not set!" );
 
    TDirectory::AddDirectory( kFALSE ); // Force ROOT to give directories in our hand - Yes, we can
    TH1::AddDirectory( kFALSE );        // Force ROOT to give histograms in our hand - Yes, we can
@@ -176,6 +183,9 @@ int main( int argc, char* argv[] ) {
    lumi::RunLumiRanges runcfg( RunConfigFile );
    SkipEvents skipEvents( config );
 
+   pxl::Core::initialize();
+   pxl::Hep::initialize();
+
    // Configure fork:
    pxl::AnalysisFork fork;
    fork.setName("MISFork");
@@ -205,16 +215,14 @@ int main( int argc, char* argv[] ) {
    // configure processes:
    if( runCcControl ){
       cp2::RecControl *plots = new cp2::RecControl( config, PlotConfig, &Selector );
-      fork.setObject( plots );
-      fork.setIndex( "RecControl", plots );
+      fork.insertObject( plots, "RecControl" );
+
       if( not runOnData ) {
          cp2::GenControl *gen_plots = new cp2::GenControl();
-         fork.setObject( gen_plots );
-         fork.setIndex( "GenControl", gen_plots );
+         fork.insertObject( gen_plots, "GenControl" );
 
          CcControl *old_plots = new CcControl( config );
-         fork.setObject( old_plots );
-         fork.setIndex( "CcControl", old_plots );
+         fork.insertObject( old_plots, "CcControl" );
       }
    }
    if (runCcEventClass){
@@ -225,8 +233,7 @@ int main( int argc, char* argv[] ) {
                                                  &Selector,
                                                  DumpECHistos
                                                  );
-      fork.setObject( cc_event );
-      fork.setIndex( "CcEventClass", cc_event );
+      fork.insertObject( cc_event, "CcEventClass" );
 
       if( not runOnData ){
          CcEventClass *cc_event_up = new CcEventClass( config,
@@ -236,8 +243,8 @@ int main( int argc, char* argv[] ) {
                                                        &Selector,
                                                        DumpECHistos
                                                        );
-         fork.setObject( cc_event_up );
-         fork.setIndex( "CcEventClass_JES_UP", cc_event_up );
+         fork.insertObject( cc_event_up, "CcEventClass_JES_UP" );
+
          CcEventClass *cc_event_down = new CcEventClass( config,
                                                          XSections,
                                                          -1,
@@ -245,16 +252,14 @@ int main( int argc, char* argv[] ) {
                                                          &Selector,
                                                          DumpECHistos
                                                          );
-         fork.setObject( cc_event_down );
-         fork.setIndex( "CcEventClass_JES_DOWN", cc_event_down );
+         fork.insertObject( cc_event_down, "CcEventClass_JES_DOWN" );
       }
    }
 
    specialAna *ana;
    if ( runSpecialAna ){
       ana = new specialAna( config );
-      fork.setObject( ana );
-      fork.setIndex( "specialAna", ana );
+      fork.insertObject( ana , "specialAna" );
    }
    // begin analysis
    fork.beginJob();
@@ -276,47 +281,57 @@ int main( int argc, char* argv[] ) {
 
    // initialize process info object
    ProcInfo_t info;
+   // Get file handler to access files.
+   // New PXL version knows how to handle dcap protocol.
+   //std::auto_prt< pxl::InputFile > inFile = pxl::InputFile();
+   pxl::InputFile inFile;
    for( unsigned int f = 0; f < input_files.size() && ( numberOfEvents == -1 || e < numberOfEvents ); f++ ) {
+      std::string const fileName = *file_iter;
+      // Open File:
       // open file(s):
-      pxl::InputHandler* input;
-      string filename = *file_iter;
-      if( filename.substr(0,7)  == "dcap://" || filename.substr(0,6) == "/pnfs/") {
-         input = new pxl::dCacheInputFile();
-      } else {
-         if( filename.substr(0,1) != "/" ) {
-            filename = startDir + "/" + filename;
-         }
-         input = new pxl::InputFile();
-      }
+      //pxl::InputHandler* input =
+      //if( filename.substr(0,7)  == "dcap://" || filename.substr(0,6) == "/pnfs/") {
+         //input = new pxl::dCacheInputFile();
+      //} else {
+         //if( filename.substr(0,1) != "/" ) {
+            //filename = startDir + "/" + filename;
+         //}
+         //input = new pxl::InputFile();
+      //}
 
-      cout << "Opening file " << filename << endl;
+      std::cout << "Opening file " << fileName << std::endl;
       unsigned int numTrials = 0;
       //we need to get done in 3 days, so don't wait too long
-      unsigned int timeout = 3*24*60*60/input_files.size();
-      cout << "Opening file (timeout " << timeout << " seconds) " << filename << endl;
+      //unsigned int timeout = 3*24*60*60/input_files.size();
+      //cout << "Opening file (timeout " << timeout << " seconds) " << filename << endl;
       while( true ) {
          numTrials++;
          try {
             time_t rawtime;
             time ( &rawtime );
             cout << "Opening time: " << ctime ( &rawtime );
-            input->open( filename, timeout );
-         } catch( dCache_error& d ) {
+            inFile.open( fileName );
+            //inFile.setCompressionMode(6);
+         } catch( std::runtime_error& e ) {
+            // Wait for ( 10^numTrials - 1 ) seconds before retrying.
+            //double const sleep = std::pow( 10, numTrials ) - 1.0;
+            //boost::this_thread::sleep( boost::posix_time::seconds( sleep ) );
+
+            if( numTrials < 3 ) {
+               numTrials++;
+               // Retry!
+               continue;
+            }
+
             if( not runOnData ) {
                //increase lost files counter, but don't try again
                lost_files++;
-               cout << "Failed, skipping file." << endl;
-            } else if( numTrials >= 3 ) {
-               cout <<"Failed three times."<< endl;
-               lost_files++;
-               throw;
+               std::cerr << "Failed to open file '" << fileName
+                         << "', skipping..." << std::endl;
             } else {
-               cout <<"Failed to open, trying again!"<< endl;
-               //reset the timeout for the second trial
-               if( numTrials == 1 ) timeout = 36000;
-               //try one hour in all following trials
-               else timeout = 3600;
-               continue;
+               std::cerr << "Failed to open file '" << fileName
+                         << "' three times. Aborting!" << std::endl;
+               throw e;
             }
          }
          //increase successful files counter
@@ -325,33 +340,28 @@ int main( int argc, char* argv[] ) {
       }
 
       // run event loop:
-      while (input->nextEvent()) {
+      while( inFile.good() ) {
+         //while (inFile.nextEvent()) {
+         pxl::Event* event_ptr =dynamic_cast<pxl::Event*>(inFile.readNextObject());
+
+         if(!event_ptr) continue;
+
+
+         pxl::Event event = *event_ptr;
+
          if( numberOfEvents > -1 and e >= numberOfEvents ) break;
 
-         //pxl::Objects event;
-         pxl::Event event;
-         // read event from disk
-         if ( ! input->readEvent(&event) ){
-            cout << "AAAARGH, event not properly read!" << endl;
-            if( runOnData ) {
-               return 1;
-            } else {
-               lost_files++;
-               break;
-            }
-         }
-
          // Break the event loop if the current event is not sensible (formatted correctly).
-         if( event.getUserRecord().size() == 0 ) {
-            cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << filename << "." << endl;
+         if( event.getUserRecords().size() == 0 ) {
+            cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << endl;
             cout << "WARNING: Continue with next event." << endl;
             continue;
          }
 
          //check if we shall analyze this event
-         lumi::ID run      = event.findUserRecord< lumi::ID >( "Run" );
-         lumi::ID LS       = event.findUserRecord< lumi::ID >( "LumiSection" );
-         lumi::ID eventNum = event.findUserRecord< lumi::ID >( "EventNum" );
+         lumi::ID run      = event.getUserRecord( "Run" ).toUInt32();
+         lumi::ID LS       = event.getUserRecord( "LumiSection" );
+         lumi::ID eventNum = event.getUserRecord( "EventNum" );
          if( ! runcfg.check( run, LS ) ) {
             ++skipped;
             continue;
@@ -407,13 +417,13 @@ int main( int argc, char* argv[] ) {
             }
 
             // create Copys of the original Event View and modify the JES
-            pxl::EventView *GenEvtView_JES_UP = event.create< pxl::EventView >( GenEvtView );
+            pxl::EventView *GenEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
             event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
-            pxl::EventView *RecEvtView_JES_UP = event.create< pxl::EventView >( RecEvtView );
+            pxl::EventView *RecEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
             event.setIndex( "Rec_JES_UP", RecEvtView_JES_UP );
-            pxl::EventView *GenEvtView_JES_DOWN = event.create< pxl::EventView >( GenEvtView );
+            pxl::EventView *GenEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
             event.setIndex( "Gen_JES_DOWN", GenEvtView_JES_DOWN );
-            pxl::EventView *RecEvtView_JES_DOWN = event.create< pxl::EventView >( RecEvtView );
+            pxl::EventView *RecEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
             event.setIndex( "Rec_JES_DOWN", RecEvtView_JES_DOWN );
 
             // Sometimes a particle is unsorted in an event, where it should be
@@ -453,8 +463,8 @@ int main( int argc, char* argv[] ) {
             }
          }
          // run the fork ..
-         fork.analyseEvent( event );
-         fork.finishEvent( event );
+         fork.analyseEvent( &event );
+         fork.finishEvent( &event );
 
          e++;
          if( e < 10 || ( e < 100 && e % 10 == 0 ) ||
@@ -466,8 +476,7 @@ int main( int argc, char* argv[] ) {
 
          if( e % 100000 == 0 ) PrintProcessInfo( info );
       }
-      input->close();
-      delete input;
+      inFile.close();
       ++file_iter;
    }
 
@@ -479,13 +488,13 @@ int main( int argc, char* argv[] ) {
    cout << "Analyzed " << e << " Events, skipped " << skipped << ", elapsed CPU time: " << dTime2-dTime1 << " ("<< double(e)/(dTime2-dTime1) <<" evts per sec)" << endl;
    if( lost_files >= 0.5*( lost_files + analyzed_files ) ) {
       cout << "Error: Too many files lost!" << endl;
-      throw runtime_error( "Too many files lost." );
+      throw std::runtime_error( "Too many files lost." );
    } else if( lost_files > 0 ) {
       cout << "Warning: " << lost_files << " of " << ( lost_files + analyzed_files ) << " files lost due to timeouts or read errors." << endl;
    }
    if( (e+skipped) == 0 ) {
       cout << "Error: No event analayzed!" << endl;
-      throw runtime_error( "No event analayzed!" );
+      throw std::runtime_error( "No event analayzed!" );
    }
    cout << "\n\n\n" << endl;
 

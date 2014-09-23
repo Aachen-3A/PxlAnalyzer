@@ -22,13 +22,13 @@ void ReWeighter::ReWeightEvent( const pxl::Event &event ) {
    pxl::EventView *GenEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Gen" );
 
    // Disable generator weights.
-   if( not m_useGenWeights ) GenEvtView->setUserRecord< double >( "Weight", 1.0 );
+   if( not m_useGenWeights ) GenEvtView->setUserRecord( "Weight", 1.0 );
 
    if( m_usePileUpReWeighting ) {
-      float const numVerticesPUTrue = GenEvtView->findUserRecord< float >( "NumVerticesPUTrue" );
+      float const numVerticesPUTrue = GenEvtView->getUserRecord( "NumVerticesPUTrue" );
 
       double const pileupWeight = m_LumiWeights.weight( numVerticesPUTrue );
 
-      GenEvtView->setUserRecord< double >( "PUWeight", pileupWeight );
+      GenEvtView->setUserRecord( "PUWeight", pileupWeight );
    }
 }

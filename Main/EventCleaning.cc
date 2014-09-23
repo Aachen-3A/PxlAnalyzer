@@ -2,7 +2,9 @@
 
 #include "TMath.h"
 
-#include "Tools/PXL/PXL.hh"
+//PXL
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/MConfig.hh"
 
 
@@ -265,8 +267,8 @@ int EventCleaning::checkGammaOverlap( pxl::Particle const *paI,
 int EventCleaning::checkNormChi2( pxl::Particle const *p1,
                                   pxl::Particle const *p2
                                   ) const {
-   double const normChi2_1 = p1->findUserRecord< double >( "NormChi2" );
-   double const normChi2_2 = p2->findUserRecord< double >( "NormChi2" );
+   double const normChi2_1 = p1->getUserRecord( "NormChi2" );
+   double const normChi2_2 = p2->getUserRecord( "NormChi2" );
 
    return normChi2_1 >= normChi2_2 ? -1 : 1;
 }
@@ -275,11 +277,11 @@ int EventCleaning::checkNormChi2( pxl::Particle const *p1,
 int EventCleaning::checkProbability( pxl::Particle const *p1,
                                      pxl::Particle const *p2
                                      ) const {
-   double const chi2_1 = p1->findUserRecord< double >( "chi2" );
-   double const ndof_1 = p1->findUserRecord< double >( "ndof" );
+   double const chi2_1 = p1->getUserRecord( "chi2" );
+   double const ndof_1 = p1->getUserRecord( "ndof" );
 
-   double const chi2_2 = p2->findUserRecord< double >( "chi2" );
-   double const ndof_2 = p2->findUserRecord< double >( "ndof" );
+   double const chi2_2 = p2->getUserRecord( "chi2" );
+   double const ndof_2 = p2->getUserRecord( "ndof" );
 
    double const prob_1 = TMath::Prob( chi2_1, ndof_1 );
    double const prob_2 = TMath::Prob( chi2_2, ndof_2 );
@@ -306,8 +308,8 @@ bool EventCleaning::checkParticleOverlap( pxl::Particle const *p1,
 bool EventCleaning::checkSeedOverlap( pxl::Particle const *p1,
                                       pxl::Particle const *p2
                                       ) const {
-   unsigned int const seedID1 = p1->findUserRecord< unsigned int >( "seedId" );
-   unsigned int const seedID2 = p2->findUserRecord< unsigned int >( "seedId" );
+   unsigned int const seedID1 = p1->getUserRecord( "seedId" );
+   unsigned int const seedID2 = p2->getUserRecord( "seedId" );
 
    if( seedID1 == seedID2 ) return true;
 
@@ -318,8 +320,8 @@ bool EventCleaning::checkSeedOverlap( pxl::Particle const *p1,
 bool EventCleaning::checkTrack( pxl::Particle const *p1,
                                 pxl::Particle const *p2
                                 ) const {
-   double const TrackerP1 = p1->findUserRecord< double >( "TrackerP" );
-   double const TrackerP2 = p2->findUserRecord< double >( "TrackerP" );
+   double const TrackerP1 = p1->getUserRecord( "TrackerP" );
+   double const TrackerP2 = p2->getUserRecord( "TrackerP" );
 
    if( TrackerP1 == TrackerP2 ) return true;
 

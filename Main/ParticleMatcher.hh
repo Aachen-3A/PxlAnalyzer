@@ -9,7 +9,8 @@ matching particle has a distance large than the given limits for DeltaR, DeltaPt
 declared to have no match. For unmatched particles Match UserRecord is set to -1.
 */
 
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/PXL/JetSubtypeCriterion.hh"
 #include "TMatrixT.h"
 #include <string>

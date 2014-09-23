@@ -3,8 +3,11 @@
 #include <iostream>
 #include <utility> // make_pair
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#pragma GCC diagnostic pop
 
 #include "Tools/MConfig.hh"
 #include "Tools/Tools.hh"

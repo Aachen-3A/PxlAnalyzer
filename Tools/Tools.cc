@@ -4,7 +4,10 @@
 #include <cstdlib>
 #include <iostream>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include <boost/algorithm/string.hpp>
+#pragma GCC diagnostic pop
 
 std::string Tools::musicAbsPath( std::string relPath ){
    if( relPath.substr(0,1) == "/" ) return relPath;

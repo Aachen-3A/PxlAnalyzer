@@ -3,7 +3,8 @@
 #include <cmath>
 
 #include "Tools/Tools.hh"
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 
 JetResolution::JetResolution( Tools::MConfig const &config ) :
    m_jet_res_config( Tools::AbsolutePath( config.GetItem< std::string >( "Jet.Resolutions.Corr.File" ) ) ),

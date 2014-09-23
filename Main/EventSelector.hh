@@ -8,9 +8,11 @@ Decision.
 
 */
 #include <string>
-#include "Tools/PXL/PXL.hh"
+#include "Pxl/Pxl/interface/pxl/core.hh"
+#include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/MConfig.hh"
 #include "TriggerSelector.hh"
+#include "MuonSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
@@ -18,7 +20,9 @@ Decision.
 #include "Main/GenSelector.hh"
 #include "Main/EventCleaning.hh"
 #include "Main/GenRecNameMap.hh"
-#include "Main/PhotonEffectiveArea.hh"
+#include "Main/EffectiveArea.hh"
+
+
 
 class EventSelector {
 public:
@@ -60,7 +64,7 @@ private:
    // perform cuts on Particle Level
    //ATTENTION: changes particle vector!
    void applyCutsOnMuon( pxl::EventView *EvtView, std::vector< pxl::Particle* > &muons, const bool& isRec );
-   bool passMuon( pxl::Particle *muon, const bool& isRec );
+
 
    void applyCutsOnEle( std::vector< pxl::Particle* > &eles,
                         double const eleRho,
@@ -184,6 +188,29 @@ private:
    std::string const  m_tracks_type;
    unsigned int const m_tracks_num_max;
 
+    // Muons:
+   bool const        m_muo_use;
+   bool const        m_muo_filter;
+   MuonSelector const m_muo_selector;
+   //double const      m_muo_pt_min;
+   //double const      m_muo_eta_max;
+   //bool const        m_muo_invertIso;
+   //bool const        m_muo_requireIsGlobal;
+   //bool const        m_muo_requireIsTracker;
+   //bool const        m_muo_requireIsPF;
+   //std::string const m_muo_iso_type;
+   //double const      m_muo_iso_max;
+   //bool const        m_muo_iso_useDeltaBetaCorr;
+   //int const         m_muo_NPixelHits_min;
+   //int const         m_muo_NMuonHits_min;
+   //int const         m_muo_NMatchedStations_min;
+   //int const         m_muo_NTrackerLayersWithMeas_min;
+   //double const      m_muo_XYImpactParameter_max;
+   //double const      m_muo_ZImpactParameter_max;
+   //double const      m_muo_globalChi2_max;
+   //bool const        m_muo_HighPtMuonID_use;
+   //double const      m_muo_dPtRelTrack_max;
+
    // Electrons:
    bool const   m_ele_use;
    double const m_ele_pt_min;
@@ -253,26 +280,7 @@ private:
    bool const m_ele_ID_use;
    std::string const m_ele_ID_name;
 
-   // Muons:
-   bool const        m_muo_use;
-   double const      m_muo_pt_min;
-   double const      m_muo_eta_max;
-   bool const        m_muo_invertIso;
-   bool const        m_muo_requireIsGlobal;
-   bool const        m_muo_requireIsTracker;
-   bool const        m_muo_requireIsPF;
-   std::string const m_muo_iso_type;
-   double const      m_muo_iso_max;
-   bool const        m_muo_iso_useDeltaBetaCorr;
-   int const         m_muo_NPixelHits_min;
-   int const         m_muo_NMuonHits_min;
-   int const         m_muo_NMatchedStations_min;
-   int const         m_muo_NTrackerLayersWithMeas_min;
-   double const      m_muo_XYImpactParameter_max;
-   double const      m_muo_ZImpactParameter_max;
-   double const      m_muo_globalChi2_max;
-   bool const        m_muo_HighPtMuonID_use;
-   double const      m_muo_dPtRelTrack_max;
+
 
    // Taus:
    bool const   m_tau_use;
@@ -302,7 +310,7 @@ private:
 
    // CutBasedPhotonID2012:
    bool const m_gam_CutBasedPhotonID2012_use;
-   PhotonEffectiveArea const m_gam_EA;
+   EffectiveArea const m_gam_EA;
    std::string const m_gam_rho_label;
    // Barrel:
    bool const   m_gam_barrel_electronVeto_require;
