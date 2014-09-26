@@ -13,6 +13,7 @@ Decision.
 #include "Tools/MConfig.hh"
 #include "TriggerSelector.hh"
 #include "MuonSelector.hh"
+#include "EleSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
@@ -63,32 +64,32 @@ private:
    bool passFilterSelection( pxl::EventView *EvtView, const bool isRec );
    // perform cuts on Particle Level
    //ATTENTION: changes particle vector!
-   void applyCutsOnMuon( pxl::EventView *EvtView, std::vector< pxl::Particle* > &muons, const bool& isRec );
+   void applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool& isRec );
 
 
    void applyCutsOnEle( std::vector< pxl::Particle* > &eles,
                         double const eleRho,
-                        bool const isRec
+                        bool const &isRec
                         ) const;
-   bool passEle( pxl::Particle const *ele,
-                 double const eleRho,
-                 bool const isRec
-                 ) const;
-   bool passCBID( pxl::Particle const *ele,
-                  double const elePt,
-                  double const eleAbsEta,
-                  bool const eleBarrel,
-                  bool const eleEndcap,
-                  double const eleRho
-                  ) const;
-   bool passHEEPID( pxl::Particle const *ele,
-                    double const eleEt,
-                    bool const eleBarrel,
-                    bool const eleEndcap,
-                    double const eleRho
-                    ) const;
+   //bool passEle( pxl::Particle const *ele,
+   //              double const eleRho,
+   //              bool const isRec
+   //              ) const;
+   //bool passCBID( pxl::Particle const *ele,
+   //               double const elePt,
+   //               double const eleAbsEta,
+   //               bool const eleBarrel,
+   //               bool const eleEndcap,
+   //               double const eleRho
+   //               ) const;
+   //bool passHEEPID( pxl::Particle const *ele,
+   //                 double const eleEt,
+   //                 bool const eleBarrel,
+   //                 bool const eleEndcap,
+   //                 double const eleRho
+   //                 ) const;
 
-   void applyCutsOnTau( pxl::EventView *EvtView, std::vector< pxl::Particle* > &taus, const bool& isRec );
+   void applyCutsOnTau( std::vector< pxl::Particle* > &taus, const bool& isRec );
    bool passTau( pxl::Particle *tau, const bool& isRec );
 
    void applyCutsOnGam( std::vector< pxl::Particle* > &gammas,
@@ -110,7 +111,7 @@ private:
                                   bool const endcap
                                   ) const;
 
-   void applyCutsOnJet( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
+   void applyCutsOnJet( std::vector< pxl::Particle* > &jets, const bool &isRec );
    bool passJet( pxl::Particle *jet, const bool &isRec ) const;
 
    void countParticles( pxl::EventView *EvtView,
@@ -119,7 +120,7 @@ private:
                         bool const &isRec
                         ) const;
    void countJets( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec );
-   void applyCutsOnMET( pxl::EventView *EvtView, std::vector< pxl::Particle* > &mets, const bool &isRec);
+   void applyCutsOnMET( std::vector< pxl::Particle* > &mets, const bool &isRec);
    bool passMET( pxl::Particle *met, const bool &isRec ) const;
    //cuts on primary vertices
    void applyCutsOnVertex( pxl::EventView* EvtView, std::vector< pxl::Vertex* > &vertices, const bool &isRec );
@@ -190,7 +191,7 @@ private:
 
     // Muons:
    bool const        m_muo_use;
-   bool const        m_muo_filter;
+   bool const        m_muo_idtag;
    MuonSelector const m_muo_selector;
    //double const      m_muo_pt_min;
    //double const      m_muo_eta_max;
@@ -212,73 +213,10 @@ private:
    //double const      m_muo_dPtRelTrack_max;
 
    // Electrons:
-   bool const   m_ele_use;
-   double const m_ele_pt_min;
-   double const m_ele_eta_barrel_max;
-   double const m_ele_eta_endcap_min;
-   double const m_ele_eta_endcap_max;
-   bool const   m_ele_invertIso;
+   bool const        m_ele_use;
+   bool const        m_ele_idtag;
    std::string const m_ele_rho_label;
-
-   // CutBasedID:
-   bool const   m_ele_cbid_use;
-   // lowEta: |eta| < 1.0
-   double const m_ele_cbid_lowEta_EoP_min;
-   double const m_ele_cbid_fBrem_min;
-   // Barrel values:
-   double const m_ele_cbid_barrel_DEtaIn_max;
-   double const m_ele_cbid_barrel_DPhiIn_max;
-   double const m_ele_cbid_barrel_sigmaIetaIeta_max;
-   double const m_ele_cbid_barrel_HoE_max;
-   double const m_ele_cbid_barrel_Dxy_max;
-   double const m_ele_cbid_barrel_Dz_max;
-   double const m_ele_cbid_barrel_RelInvEpDiff_max;
-   double const m_ele_cbid_barrel_PFIsoRel_max;
-   int const    m_ele_cbid_barrel_NInnerLayerLostHits_max;
-   double const m_ele_cbid_barrel_Conversion_reject;
-   // Endcap values:
-   double const m_ele_cbid_endcap_DEtaIn_max;
-   double const m_ele_cbid_endcap_DPhiIn_max;
-   double const m_ele_cbid_endcap_sigmaIetaIeta_max;
-   double const m_ele_cbid_endcap_HoE_max;
-   double const m_ele_cbid_endcap_Dxy_max;
-   double const m_ele_cbid_endcap_Dz_max;
-   double const m_ele_cbid_endcap_RelInvEpDiff_max;
-   double const m_ele_cbid_endcap_PFIsoRel_max;
-   int const    m_ele_cbid_endcap_NInnerLayerLostHits_max;
-   double const m_ele_cbid_endcap_Conversion_reject;
-
-   // HEEP:
-   bool const   m_ele_heepid_use;
-   double const m_ele_heepid_EoP_max;
-   bool const   m_ele_heepid_requireEcalDriven;
-   bool const   m_ele_heepid_rejectOutOfTime;
-   // Barrel:
-   double const m_ele_heepid_barrel_deltaEta_max;
-   double const m_ele_heepid_barrel_deltaPhi_max;
-   double const m_ele_heepid_barrel_HoEM_max;
-   double const m_ele_heepid_barrel_trackiso_max;
-   double const m_ele_heepid_barrel_HcalD1_offset;
-   double const m_ele_heepid_barrel_HcalD1_slope;
-   double const m_ele_heepid_barrel_HcalD1_rhoSlope;
-   int const    m_ele_heepid_barrel_NInnerLayerLostHits_max;
-   double const m_ele_heepid_barrel_dxy_max;
-   double const m_ele_heepid_barrel_e1x5_min;
-   double const m_ele_heepid_barrel_e2x5_min;
-   // Endcap:
-   double const m_ele_heepid_endcap_deltaEta_max;
-   double const m_ele_heepid_endcap_deltaPhi_max;
-   double const m_ele_heepid_endcap_HoEM_max;
-   double const m_ele_heepid_endcap_trackiso_max;
-   double const m_ele_heepid_endcap_HcalD1_offset;
-   double const m_ele_heepid_endcap_HcalD1_slope;
-   double const m_ele_heepid_endcap_HcalD1_rhoSlope;
-   int const    m_ele_heepid_endcap_NInnerLayerLostHits_max;
-   double const m_ele_heepid_endcap_dxy_max;
-   double const m_ele_heepid_endcap_sigmaIetaIeta_max;
-   // ID:
-   bool const m_ele_ID_use;
-   std::string const m_ele_ID_name;
+   EleSelector const m_ele_selector;
 
 
 

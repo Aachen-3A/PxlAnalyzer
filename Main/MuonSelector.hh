@@ -1,5 +1,5 @@
-//#ifndef MuonSelector_hh
-//#define MuonSelector_hh
+#ifndef MuonSelector_hh
+#define MuonSelector_hh
 
 
 /*
@@ -21,7 +21,7 @@ public:
     MuonSelector(const Tools::MConfig &config );
     // Destruktor
     ~MuonSelector();
-    bool passMuon( pxl::Particle *muon, const bool& isRec ,double rho=0. ) const;
+    bool passMuon( pxl::Particle *muon, const bool& isRec ,double const rho=0. ) const;
 
 private:
     // Methods;
@@ -41,3 +41,4 @@ private:
    EffectiveArea const m_muo_EA;
 
 };
+#endif

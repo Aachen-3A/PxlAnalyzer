@@ -43,81 +43,15 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_tracks_num_max( cfg.GetItem< unsigned int >( "Tracks.num.max" ) ),
 
    //Muons
-   m_muo_use(                        cfg.GetItem< bool   >( "Muon.use" ) ),
-   m_muo_filter(                     cfg.GetItem< bool   >( "Muon.Filter") ),
+   m_muo_use(    cfg.GetItem< bool   >( "Muon.use" ) ),
+   m_muo_idtag( cfg.GetItem< bool   >( "Muon.IdTag") ),
    m_muo_selector(cfg),
 
    // Electrons:
-   m_ele_use(            cfg.GetItem< bool   >( "Ele.use" ) ),
-   m_ele_pt_min(         cfg.GetItem< double >( "Ele.pt.min" ) ),
-   m_ele_eta_barrel_max( cfg.GetItem< double >( "Ele.eta.Barrel.max" ) ),
-   m_ele_eta_endcap_min( cfg.GetItem< double >( "Ele.eta.Endcap.min" ) ),
-   m_ele_eta_endcap_max( cfg.GetItem< double >( "Ele.eta.Endcap.max" ) ),
-   m_ele_invertIso(      cfg.GetItem< bool   >( "Ele.InvertIsolation" ) ),
-   m_ele_rho_label(      cfg.GetItem< string >( "Ele.Rho.Label" ) ),
-
-   // CutBasedID (Tight):
-   m_ele_cbid_use( cfg.GetItem< bool >( "Ele.CBID.use" ) ),
-   // lowEta: |eta| < 1.0
-   m_ele_cbid_lowEta_EoP_min( cfg.GetItem< double >( "Ele.CBID.lowEta.EoverPin.min" ) ), // Only for 2011!
-   m_ele_cbid_fBrem_min(      cfg.GetItem< double >( "Ele.CBID.fBrem.min" ) ), // Only for 2011!
-   // Barrel values:
-   m_ele_cbid_barrel_DEtaIn_max(              cfg.GetItem< double >( "Ele.CBID.Barrel.DEtaIn.max" ) ),
-   m_ele_cbid_barrel_DPhiIn_max(              cfg.GetItem< double >( "Ele.CBID.Barrel.DPhiIn.max" ) ),
-   m_ele_cbid_barrel_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.CBID.Barrel.sigmaIetaIeta.max" ) ),
-   m_ele_cbid_barrel_HoE_max(                 cfg.GetItem< double >( "Ele.CBID.Barrel.HoE.max" ) ),
-   m_ele_cbid_barrel_Dxy_max(                 cfg.GetItem< double >( "Ele.CBID.Barrel.Dxy.max" ) ),
-   m_ele_cbid_barrel_Dz_max(                  cfg.GetItem< double >( "Ele.CBID.Barrel.Dz.max" ) ),
-   m_ele_cbid_barrel_RelInvEpDiff_max(        cfg.GetItem< double >( "Ele.CBID.Barrel.RelInvEpDiff.max" ) ),
-   m_ele_cbid_barrel_PFIsoRel_max(            cfg.GetItem< double >( "Ele.CBID.Barrel.PFIsoRel.max" ) ),
-   m_ele_cbid_barrel_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.CBID.Barrel.NInnerLayerLostHits.max" ) ),
-   m_ele_cbid_barrel_Conversion_reject(       cfg.GetItem< bool   >( "Ele.CBID.Barrel.Conversion.reject" ) ),
-   // Endcap values:
-   m_ele_cbid_endcap_DEtaIn_max(              cfg.GetItem< double >( "Ele.CBID.Endcap.DEtaIn.max" ) ),
-   m_ele_cbid_endcap_DPhiIn_max(              cfg.GetItem< double >( "Ele.CBID.Endcap.DPhiIn.max" ) ),
-   m_ele_cbid_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.CBID.Endcap.sigmaIetaIeta.max" ) ),
-   m_ele_cbid_endcap_HoE_max(                 cfg.GetItem< double >( "Ele.CBID.Endcap.HoE.max" ) ),
-   m_ele_cbid_endcap_Dxy_max(                 cfg.GetItem< double >( "Ele.CBID.Endcap.Dxy.max" ) ),
-   m_ele_cbid_endcap_Dz_max(                  cfg.GetItem< double >( "Ele.CBID.Endcap.Dz.max" ) ),
-   m_ele_cbid_endcap_RelInvEpDiff_max(        cfg.GetItem< double >( "Ele.CBID.Endcap.RelInvEpDiff.max" ) ),
-   m_ele_cbid_endcap_PFIsoRel_max(            cfg.GetItem< double >( "Ele.CBID.Endcap.PFIsoRel.max" ) ),
-   m_ele_cbid_endcap_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.CBID.Endcap.NInnerLayerLostHits.max" ) ),
-   m_ele_cbid_endcap_Conversion_reject(       cfg.GetItem< bool   >( "Ele.CBID.Endcap.Conversion.reject" ) ),
-
-   // HEEP ID v4.1:
-   m_ele_heepid_use(               cfg.GetItem< bool   >( "Ele.HEEPID.use" ) ),
-   m_ele_heepid_EoP_max(           cfg.GetItem< double >( "Ele.HEEPID.EoP.max" ) ),
-   m_ele_heepid_requireEcalDriven( cfg.GetItem< bool   >( "Ele.HEEPID.RequireEcalDriven" ) ),
-   m_ele_heepid_rejectOutOfTime(   cfg.GetItem< bool   >( "Ele.HEEPID.RejectOutOfTime" ) ),
-   // Barrel values:
-   m_ele_heepid_barrel_deltaEta_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.DEta.max" ) ),
-   m_ele_heepid_barrel_deltaPhi_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.DPhi.max" ) ),
-   m_ele_heepid_barrel_HoEM_max(                cfg.GetItem< double >( "Ele.HEEPID.Barrel.HoEM.max" ) ),
-   m_ele_heepid_barrel_trackiso_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.TrkIso.max" ) ),
-   m_ele_heepid_barrel_HcalD1_offset(           cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.Offset" ) ),
-   m_ele_heepid_barrel_HcalD1_slope(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.Slope" ) ),
-   m_ele_heepid_barrel_HcalD1_rhoSlope(         cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.RhoSlope" ) ),
-   m_ele_heepid_barrel_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.HEEPID.Barrel.NInnerLayerLostHits.max" ) ),
-   m_ele_heepid_barrel_dxy_max(                 cfg.GetItem< double >( "Ele.HEEPID.Barrel.dxy.max" ) ),
-   m_ele_heepid_barrel_e1x5_min(                cfg.GetItem< double >( "Ele.HEEPID.Barrel.E1x5.min" ) ),
-   m_ele_heepid_barrel_e2x5_min(                cfg.GetItem< double >( "Ele.HEEPID.Barrel.E2x5.min" ) ),
-   // Endcap values:
-   m_ele_heepid_endcap_deltaEta_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.DEta.max" ) ),
-   m_ele_heepid_endcap_deltaPhi_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.DPhi.max" ) ),
-   m_ele_heepid_endcap_HoEM_max(                cfg.GetItem< double >( "Ele.HEEPID.Endcap.HoEM.max" ) ),
-   m_ele_heepid_endcap_trackiso_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.TrkIso.max" ) ),
-   m_ele_heepid_endcap_HcalD1_offset(           cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.Offset" ) ),
-   m_ele_heepid_endcap_HcalD1_slope(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.Slope" ) ),
-   m_ele_heepid_endcap_HcalD1_rhoSlope(         cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.RhoSlope" ) ),
-   m_ele_heepid_endcap_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.HEEPID.Endcap.NInnerLayerLostHits.max" ) ),
-   m_ele_heepid_endcap_dxy_max(                 cfg.GetItem< double >( "Ele.HEEPID.Endcap.dxy.max" ) ),
-   m_ele_heepid_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.HEEPID.Endcap.SigmaIetaIeta.max" ) ),
-
-   // Use IDs?
-   m_ele_ID_use(  cfg.GetItem< bool   >( "Ele.ID.use" ) ),
-   m_ele_ID_name( cfg.GetItem< string >( "Ele.ID.name" ) ),
-
-
+   m_ele_use(        cfg.GetItem< bool   >( "Ele.use" ) ),
+   m_ele_idtag(      cfg.GetItem< bool   >( "Ele.IdTag") ),
+   m_ele_rho_label(  cfg.GetItem< string >( "Ele.Rho.Label" ) ),
+   m_ele_selector(cfg),
 
    // Taus:
    m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
@@ -263,15 +197,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
       error << "In config file: ";
       error << "'" << cfg.GetConfigFilePath() << "': ";
       error << "exactly one of 'Gamma.Vgamma2011PhotonID.use' and 'Gamma.CutBasedPhotonID2012.use' ";
-      error << "must be true!";
-      throw Tools::config_error( error.str() );
-   }
-
-   if( not m_ele_cbid_use xor m_ele_heepid_use ) {
-      stringstream error;
-      error << "In config file: ";
-      error << "'" << cfg.GetConfigFilePath() << "': ";
-      error << "exactly one of 'Ele.HEEPID.use' and 'Ele.CBID.use' ";
       error << "must be true!";
       throw Tools::config_error( error.str() );
    }
@@ -448,188 +373,85 @@ void EventSelector::varyJESMET( vector< pxl::Particle* > const &jets,
 
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
-//ATTENTION: muon-vector is changed!
-void EventSelector::applyCutsOnMuon( pxl::EventView* EvtView, std::vector< pxl::Particle* > &muons, const bool &isRec) {
-   vector< pxl::Particle* > muonsAfterCut;
-
-   for( vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon ) {
-      Particle* thisMuon = *muon;
-      if( m_muo_selector.passMuon(thisMuon,isRec) ) {
-         if (m_muo_filter){
-            muonsAfterCut.push_back( thisMuon );
-         }else{
-            thisMuon->setUserRecord("passed",true);
-         }
-      } else {
-         if (m_muo_filter){
-            thisMuon->owner()->remove( thisMuon );
-         }else{
-            thisMuon->setUserRecord("passed",false);
+//ATTENTION: muon-vector is possibly changed!
+// void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool &isRec) {
+//    vector< pxl::Particle* > muonsAfterCut;
+//
+//    for( vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon ) {
+//       Particle* thisMuon = *muon;
+//       if( m_muo_selector.passMuon(thisMuon,isRec) ) {
+//          if (m_muo_idtag){
+//             thisMuon->setUserRecord("passed",true);
+//          }else{
+//             muonsAfterCut.push_back( thisMuon );
+//          }
+//       } else {
+//          if (m_muo_idtag){
+//             thisMuon->setUserRecord("passed",false);
+//          }else{
+//             thisMuon->owner()->remove( thisMuon );
+//          }
+//       }
+//    }
+//    if (not m_muo_idtag){
+//       //ATTENTION: changing muon-vector!
+//       muons = muonsAfterCut;
+//    }
+// }
+void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool &isRec) {
+   if(m_muo_idtag){ // muons are tagged, not discarded
+      for(vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon) {
+         if(m_muo_selector.passMuon(*muon,isRec)) {
+            (*muon)->setUserRecord("passed",true);
+         } else {
+            (*muon)->setUserRecord("passed",false);
          }
       }
+      return; // method has finished
    }
-   if (m_muo_filter){
-      //ATTENTION: changing muon-vector!
-      muons = muonsAfterCut;
+
+
+   vector< pxl::Particle* > muonsAfterCut;
+   Particle* thisMuon;
+   for( vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon ) {
+      thisMuon = *muon;
+      if( m_muo_selector.passMuon(thisMuon,isRec) ) {
+            muonsAfterCut.push_back(thisMuon);
+      } else {
+            thisMuon->owner()->remove(thisMuon);
+      }
    }
+   //ATTENTION: changing muon-vector!
+   muons = muonsAfterCut;
 }
-
-
-//bool EventSelector::passMuon( pxl::Particle *muon, const bool &isRec ) {
-   //double const muonPt = muon->getPt();
-   //// pt cut
-   //if( muonPt < m_muo_pt_min ) return false;
-
-   ////eta cut
-   //if( fabs( muon->getEta() ) > m_muo_eta_max ) return false;
-
-   //// Reconstructed muons cuts.
-   //// According to:
-   //// https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#Tight_Muon_selection
-   //// https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=48#New_Version_recommended
-   //// For delta beta (pile-up) corrections:
-   //// https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49#Accessing_PF_Isolation_from_AN1
-   //if( isRec ) {
-      ////is the muon global? do we care?
-      //if( m_muo_requireIsGlobal && !muon->getUserRecord( "isGlobalMuon" ) ) return false;
-
-      ////is it a Tracker muon? do we care ?
-      //if( m_muo_requireIsTracker && !muon->getUserRecord( "isTrackerMuon" ) ) return false;
-      //// Muon isolation.
-      //double muon_iso;
-      //if( m_muo_iso_type == "Combined" ) {
-         //muon_iso = muon->getUserRecord( "TrkIso" )
-                  //+ muon->getUserRecord( "ECALIso" )
-                  //+ muon->getUserRecord( "HCALIso" );
-      //} else if( m_muo_iso_type == "Tracker" ) {
-         //muon_iso = muon->getUserRecord( "TrkIso" );
-      //} else if( m_muo_iso_type == "PFCombined03" ) {
-         //if( m_muo_iso_useDeltaBetaCorr ) {
-            //muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" )
-                     //+ max( 0.,
-                            //muon->getUserRecord( "PFIsoR03NeutralHadrons" )
-                            //+ muon->getUserRecord( "PFIsoR03Photons" )
-                            //- 0.5 * muon->getUserRecord( "PFIsoR03PU" )
-                            //);
-         //} else {
-            //muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" )
-                     //+ muon->getUserRecord( "PFIsoR03NeutralHadrons" )
-                     //+ muon->getUserRecord( "PFIsoR03Photons" );
-         //}
-      //} else if( m_muo_iso_type == "PFCombined04" ) {
-         //if( m_muo_iso_useDeltaBetaCorr ) {
-            //muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" )
-                     //+ max( 0.,
-                            //muon->getUserRecord( "PFIsoR04NeutralHadrons" )
-                            //+ muon->getUserRecord( "PFIsoR04Photons" )
-                            //- 0.5 * muon->getUserRecord( "PFIsoR04PU" )
-                            //);
-         //} else {
-            //muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" )
-                     //+ muon->getUserRecord( "PFIsoR04NeutralHadrons" )
-                     //+ muon->getUserRecord( "PFIsoR04Photons" );
-         //}
-      //} else {
-         //throw Tools::config_error( "In passMuon(...): Invalid isolation type: '" + m_muo_iso_type + "'" );
-      //}
-
-      //double const muon_rel_iso = muon_iso / muonPt;
-
-      //bool iso_failed = muon_rel_iso > m_muo_iso_max;
-      ////turn around for iso-inversion
-      //if( m_muo_invertIso ) iso_failed = !iso_failed;
-      ////now check
-      //if( iso_failed ) return false;
-
-      ////number of hits in the pixel detector
-      //if( muon->getUserRecord( "VHitsPixel" ) < m_muo_NPixelHits_min ) return false;
-
-      //// Muon segments in at least two muon stations. (TODO: Typo in Skimmer already corrected, so remove the try block.)
-      //try {
-         //if( muon->getUserRecord( "NMachedStations" ) < m_muo_NMatchedStations_min ) return false;
-      //} catch( std::runtime_error ) {
-         //if( muon->getUserRecord( "NMatchedStations" ) < m_muo_NMatchedStations_min ) return false;
-      //}
-
-      //// Number of tracker layers with hits.
-      //if( muon->getUserRecord( "TrackerLayersWithMeas" ) < m_muo_NTrackerLayersWithMeas_min ) return false;
-
-      ////number of muon hits surviving in the global fit
-      //if( muon->getUserRecord( "VHitsMuonSys" ) < m_muo_NMuonHits_min ) return false;
-
-      //if( m_muo_HighPtMuonID_use && muonPt > 200. ) {
-         //// Apply dedicated cuts for the High Pt Muon Selection.
-
-         ////FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
-         //try {
-            //// Transverse impact parameter dxy of the muon's picky cocktail track w.r.t. the primary vertex.
-            //if( muon->getUserRecord( "DxyCocktail" ) > m_muo_XYImpactParameter_max ) return false;
-
-            //// Longitudinal impact parameter dz of the muon's picky cocktail track  w.r.t. the primary vertex.
-            //if( muon->getUserRecord( "DzCocktail" ) > m_muo_ZImpactParameter_max ) return false;
-
-            //// Relative pT error on the muon's picky cocktail track.
-            //if( ( muon->getUserRecord( "ptErrorCocktail" ) / muonPt ) > m_muo_dPtRelTrack_max ) return false;
-
-         //} catch( std::runtime_error ) {
-            //// Transverse impact parameter dxy of the muon's tracker track w.r.t. the primary vertex.
-            //if( muon->getUserRecord( "dB" ) > m_muo_XYImpactParameter_max ) return false;
-
-            //// Longitudinal impact parameter dz of the muon's tracker track  w.r.t. the primary vertex.
-            //if( muon->getUserRecord( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
-         //}
-
-      //} else {
-         //// Apply dedicated cuts for the Tight Muon Selection.
-
-         //// Is it a PF muon? Do we care?
-         //if( m_muo_requireIsPF && !muon->getUserRecord( "isPFMuon" ) ) return false;
-
-         //// Normalised chisquare of the global track.
-         //if( muon->getUserRecord( "NormChi2" ) > m_muo_globalChi2_max ) return false;
-
-         //// Transverse impact parameter dxy of the muon's BestTrack w.r.t. the primary vertex.
-         //if( muon->getUserRecord( "dB" ) > m_muo_XYImpactParameter_max ) return false;
-
-         ////FIXME: New variable in Skimmer, remove try block once all samples are re-skimmed.
-         //try {
-            //// Longitudinal impact parameter dz of the muon's BestTrack w.r.t. the primary vertex.
-            //if( muon->getUserRecord( "DzBT" ) > m_muo_ZImpactParameter_max ) return false;
-         //} catch( std::runtime_error ) {
-            //// Longitudinal impact parameter dz of the muon's tracker track w.r.t. the primary vertex.
-            //if( muon->getUserRecord( "Dz" ) > m_muo_ZImpactParameter_max ) return false;
-         //}
-      //}
-
-   ////generator muon cuts
-   //} else {
-      //double const muon_rel_iso = muon->getUserRecord( "GenIso" ) / muonPt;
-      //// Gen iso cut.
-      //bool iso_failed = muon_rel_iso > m_muo_iso_max;
-      ////turn around for iso-inversion
-      //if( m_muo_invertIso ) iso_failed = !iso_failed;
-      ////now check
-      //if( iso_failed ) return false;
-   //}
-
-   ////no cut failed
-   //return true;
-//}
 
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 //ATTENTION: ele-vector is changed!
 void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
                                     double const eleRho,
-                                    bool const isRec
+                                    bool const &isRec
                                     ) const {
+   if(m_ele_idtag){ // electrons are tagged, not discarded
+      for( vector< Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ) {
+         if( m_ele_selector.passEle( *ele, eleRho, isRec ) ) {
+            (*ele)->setUserRecord("passed",true);
+         } else {
+            (*ele)->setUserRecord("passed",false);
+         }
+      }
+      return; // method has finished
+   }
+   
+   // else if(not m_ele_idtag):
    vector<pxl::Particle*> elesAfterCut;
-
+   Particle* thisEle;
    for( vector< Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ) {
-      if( passEle( *ele, eleRho, isRec ) ) {
-         elesAfterCut.push_back( *ele );
+      thisEle = *ele;
+      if( m_ele_selector.passEle(thisEle, eleRho, isRec) ) {
+         elesAfterCut.push_back(thisEle);
       } else {
-         (*ele)->owner()->remove(*ele);
+         (*ele)->owner()->remove(thisEle);
       }
    }
 
@@ -638,359 +460,10 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
 }
 
 
-bool EventSelector::passEle( pxl::Particle const *ele,
-                             double const eleRho,
-                             bool const isRec
-                             ) const {
-   double const elePt = ele->getPt();
-   // Updated transverse energy in Skimmer for HEEP selection (Supercluster
-   // based transverse energy).
-   // TODO: Remove try-block once everything is reskimmed.
-   double eleEt = ele->getEt();
-   try {
-      eleEt = ele->getUserRecord( "SCEt" );
-   } catch( std::runtime_error ) {
-      // Do nothing, simply use the Et from the pxl::Particle.
-   }
-
-   // Transverse energy cut.
-   if( elePt < m_ele_pt_min ) return false;
-
-   // eta
-   double const abseta = isRec ? fabs( ele->getUserRecord( "SCeta" ).toDouble() ) : fabs( ele->getEta() );
-
-   //out of endcap
-   if( abseta > m_ele_eta_endcap_max ) return false;
-   //between endcap and barrel
-   if( abseta < m_ele_eta_endcap_min and abseta > m_ele_eta_barrel_max ) return false;
-   //ele in barrel?
-   bool const barrel = abseta <= m_ele_eta_barrel_max;
-   //ele in endcap?
-   bool const endcap = abseta >= m_ele_eta_endcap_min and abseta <= m_ele_eta_endcap_max;
-
-   if( barrel and endcap ) throw Tools::value_error( "In passEle(...): Electron cannot be in both barrel and endcap!" );
-   if( not barrel and not endcap ) {
-      stringstream warning;
-      warning << "WARNING: In passEle(...): ";
-      warning << "At this point ";
-      if( isRec ) warning << "(Rec) ";
-      else        warning << "(Gen) ";
-      warning << "electron should be in barrel or endcap. But:" << endl;
-      warning << "eta = " << abseta << endl;
-      warning << "pt  = " << elePt << endl;
-      warning << "Et  = " << eleEt << endl;
-      warning << "Ignoring this particle!" << endl;
-
-      cerr << warning.str();
-
-      return false;
-   }
-
-   if( isRec ) {
-      if( m_ele_cbid_use ) {
-         bool const pass = passCBID( ele, elePt, abseta, barrel, endcap, eleRho );
-         if( not pass )
-            return false;
-      }
-
-      if( m_ele_heepid_use ) {
-         bool const pass = passHEEPID( ele, eleEt, barrel, endcap, eleRho );
-         if( not pass )
-            return false;
-      }
-
-      //ID cuts
-      if( m_ele_ID_use && !ele->getUserRecord( m_ele_ID_name ).asBool() ) return false;
-   } else {
-      //gen ele cuts
-      if( barrel ) {
-         //ele in barrel
-         bool iso_failed = false;
-         if( m_ele_heepid_use )
-            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() > m_ele_heepid_barrel_trackiso_max;
-         if( m_ele_cbid_use )
-            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() / elePt > m_ele_cbid_barrel_PFIsoRel_max;
-
-         //turn around for iso-inversion
-         if( m_ele_invertIso )
-            iso_failed = not iso_failed;
-         //now test
-         if( iso_failed )
-            return false;
-      }
-
-      //gen ele in endcap
-      if( endcap ) {
-         bool iso_failed = false;
-         if( m_ele_heepid_use )
-            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() > m_ele_heepid_barrel_trackiso_max;
-         if( m_ele_cbid_use )
-            iso_failed = ele->getUserRecord( "GenIso" ).toDouble() / elePt > m_ele_cbid_barrel_PFIsoRel_max;
-
-         //turn around for iso-inversion
-         if( m_ele_invertIso )
-            iso_failed = not iso_failed;
-         //now test
-         if( iso_failed )
-            return false;
-      }
-   }
-
-   //no cut failed
-   return true;
-}
-
-// Return true, if the electron passes the CutBasedID.
-// See also:
-// https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30
-bool EventSelector::passCBID( pxl::Particle const *ele,
-                              double const elePt,
-                              double const eleAbsEta,
-                              bool const eleBarrel,
-                              bool const eleEndcap,
-                              double const eleRho
-                              ) const {
-   // Retrieve each variable and IMMEDIATELY check if it passes the cut!
-
-   double const DEtaIn = ele->getUserRecord( "DEtaSCVtx" );
-   if( eleBarrel and DEtaIn > m_ele_cbid_barrel_DEtaIn_max )
-      return false;
-   if( eleEndcap and DEtaIn > m_ele_cbid_endcap_DEtaIn_max )
-      return false;
-
-   double const DPhiIn = ele->getUserRecord( "DPhiSCVtx" );
-   if( eleBarrel and DPhiIn > m_ele_cbid_barrel_DPhiIn_max )
-      return false;
-   if( eleEndcap and DPhiIn > m_ele_cbid_endcap_DPhiIn_max )
-      return false;
-
-   double const sigmaIetaIeta = ele->getUserRecord( "sigmaIetaIeta" );
-   if( eleBarrel and sigmaIetaIeta > m_ele_cbid_barrel_sigmaIetaIeta_max )
-      return false;
-   if( eleEndcap and sigmaIetaIeta > m_ele_cbid_endcap_sigmaIetaIeta_max )
-      return false;
-
-   double const HoE = ele->getUserRecord( "HoEm" );
-   if( eleBarrel and HoE > m_ele_cbid_barrel_HoE_max )
-      return false;
-   if( eleEndcap and HoE > m_ele_cbid_endcap_HoE_max )
-      return false;
-
-   double const Dxy = ele->getUserRecord( "Dxy" );
-   if( eleBarrel and Dxy > m_ele_cbid_barrel_Dxy_max )
-      return false;
-   if( eleEndcap and Dxy > m_ele_cbid_endcap_Dxy_max )
-      return false;
-
-   double const Dz = ele->getUserRecord( "Dz" );
-   if( eleBarrel and Dz > m_ele_cbid_barrel_Dz_max )
-      return false;
-   if( eleEndcap and Dz > m_ele_cbid_endcap_Dz_max )
-      return false;
-
-   double const Energy = ele->getE();
-   double const EoP = ele->getUserRecord( "EoP" );
-   // p_in, the same as 'pat::Electron::trackMomentumAtVtx().p()'
-   double const pIn = Energy / EoP;
-   double const relInvEpDiff = std::abs( 1.0 / Energy - 1.0/ pIn );
-   if( eleBarrel and relInvEpDiff > m_ele_cbid_barrel_RelInvEpDiff_max )
-      return false;
-   if( eleEndcap and relInvEpDiff > m_ele_cbid_endcap_RelInvEpDiff_max )
-      return false;
-
-   double const effArea = ele->getUserRecord( "EffectiveArea" );
-   double const pfIsoCH = ele->getUserRecord( "PFIso03ChargedHadron" );
-   double const pfIsoNH = ele->getUserRecord( "PFIso03NeutralHadron" );
-   double const pfIsoPH = ele->getUserRecord( "PFIso03Photon" );
-   double const pfIsoPUCorrected = pfIsoCH +
-                                   max( 0.0,
-                                        ( pfIsoPH + pfIsoNH ) - effArea * eleRho
-                                        );
-
-   bool iso_ok = true;
-   if( eleBarrel and pfIsoPUCorrected/elePt > m_ele_cbid_barrel_PFIsoRel_max )
-      iso_ok = false;
-   if( eleEndcap and pfIsoPUCorrected/elePt > m_ele_cbid_endcap_PFIsoRel_max )
-      iso_ok = false;
-
-   // Turn around for Iso-inversion.
-   if( m_ele_invertIso ) iso_ok = not iso_ok;
-   // Now check.
-   if( not iso_ok )
-      return false;
-
-   double const NinnerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
-   if( eleBarrel and NinnerLayerLostHits > m_ele_cbid_barrel_NInnerLayerLostHits_max )
-      return false;
-   if( eleEndcap and NinnerLayerLostHits > m_ele_cbid_endcap_NInnerLayerLostHits_max )
-      return false;
-
-   //double const PFIso03PUCorrected = ele->getUserRecord( "PFIso03PUCorrected" );
-
-   double const hasConversion = ele->getUserRecord( "hasMatchedConversion" );
-   if( eleBarrel and m_ele_cbid_barrel_Conversion_reject and hasConversion )
-      return true;
-   if( eleEndcap and m_ele_cbid_endcap_Conversion_reject and hasConversion )
-      return true;
-
-   // NOTE: fbrem and E/pIn cuts only for 2011 analysis!
-   // See also:
-   // https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30#E_p_and_fbrem_based_tight_ID_201
-
-   double const fBrem = ele->getUserRecord( "fbrem" );
-   // It is OK that fBrem is too small, if we are in the lowEta region and the
-   // EoP is large enough!
-   double const passfBrem = fBrem > m_ele_cbid_fBrem_min or
-                            ( eleAbsEta < 1.0 and EoP > m_ele_cbid_lowEta_EoP_min );
-   if( not passfBrem )
-      return false;
-
-   // All cuts passed!
-   return true;
-}
-
-
-// This function returns true, if the given electron passes the HEEP Selection.
-// See also:
-// https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
-bool EventSelector::passHEEPID( pxl::Particle const *ele,
-                                double const eleEt,
-                                bool const eleBarrel,
-                                bool const eleEndcap,
-                                double const eleRho
-                                ) const {
-   // Require electron to be ECAL driven?
-   if( m_ele_heepid_requireEcalDriven and
-       not ele->getUserRecord( "ecalDriven" )
-       ) return false;
-
-   if( ele->getUserRecord( "EoP" ).toDouble() > m_ele_heepid_EoP_max )
-      return false;
-
-   // These variables are checked in the barrel as well as in the endcaps.
-   double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
-   double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
-   double const ele_HoEM        = ele->getUserRecord( "HoEm" );
-   double const ele_TrkIso      = ele->getUserRecord( "TrkIso03" );
-   double const ele_ECALIso     = ele->getUserRecord( "ECALIso03" );
-   double const ele_HCALIso     = ele->getUserRecord( "HCALIso03d1" );
-   double const ele_CaloIso     = ele_ECALIso + ele_HCALIso;
-
-
-   // TODO: Remove this construct when FA11 or older samples are not used anymore.
-   // (Typo in skimmer already fixed. UserRecord: NinnerLayerLostHits.)
-   int ele_innerLayerLostHits;
-   try{
-      ele_innerLayerLostHits = ele->getUserRecord( "NMissingHits: " );
-   } catch( std::runtime_error ) {
-      ele_innerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
-   } catch( ... ) {
-      throw;
-   }
-
-   if( m_ele_heepid_rejectOutOfTime and
-       ele->getUserRecord_def( "recoFlag",0 ).toInt32() == 2
-       ) return false;
-
-   //ele in barrel
-   if( eleBarrel ) {
-      //delta eta between SC and track
-      if( ele_absDeltaEta > m_ele_heepid_barrel_deltaEta_max )
-         return false;
-
-      //delta phi between SC and track
-      if( ele_absDeltaPhi > m_ele_heepid_barrel_deltaPhi_max )
-         return false;
-
-      //hadronic over EM
-      if( ele_HoEM > m_ele_heepid_barrel_HoEM_max )
-         return false;
-      //shower shape
-      double const e5x5 = ele->getUserRecord( "e5x5" );
-      double const e1x5 = ele->getUserRecord( "e1x5" );
-      double const e2x5 = ele->getUserRecord( "e2x5" );
-
-      if( e1x5/e5x5 < m_ele_heepid_barrel_e1x5_min and
-          e2x5/e5x5 < m_ele_heepid_barrel_e2x5_min
-          ) return false;
-
-      //Isolation
-      bool iso_ok = true;
-      //HCAL iso depth 1
-      double const maxIso = m_ele_heepid_barrel_HcalD1_offset +
-                            m_ele_heepid_barrel_HcalD1_slope * eleEt +
-                            m_ele_heepid_barrel_HcalD1_rhoSlope * eleRho;
-
-      if( iso_ok and ele_CaloIso > maxIso ) iso_ok = false;
-      //Track iso
-      if( iso_ok and ele_TrkIso > m_ele_heepid_barrel_trackiso_max ) iso_ok = false;
-
-      //turn around for iso-inversion
-      if( m_ele_invertIso ) iso_ok = not iso_ok;
-      //now test
-      if( !iso_ok ) return false;
-
-
-      if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
-         return false;
-
-      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_barrel_dxy_max )
-         return false;
-   }
-
-   //ele in endcap
-   if( eleEndcap ) {
-      //delta eta between SC and track
-      if( ele_absDeltaEta > m_ele_heepid_endcap_deltaEta_max )
-         return false;
-
-      //delta phi between SC and track
-      if( ele_absDeltaPhi > m_ele_heepid_endcap_deltaPhi_max )
-         return false;
-
-      //hadronic over EM
-      if( ele_HoEM > m_ele_heepid_endcap_HoEM_max )
-         return false;
-
-      //sigma iEta-iEta
-      if( ele->getUserRecord( "sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
-         return false;
-
-      //Isolation
-      bool iso_ok = true;
-      //HCAL iso depth 1
-      double maxIso = m_ele_heepid_endcap_HcalD1_offset +
-                      m_ele_heepid_endcap_HcalD1_rhoSlope * eleRho;
-
-      //add a slope for high energy electrons
-      if( eleEt > 50.0 ) maxIso += m_ele_heepid_endcap_HcalD1_slope * ( eleEt - 50.0 );
-      //now test
-      if( iso_ok and ele_CaloIso > maxIso )
-         iso_ok = false;
-      //Track iso
-      if( iso_ok and ele_TrkIso > m_ele_heepid_endcap_trackiso_max )
-         iso_ok = false;
-      //turn around for iso-inversion
-      if( m_ele_invertIso )
-         iso_ok = not iso_ok;
-      //now test
-      if( not iso_ok )
-         return false;
-
-      if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
-         return false;
-
-      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
-         return false;
-   }
-
-   return true;
-}
-
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 //ATTENTION: tau-vector is changed!
-void EventSelector::applyCutsOnTau( pxl::EventView* EvtView, std::vector< pxl::Particle* > &taus, const bool &isRec ) {
+void EventSelector::applyCutsOnTau( std::vector< pxl::Particle* > &taus, const bool &isRec ) {
    int numTau = 0;
 
    vector< pxl::Particle* > tausAfterCut;
@@ -1315,7 +788,7 @@ bool EventSelector::passCutBasedPhotonID2012( pxl::Particle const *gam,
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 //ATTENTION: jet-vector is changed!
-void EventSelector::applyCutsOnJet( pxl::EventView* EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec ) {
+void EventSelector::applyCutsOnJet( std::vector< pxl::Particle* > &jets, const bool &isRec ) {
    vector< pxl::Particle* > jetsAfterCuts;
    for( vector< Particle* >::const_iterator jet = jets.begin(); jet != jets.end(); ++jet ) {
       Particle *thisJet = *jet;
@@ -1438,7 +911,7 @@ void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Partic
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 
-void EventSelector::applyCutsOnMET( pxl::EventView *EvtView, std::vector< pxl::Particle* > &mets, const bool &isRec ) {
+void EventSelector::applyCutsOnMET( std::vector< pxl::Particle* > &mets, const bool &isRec ) {
    int numMET = 0;
 
    vector< pxl::Particle* > metsAfterCuts;
@@ -1687,13 +1160,13 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    //get vertices
    vector< pxl::Vertex* > vertices;
    EvtView->getObjectsOfType< pxl::Vertex >( vertices );
-   applyCutsOnMuon( EvtView, muons, isRec );
+   applyCutsOnMuon( muons, isRec );
    applyCutsOnEle( eles, eleRho, isRec );
-   applyCutsOnTau( EvtView, taus, isRec );
+   applyCutsOnTau( taus, isRec );
    applyCutsOnGam( gammas, gamRho, isRec );
    //first vary JES and then check corrected jets to pass cuts
    varyJES(jets, JES, isRec);
-   applyCutsOnJet( EvtView, jets, isRec );     //distribution into jets and b-jets
+   applyCutsOnJet( jets, isRec );     //distribution into jets and b-jets
    //consistently check GenView for duplicates, important especially for GenJets and efficiency-normalization
    if( not m_ignoreOverlaps ) m_eventCleaning.cleanEvent( muons,
                                                           eles,
@@ -1705,7 +1178,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    //now vary also MET using ONLY selected and JES-modified jets. Maybe use dedicated jet cuts here?
    varyJESMET(jets, mets, JES, isRec);
    //after MET varied check also cuts
-   applyCutsOnMET( EvtView, mets, isRec );
+   applyCutsOnMET( mets, isRec );
 
    //now store the number of particles of each type
    countParticles( EvtView, muons,  "Muo", isRec );

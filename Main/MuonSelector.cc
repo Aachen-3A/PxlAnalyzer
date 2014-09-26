@@ -1,7 +1,6 @@
 #include "MuonSelector.hh"
 
 
-using namespace pxl;
 using namespace std;
 
 //--------------------Constructor-----------------------------------------------------------------
@@ -27,7 +26,7 @@ MuonSelector::~MuonSelector() {
 }
 
 
-bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double rho ) const {
+bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const {
     if( isRec ){
         return muonID(muon, rho);
     }
@@ -65,12 +64,12 @@ bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
     // isTightMuon or isHighPtMuon
     if(m_muo_id_type=="musicID"){
         if(muon->getPt()<m_muo_HighPtSwitchPt){
-            if( muon->getUserRecord("isTightMuon")) return false;
+            if( not muon->getUserRecord("isTightMuon")) return false;
         }else{
-            if( muon->getUserRecord("isHighPtMuon")) return false;
+            if( not muon->getUserRecord("isHighPtMuon")) return false;
         }
     }else{
-        if(muon->getUserRecord(m_muo_id_type)) return false;
+        if(not muon->getUserRecord(m_muo_id_type)) return false;
     }
 
 

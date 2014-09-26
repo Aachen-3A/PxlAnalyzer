@@ -12,7 +12,7 @@
 
 #include "Pxl/Pxl/interface/pxl/core/macros.hh"
 
-#include "/user/padeken/MUSiC/Pxl/Pxl/src/simpleini/SimpleIni.h"
+#include "Pxl/Pxl/src/simpleini/SimpleIni.h"
 
 namespace pxl
 {
