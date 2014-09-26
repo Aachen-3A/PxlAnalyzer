@@ -65,12 +65,12 @@ bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
     // isTightMuon or isHighPtMuon
     if(m_muo_id_type=="musicID"){
         if(muon->getPt()<m_muo_HighPtSwitchPt){
-            if( muon->getUserRecord("isTightMuon")) return false;
+            if( ! muon->getUserRecord("isTightMuon") ) return false;
         }else{
-            if( muon->getUserRecord("isHighPtMuon")) return false;
+            if( ! muon->getUserRecord("isHighPtMuon") ) return false;
         }
     }else{
-        if(muon->getUserRecord(m_muo_id_type)) return false;
+        if( ! muon->getUserRecord(m_muo_id_type) ) return false;
     }
 
 

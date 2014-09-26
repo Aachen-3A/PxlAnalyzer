@@ -4,20 +4,17 @@
 #include "Pxl/Pxl/interface/pxl/core.hh"
 #include <iostream>
 #include <iomanip>
-//#include <chrono>
-//#include <thread>
 #include "ControlPlotFactory/CcControl.hh"
 #include "ControlPlots2/RecControl.hh"
 #include "ControlPlots2/GenControl.hh"
 #include "EventClassFactory/CcEventClass.hh"
-//#include "Tools/PXL/PXLdCache.hh"
+
 #include "Tools/argstream.h"
 #include "Tools/Tools.hh"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include <boost/filesystem/path.hpp>
-//#include <boost/thread/thread.hpp>
 #pragma GCC diagnostic pop
 
 #include "Main/EventAdaptor.hh"
@@ -359,7 +356,7 @@ int main( int argc, char* argv[] ) {
          }
 
          //check if we shall analyze this event
-         lumi::ID run      = event.getUserRecord( "Run" ).toUInt32();
+         lumi::ID run      = event.getUserRecord( "Run" );
          lumi::ID LS       = event.getUserRecord( "LumiSection" );
          lumi::ID eventNum = event.getUserRecord( "EventNum" );
          if( ! runcfg.check( run, LS ) ) {
@@ -463,8 +460,8 @@ int main( int argc, char* argv[] ) {
             }
          }
          // run the fork ..
-         fork.analyseEvent( &event );
-         fork.finishEvent( &event );
+         fork.analyseEvent( event_ptr );
+         fork.finishEvent( event_ptr );
 
          e++;
          if( e < 10 || ( e < 100 && e % 10 == 0 ) ||

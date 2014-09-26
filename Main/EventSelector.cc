@@ -458,13 +458,13 @@ void EventSelector::applyCutsOnMuon( pxl::EventView* EvtView, std::vector< pxl::
          if (m_muo_filter){
             muonsAfterCut.push_back( thisMuon );
          }else{
-            thisMuon->setUserRecord("passed",true);
+            thisMuon->setUserRecord("IDpassed",true);
          }
       } else {
          if (m_muo_filter){
             thisMuon->owner()->remove( thisMuon );
          }else{
-            thisMuon->setUserRecord("passed",false);
+            thisMuon->setUserRecord("IDpassed",false);
          }
       }
    }
