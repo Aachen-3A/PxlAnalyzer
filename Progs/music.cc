@@ -29,6 +29,7 @@
 #include "Main/SkipEvents.hh"
 
 #include "specialAna/specialAna.hh"
+#include "Main/Systematics.hh"
 
 namespace fs = boost::filesystem;
 
@@ -198,6 +199,9 @@ int main( int argc, char* argv[] ) {
 
    // Initialize the ParticleMatcher.
    ParticleMatcher Matcher( config, debug );
+
+   // Initialize the Systematics.
+   Systematics syst_shifter(config, debug);
 
    // When running on data, we do not want to initialize the PDFSets as this
    // takes lots of resources.
@@ -408,6 +412,22 @@ int main( int argc, char* argv[] ) {
             // adapt the events (jet/met smearing).
             std::string const linkName = "pre-priv-gen-rec";
             Matcher.matchObjects( GenEvtView, RecEvtView, linkName, false );
+
+            // create new event views with systematic shifts
+            // (the event cannot be modified inside specialAna - especially no new event views)
+            // shifts of type 'Scale' are implemented at the moment
+            // shifts of type 'Resolution' are to be implemented
+            syst_shifter.init(&event);
+            syst_shifter.shiftEleAndMET("Scale");
+            //syst_shifter.shiftEleAndMET("Resolution");
+            syst_shifter.shiftMuoAndMET("Scale");
+            //syst_shifter.shiftMuoAndMET("Resolution");
+            syst_shifter.shiftTauAndMET("Scale");
+            //syst_shifter.shiftTauAndMET("Resolution");
+            //syst_shifter.shiftJetAndMET("Scale");
+            //syst_shifter.shiftJetAndMET("Resolution");
+            //syst_shifter.shiftMETUnclustered("Scale");
+            //syst_shifter.shiftMETUnclustered("Resolution");
 
             if( jetResCorrUse ) {
                // Change event properties according to official recommendations.
