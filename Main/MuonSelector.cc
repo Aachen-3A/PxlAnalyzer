@@ -1,7 +1,6 @@
 #include "MuonSelector.hh"
 
 
-using namespace pxl;
 using namespace std;
 
 //--------------------Constructor-----------------------------------------------------------------
@@ -18,7 +17,18 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_iso_useRhoCorr(             cfg.GetItem< bool   >( "Muon.Iso.UseRhoCorr" ) ),
     m_muo_id_type(                    cfg.GetItem< string >( "Muon.ID.Type" ) ),
     m_muo_HighPtSwitchPt(             cfg.GetItem< double >( "Muon.ID.HighPtSwitchPt" ) ),
-    m_muo_EA( cfg , "Muon.EffectiveArea.File" )
+    m_muo_EA( cfg , "Muon.EffectiveArea.File" ),
+
+
+    //cut variables:
+    m_globalChi2_max(                 cfg.GetItem< int >(     "Muon.GlobalChi2.max") ),
+    m_nMuonHits_min(                  cfg.GetItem< int >(     "Muon.NMuonHits.min") ),
+    m_nMatchedStations_min(           cfg.GetItem< int >(     "Muon.NMatchedStations.min") ),
+    m_zImpactParameter_max(           cfg.GetItem< double >(  "Muon.ZImpactParameter.max") ),
+    m_xyImpactParameter_max(          cfg.GetItem< double >(  "Muon.XYImpactParameter.max") ),
+    m_nPixelHits_min(                 cfg.GetItem< int >(     "Muon.NPixelHits.min") ),
+    m_nTrackerLayersWithMeas_min(     cfg.GetItem< int >(     "Muon.NTrackerLayersWithMeas.min") ),
+    m_dPtRelTrack_max(                cfg.GetItem< double >(  "Muon.dPtRelTrack.max") )
 {
 }
 //--------------------Destructor-----------------------------------------------------------------
@@ -27,7 +37,7 @@ MuonSelector::~MuonSelector() {
 }
 
 
-bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double rho ) const {
+bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const {
     if( isRec ){
         return muonID(muon, rho);
     }
@@ -59,18 +69,34 @@ bool MuonSelector::kinematics(pxl::Particle *muon ) const {
 bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
     if(kinematics( muon )) return false;
     //the muon cuts are according to :
-    //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
+    //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49
     //status: 17.9.2014
 
     // isTightMuon or isHighPtMuon
-    if(m_muo_id_type=="musicID"){
+    if(m_muo_id_type=="musicID.bool"){
         if(muon->getPt()<m_muo_HighPtSwitchPt){
-            if( ! muon->getUserRecord("isTightMuon") ) return false;
+            if( not muon->getUserRecord("isTightMuon")) return false;
         }else{
-            if( ! muon->getUserRecord("isHighPtMuon") ) return false;
+            if( not muon->getUserRecord("isHighPtMuon")) return false;
+        }
+    }else if(m_muo_id_type=="isTightMuon.bool"){
+        if(not muon->getUserRecord("isTightMuon")) return false;
+    }else if(m_muo_id_type=="isHighPtMuon.bool"){
+        if(not muon->getUserRecord("isHighPtMuon")) return false;
+    }else if(m_muo_id_type=="isTightMuon.Cut"){
+        if ( not tightMuonIDCut(muon) ){
+            return false;
+        }
+    }else if(m_muo_id_type=="isHighPtMuon.Cut"){
+        if ( not HighptMuonIDCut(muon) ){
+            return false;
         }
     }else{
-        if( ! muon->getUserRecord(m_muo_id_type) ) return false;
+          std::stringstream error;
+          error << "'Muon.ID.Type' must be one of these values: 'musicID.bool','isTightMuon.bool','isHighPtMuon.bool','isTightMuon.Cut','isHighPtMuon.Cut' The value is "<<m_muo_id_type;
+          throw Tools::config_error( error.str() );
+          return false;
+
     }
 
 
@@ -136,6 +162,38 @@ bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
 
 
     //no cut failed
+    return true;
+}
+
+
+bool MuonSelector::tightMuonIDCut(pxl::Particle *muon) const{
+
+    if( not muon->getUserRecord("isGlobalMuon").toBool() )                          return false;
+    if( not muon->getUserRecord("isPFMuon").toBool() )                              return false;
+    if( muon->getUserRecord("NormChi2").toInt32() > m_globalChi2_max)               return false;
+    if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_nMuonHits_min)            return false;
+    if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
+    if( muon->getUserRecord("Dxy").toDouble() < m_xyImpactParameter_max)            return false;
+    if( muon->getUserRecord("DzBT").toDouble() < m_zImpactParameter_max)            return false;
+    if( muon->getUserRecord("VHitsPixel").toInt32() < m_nPixelHits_min)             return false;
+    if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() < m_nTrackerLayersWithMeas_min)
+        return false;
+    return true;
+}
+
+
+
+bool MuonSelector::HighptMuonIDCut(pxl::Particle *muon) const{
+    if( not muon->getUserRecord("isGlobalMuon").toBool() )                                  return false;
+    if( muon->getUserRecord("VHitsMuonSysCocktail").toInt32() < m_nMuonHits_min)            return false;
+    if( muon->getUserRecord("NMatchedStationsCocktail").toInt32() < m_nMatchedStations_min) return false;
+    if( muon->getUserRecord("DxyCocktail").toDouble() < m_xyImpactParameter_max)            return false;
+    if( muon->getUserRecord("DzBTCocktail").toDouble() < m_zImpactParameter_max)            return false;
+    if( muon->getUserRecord("VHitsPixelCocktail").toInt32() < m_nPixelHits_min)             return false;
+    if( muon->getUserRecord("TrackerLayersWithMeasCocktail").toInt32() < m_nTrackerLayersWithMeas_min)
+        return false;
+    if( muon->getUserRecord("ptErrorCocktail").toDouble()/muon->getUserRecord("ptCocktail").toDouble() > m_dPtRelTrack_max )
+        return false;
     return true;
 }
 

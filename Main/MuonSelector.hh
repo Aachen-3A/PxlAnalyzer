@@ -1,5 +1,5 @@
-//#ifndef MuonSelector_hh
-//#define MuonSelector_hh
+#ifndef MuonSelector_hh
+#define MuonSelector_hh
 
 
 /*
@@ -21,12 +21,14 @@ public:
     MuonSelector(const Tools::MConfig &config );
     // Destruktor
     ~MuonSelector();
-    bool passMuon( pxl::Particle *muon, const bool& isRec ,double rho=0. ) const;
+    bool passMuon( pxl::Particle *muon, const bool& isRec ,double const rho=0. ) const;
 
 private:
     // Methods;
     bool kinematics(pxl::Particle *muon ) const;
     bool muonID( pxl::Particle *muon , double rho) const;
+    bool tightMuonIDCut(pxl::Particle *muon) const;
+    bool HighptMuonIDCut(pxl::Particle *muon) const;
     //Variables
     double const        m_muo_pt_min;
     double const        m_muo_eta_max;
@@ -37,7 +39,16 @@ private:
     bool const          m_muo_iso_useRhoCorr;
     std::string const   m_muo_id_type;
     double const        m_muo_HighPtSwitchPt;
-
-   EffectiveArea const m_muo_EA;
+    EffectiveArea const m_muo_EA;
+    //cut variables
+    int const           m_globalChi2_max;
+    int const           m_nMuonHits_min;
+    int const           m_nMatchedStations_min;
+    double const        m_zImpactParameter_max;
+    double const        m_xyImpactParameter_max;
+    int const           m_nPixelHits_min;
+    int const           m_nTrackerLayersWithMeas_min;
+    double const        m_dPtRelTrack_max;
 
 };
+#endif

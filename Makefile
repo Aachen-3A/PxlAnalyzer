@@ -26,7 +26,7 @@ ifdef DEBUG
    # with a newer version?!
    CXXFLAGS += -g3 -ggdb
 else
-   CXXFLAGS := -O2
+   CXXFLAGS := -O3
 endif
 
 # ROOT libraries:
