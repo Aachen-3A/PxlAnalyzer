@@ -229,15 +229,7 @@ void shiftJetAndMET(std::string const shiftType){/*
 
    //else shiftType == "Scale"
 
-   // create Copys of the original Event View and modify the JES
-   pxl::EventView *GenEvtView_JES_UP = m_event.getObjectOwner().create< pxl::EventView >( GenEvtView );
-   event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
-   pxl::EventView *RecEvtView_JES_UP = m_event.getObjectOwner().create< pxl::EventView >( RecEvtView );
-   event.setIndex( "Rec_JES_UP", RecEvtView_JES_UP );
-   pxl::EventView *GenEvtView_JES_DOWN = m_event.getObjectOwner().create< pxl::EventView >( GenEvtView );
-   event.setIndex( "Gen_JES_DOWN", GenEvtView_JES_DOWN );
-   pxl::EventView *RecEvtView_JES_DOWN = m_event.getObjectOwner().create< pxl::EventView >( RecEvtView );
-   event.setIndex( "Rec_JES_DOWN", RecEvtView_JES_DOWN );
+
 
 */}
 

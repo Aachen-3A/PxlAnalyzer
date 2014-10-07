@@ -312,7 +312,6 @@ int main( int argc, char* argv[] ) {
             time ( &rawtime );
             cout << "Opening time: " << ctime ( &rawtime );
             inFile.open( fileName );
-            //inFile.setCompressionMode(6);
          } catch( std::runtime_error& e ) {
             // Wait for ( 10^numTrials - 1 ) seconds before retrying.
             //double const sleep = std::pow( 10, numTrials ) - 1.0;
@@ -343,7 +342,13 @@ int main( int argc, char* argv[] ) {
       // run event loop:
       while( inFile.good() ) {
          //while (inFile.nextEvent()) {
-         pxl::Event* event_ptr =dynamic_cast<pxl::Event*>(inFile.readNextObject());
+         pxl::Event* event_ptr=0;
+         try{
+             event_ptr=dynamic_cast<pxl::Event*>(inFile.readNextObject());
+        }catch( std::runtime_error& e ){
+            cout<< "möörp"<<endl;
+            break;
+        }
 
          if(!event_ptr) continue;
 
