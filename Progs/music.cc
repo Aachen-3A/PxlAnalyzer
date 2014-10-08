@@ -205,7 +205,6 @@ int main( int argc, char* argv[] ) {
    pdf::PDFTool *pdfTool = 0;
    if( not runOnData && NoSpecialAna ){
        pdfTool = new pdf::PDFTool( config, debug );
-
    }
    // When running on data, there is no PDF information. Thus, we cannot use
    // PDFTool to get the PDFInfo, so initialize it empty.
@@ -257,7 +256,7 @@ int main( int argc, char* argv[] ) {
       }
    }
 
-   specialAna *ana;
+   specialAna *ana=0;
    if ( runSpecialAna ){
       ana = new specialAna( config );
       fork.insertObject( ana , "specialAna" );
@@ -341,7 +340,6 @@ int main( int argc, char* argv[] ) {
 
       // run event loop:
       while( inFile.good() ) {
-         //while (inFile.nextEvent()) {
          pxl::Event* event_ptr=0;
          try{
              event_ptr=dynamic_cast<pxl::Event*>(inFile.readNextObject());
@@ -415,29 +413,12 @@ int main( int argc, char* argv[] ) {
             std::string const linkName = "pre-priv-gen-rec";
             Matcher.matchObjects( GenEvtView, RecEvtView, linkName, false );
 
-            // create new event views with systematic shifts
-            // (the event cannot be modified inside specialAna - especially no new event views)
-            // shifts of type 'Scale' are implemented at the moment
-            // shifts of type 'Resolution' are to be implemented
-            syst_shifter.init(&event);
-            syst_shifter.shiftEleAndMET("Scale");
-            //syst_shifter.shiftEleAndMET("Resolution");
-            syst_shifter.shiftMuoAndMET("Scale");
-            //syst_shifter.shiftMuoAndMET("Resolution");
-            syst_shifter.shiftTauAndMET("Scale");
-            //syst_shifter.shiftTauAndMET("Resolution");
-            //syst_shifter.shiftJetAndMET("Scale");
-            //syst_shifter.shiftJetAndMET("Resolution");
-            //syst_shifter.shiftMETUnclustered("Scale");
-            //syst_shifter.shiftMETUnclustered("Resolution");
-
             if( jetResCorrUse ) {
                // Change event properties according to official recommendations.
                // (Also used for JES UP/DOWN!)
                // Don't do this on data!
                Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
             }
-
             // create Copys of the original Event View and modify the JES
             pxl::EventView *GenEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
             event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
@@ -463,6 +444,23 @@ int main( int argc, char* argv[] ) {
                cerr << "Skipping this event!" << std::endl;
                continue;
             }
+
+            // create new event views with systematic shifts
+            // (the event cannot be modified inside specialAna - especially no new event views)
+            // shifts of type 'Scale' are implemented at the moment
+            // shifts of type 'Resolution' are to be implemented
+            syst_shifter.init(&event);
+            syst_shifter.shiftEleAndMET("Scale");
+            //syst_shifter.shiftEleAndMET("Resolution");
+            syst_shifter.shiftMuoAndMET("Scale");
+            //syst_shifter.shiftMuoAndMET("Resolution");
+            syst_shifter.shiftTauAndMET("Scale");
+            //syst_shifter.shiftTauAndMET("Resolution");
+            //syst_shifter.shiftJetAndMET("Scale");
+            //syst_shifter.shiftJetAndMET("Resolution");
+            //syst_shifter.shiftMETUnclustered("Scale");
+            //syst_shifter.shiftMETUnclustered("Resolution");
+
             // Redo the matching, because the selection can remove particles.
             Matcher.matchObjects( GenEvtView, RecEvtView, "priv-gen-rec", true );
 
@@ -487,7 +485,7 @@ int main( int argc, char* argv[] ) {
          // run the fork ..
          fork.analyseEvent( event_ptr );
          fork.finishEvent( event_ptr );
-
+         delete event_ptr;
          e++;
          if( e < 10 || ( e < 100 && e % 10 == 0 ) ||
             ( e < 1000 && e % 100 == 0 ) ||
