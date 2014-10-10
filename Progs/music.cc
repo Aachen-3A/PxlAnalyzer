@@ -482,9 +482,10 @@ int main( int argc, char* argv[] ) {
                Selector.synchronizeGenRec( GenEvtView_JES_DOWN, RecEvtView_JES_DOWN );
             }
          }
+
          // run the fork ..
-         fork.analyseEvent( event_ptr );
-         fork.finishEvent( event_ptr );
+         fork.analyseEvent( &event );
+         fork.finishEvent( &event );
          delete event_ptr;
          e++;
          if( e < 10 || ( e < 100 && e % 10 == 0 ) ||

@@ -40,9 +40,12 @@ private:
    std::vector< pxl::Particle* > METList;
    std::vector< pxl::Particle* > METListUp;
    std::vector< pxl::Particle* > METListDown;
+   std::vector< pxl::Particle* > UnclusteredEnUp;
+   std::vector< pxl::Particle* > UnclusteredEnDown;
 
    // methods
-   bool inline checkshift(std::string const shiftType) const;
+   void inline checkshift(std::string const shiftType) const;
+   void createEventViews(std::string prefix, pxl::EventView** evup, pxl::EventView** evdown);
    void fillMETLists(pxl::EventView* evup, pxl::EventView* evdown);
    void shiftParticle(pxl::EventView* eview, pxl::Particle* const part , double const& ratio, double& dPx, double& dPy/*, bool const up*/);
    void shiftMET(double const dPx_up, double const dPx_down, double const dPy_up, double const dPy_down);

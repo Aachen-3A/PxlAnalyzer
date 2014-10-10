@@ -48,6 +48,8 @@ void Systematics::init(pxl::Event* event){
    TauList.clear();
    JetList.clear();
    METList.clear();
+   UnclusteredEnUp.clear();
+   UnclusteredEnDown.clear();
 
    // get all particles
    std::vector< pxl::Particle* > AllParticles;
@@ -63,6 +65,9 @@ void Systematics::init(pxl::Event* event){
       else if( Name == m_TauType ) TauList.push_back( part );
       else if( Name == m_JetType ) JetList.push_back( part );
       else if( Name == m_METType ) METList.push_back( part );
+      //copy already shifted MET from Event:
+      else if( Name == m_METType+"uncert_10") UnclusteredEnUp.push_back( part );
+      else if( Name == m_METType+"uncert_11") UnclusteredEnDown.push_back( part );
    }
    return;
 }
@@ -70,7 +75,7 @@ void Systematics::init(pxl::Event* event){
 
 
 void Systematics::shiftMuoAndMET(std::string const shiftType){
-   if(!checkshift(shiftType)) return;
+   checkshift(shiftType);
 
    // shiftType == "Resolution"
    if(shiftType == "Resolution"){
@@ -87,22 +92,20 @@ void Systematics::shiftMuoAndMET(std::string const shiftType){
    double dPy_up=0;
    double dPx_down=0;
    double dPy_down=0;
+   std::string prefix = std::string("Muon_syst") + shiftType;
+   pxl::EventView* evup   = 0;
+   pxl::EventView* evdown = 0;
 
-   // create new EventViews inside the event
-   pxl::EventView* EventViewMuonUp   = m_event->getObjectOwner().create< pxl::EventView >();
-   pxl::EventView* EventViewMuonDown = m_event->getObjectOwner().create< pxl::EventView >();
-   m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Up",   EventViewMuonUp);
-   m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Down", EventViewMuonDown);
-
-   fillMETLists(EventViewMuonUp, EventViewMuonDown);
+   createEventViews(prefix, &evup, &evdown);
+   fillMETLists(evup, evdown);
 
    // add shifted particles to these EventViews
    for(unsigned int i = 0; i < MuonList.size(); i++){
       //use the high pt definition x% per TeV
       ratio_up   = MuonList.at(i)->getPt()*(1.+ratio)/1000.;
-      shiftParticle(EventViewMuonUp,   MuonList.at(i), ratio_up,   dPx_up,   dPy_up);
+      shiftParticle(evup,   MuonList.at(i), ratio_up,   dPx_up,   dPy_up);
       ratio_down = MuonList.at(i)->getPt()*(1.-ratio)/1000.;
-      shiftParticle(EventViewMuonDown, MuonList.at(i), ratio_down, dPx_down, dPy_down);
+      shiftParticle(evdown, MuonList.at(i), ratio_down, dPx_down, dPy_down);
    }
 
    shiftMET(dPx_up, dPx_down, dPy_up, dPy_down);
@@ -115,7 +118,7 @@ void Systematics::shiftMuoAndMET(std::string const shiftType){
 
 
 void Systematics::shiftEleAndMET(std::string const shiftType){
-   if(!checkshift(shiftType)) return;
+   checkshift(shiftType);
 
    // shiftType == "Resolution"
    if(shiftType == "Resolution"){
@@ -133,14 +136,12 @@ void Systematics::shiftEleAndMET(std::string const shiftType){
    double dPy_up=0;
    double dPx_down=0;
    double dPy_down=0;
+   std::string prefix = std::string("Ele_syst") + shiftType;
+   pxl::EventView* evup   = 0;
+   pxl::EventView* evdown = 0;
 
-   // create new EventViews inside the event
-   pxl::EventView* EventViewEleUp   = m_event->create< pxl::EventView >();
-   pxl::EventView* EventViewEleDown = m_event->create< pxl::EventView >();
-   m_event->setIndex(std::string("Ele") + "_syst" + shiftType + "Up",   EventViewEleUp);
-   m_event->setIndex(std::string("Ele") + "_syst" + shiftType + "Down", EventViewEleDown);
-
-   fillMETLists(EventViewEleUp, EventViewEleDown);
+   createEventViews(prefix, &evup, &evdown);
+   fillMETLists(evup, evdown);
 
    // add shifted particles to these EventViews
    for(unsigned int i = 0; i < EleList.size(); i++){
@@ -152,8 +153,8 @@ void Systematics::shiftEleAndMET(std::string const shiftType){
       } else {
          throw std::runtime_error( "Systematics.cc: electrons must be in either endcap or barrel and have an id" );
       }
-      shiftParticle(EventViewEleUp,   EleList.at(i), 1. + ratio, dPx_up,   dPy_up);
-      shiftParticle(EventViewEleDown, EleList.at(i), 1. - ratio, dPx_down, dPy_down);
+      shiftParticle(evup,   EleList.at(i), 1. + ratio, dPx_up,   dPy_up);
+      shiftParticle(evdown, EleList.at(i), 1. - ratio, dPx_down, dPy_down);
    }
 
    shiftMET(dPx_up, dPx_down, dPy_up, dPy_down);
@@ -166,7 +167,7 @@ void Systematics::shiftEleAndMET(std::string const shiftType){
 
 
 void Systematics::shiftTauAndMET(std::string const shiftType){
-   if(!checkshift(shiftType)) return;
+   checkshift(shiftType);
 
    // shiftType == "Resolution"
    if(shiftType == "Resolution"){
@@ -182,19 +183,17 @@ void Systematics::shiftTauAndMET(std::string const shiftType){
    double dPy_up=0;
    double dPx_down=0;
    double dPy_down=0;
+   std::string prefix = std::string("Tau_syst") + shiftType;
+   pxl::EventView* evup   = 0;
+   pxl::EventView* evdown = 0;
 
-   // create new EventViews inside the event
-   pxl::EventView* EventViewTauUp   = m_event->create< pxl::EventView >();
-   pxl::EventView* EventViewTauDown = m_event->create< pxl::EventView >();
-   m_event->setIndex(std::string("Tau") + "_syst" + shiftType + "Up",   EventViewTauUp);
-   m_event->setIndex(std::string("Tau") + "_syst" + shiftType + "Down", EventViewTauDown);
-
-   fillMETLists(EventViewTauUp, EventViewTauDown);
+   createEventViews(prefix, &evup, &evdown);
+   fillMETLists(evup, evdown);
 
    // add shifted particles to these EventViews
    for(unsigned int i = 0; i < TauList.size(); i++){
-      shiftParticle(EventViewTauUp,   TauList.at(i), 1. + ratio, dPx_up,   dPy_up);
-      shiftParticle(EventViewTauDown, TauList.at(i), 1. - ratio, dPx_down, dPy_down);
+      shiftParticle(evup,   TauList.at(i), 1. + ratio, dPx_up,   dPy_up);
+      shiftParticle(evdown, TauList.at(i), 1. - ratio, dPx_down, dPy_down);
    }
 
    shiftMET(dPx_up, dPx_down, dPy_up, dPy_down);
@@ -207,7 +206,7 @@ void Systematics::shiftTauAndMET(std::string const shiftType){
 
 
 void shiftJetAndMET(std::string const shiftType){/*
-   if(!checkshift(shiftType)) return;
+   checkshift(shiftType);
    if( not m_jet_res_corr_use ) {
       if( m_debug > 0 ) {
          std::stringstream warn;
@@ -236,7 +235,7 @@ void shiftJetAndMET(std::string const shiftType){/*
 
 
 void Systematics::shiftMETUnclustered(std::string const shiftType){
-   if(!checkshift(shiftType)) return;
+   checkshift(shiftType);
 
    // shiftType == "Resolution"
    if(shiftType == "Resolution"){
@@ -245,6 +244,32 @@ void Systematics::shiftMETUnclustered(std::string const shiftType){
       return;
    }
 
+   //from MUSiCSkimmer_miniAOD.cc:
+   //Get systmetShifts:
+   //enum   METUncertainty {
+     //JetEnUp =0, JetEnDown =1, JetResUp =2, JetResDown =3,
+     //MuonEnUp =4, MuonEnDown =5, ElectronEnUp =6, ElectronEnDown =7,
+     //TauEnUp =8, TauEnDown =9, UnclusteredEnUp =10, UnclusteredEnDown =11,
+     //METUncertaintySize =12
+   //}
+
+
+   std::string find   = m_METType+"uncert_";
+   std::string prefix = m_METType + shiftType;
+   pxl::EventView* evup   = 0;
+   pxl::EventView* evdown = 0;
+   pxl::Particle*  part   = 0;
+
+   createEventViews(prefix, &evup, &evdown);
+   // create previously copied uncert MET
+   for(unsigned int i = 0; i < UnclusteredEnUp.size(); i++){
+       part = evup->getObjectOwner().create< pxl::Particle >(UnclusteredEnUp.at(i));
+       part->setName(m_METType);
+   }
+   for(unsigned int i = 0; i < UnclusteredEnDown.size(); i++){
+       part = evdown->getObjectOwner().create< pxl::Particle >(UnclusteredEnDown.at(i));
+       part->setName(m_METType);
+   }
    return;
 }
 
@@ -254,13 +279,38 @@ void Systematics::shiftMETUnclustered(std::string const shiftType){
 //private-----
 //------------
 
-bool inline Systematics::checkshift(std::string const shiftType) const {
+void inline Systematics::checkshift(std::string const shiftType) const {
    // check if given shiftType is supported
    if(not (shiftType == "Resolution") && not (shiftType == "Scale")){
-      std::cout << "Systematics.cc: only accepted shift types at the moment are 'Resolution' and 'Scale'" << std::endl;
-      return false;
+      throw std::runtime_error("Systematics.cc: only accepted shift types at the moment are 'Resolution' and 'Scale'");
    }
-   return true;
+   return;
+}
+
+
+
+void Systematics::createEventViews(std::string prefix, pxl::EventView** evup, pxl::EventView** evdown) {
+   bool success;
+
+   // create new EventViews inside the event
+   (*evup)   = m_event->getObjectOwner().create< pxl::EventView >();
+   (*evdown) = m_event->getObjectOwner().create< pxl::EventView >();
+   if((*evup)==0 || (*evdown)==0){
+      throw std::runtime_error("Systematics.cc: creating an event view failed!");
+   }
+   success = m_event->getObjectOwner().setIndexEntry(prefix + "Up",   (*evup));
+   (*evup)->setName(prefix + "Up");
+   if(!success){
+      std::string message = "Systematics.cc: setIndex for event view" + prefix + "Up" + " failed!";
+      throw std::runtime_error(message);
+   }
+   success = m_event->getObjectOwner().setIndexEntry(prefix + "Down", (*evdown));
+   (*evdown)->setName(prefix + "Down");
+   if(!success){
+      std::string message = "Systematics.cc: setIndex for event view" + prefix + "Down" + " failed!";
+      throw std::runtime_error(message);
+   }
+   return;
 }
 
 
@@ -315,4 +365,3 @@ void Systematics::shiftMET(double const dPx_up, double const dPx_down, double co
    }
    return;
 }
-
