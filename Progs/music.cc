@@ -78,7 +78,7 @@ int main( int argc, char* argv[] ) {
    // merging, the output is effectively reduced by almost a factor of 2.
    unsigned int ECMerger = 2;
    bool NoCcControl    = false;
-   bool NoSpecialAna   = false;
+   bool runSpecialAna   = false;
    bool NoCcEventClass = false;
    bool DumpECHistos   = false;
    vector< string > arguments;
@@ -94,7 +94,7 @@ int main( int argc, char* argv[] ) {
       >> parameter( 'M', "ECMerger", ECMerger, "Which ECMerger to use: 0 = Don't merge JES files, 1 = use ECMerger, 2 = use ECMerger2.", false )
       >> option(         "NoCcEventClass", NoCcEventClass, "Do NOT create EventClass file. (Not allowed if --NoCcControl specified!)" )
       >> option(         "NoCcControl",  NoCcControl, "Do NOT make ControlPlots. (Not allowed if --NoCcEventClass specified!)" )
-      >> option(         "NoSpecialAna",  NoSpecialAna, "Do NOT perform dedicated analysis." )
+      >> option(         "SpecialAna",  runSpecialAna, "Do perform dedicated analysis. Sets NoCcEventClass and NoCcControl" )
       >> option(         "DumpECHistos", DumpECHistos, "Write out all histograms into a separate file (slow!)." )
       >> values< string >( back_inserter( arguments ), "CONFIG_FILE and PXLIO_FILE(S)." );
 
@@ -137,9 +137,15 @@ int main( int argc, char* argv[] ) {
    //
    vector< string > input_files( ++arguments.begin(), arguments.end() );
 
+   const bool NoSpecialAna   = not runSpecialAna;
+   if(runSpecialAna){
+      NoCcEventClass=true;
+      NoCcControl=true;
+   }
+
    const bool runCcEventClass = not NoCcEventClass;
    const bool runCcControl    = not NoCcControl;
-   const bool runSpecialAna   = not NoSpecialAna;
+
 
    // Get the run config file from config file.
    //
@@ -344,7 +350,7 @@ int main( int argc, char* argv[] ) {
          try{
              event_ptr=dynamic_cast<pxl::Event*>(inFile.readNextObject());
         }catch( std::runtime_error& e ){
-            cout<< "möörp"<<endl;
+            cout <<"end of file or unreadable event.    "<<endl;
             break;
         }
 
@@ -495,7 +501,7 @@ int main( int argc, char* argv[] ) {
             cout << e << " Events analyzed (" << skipped << " skipped)" << endl;
          }
 
-         if( e % 100000 == 0 ) PrintProcessInfo( info );
+         //if( e % 100000 == 0 ) PrintProcessInfo( info );
       }
       inFile.close();
       ++file_iter;
