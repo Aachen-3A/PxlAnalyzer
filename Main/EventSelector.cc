@@ -606,7 +606,7 @@ bool EventSelector::passGam( pxl::Particle const *gam,
 
       if( m_gam_rejectOutOfTime )
         try {
-            if( gam->getUserRecord_def( "recoFlag",0 ) == 2 )
+            if( gam->getUserRecord_def( "recoFlag",0 ).toUInt32() == 2 )
                 return false;
         } catch( std::runtime_error ) {
             // In case "recoFlag" is not set, we assume, it is *not* out of

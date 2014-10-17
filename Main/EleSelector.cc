@@ -326,7 +326,7 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
    }
 
    if( m_ele_heepid_rejectOutOfTime and
-       ele->getUserRecord_def( "recoFlag",0 ).toInt32() == 2
+       ele->getUserRecord_def( "recoFlag",0 ).toUInt32() == 2
        ) return false;
 
    //ele in barrel
