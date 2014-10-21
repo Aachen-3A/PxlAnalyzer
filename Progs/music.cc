@@ -321,7 +321,7 @@ int main( int argc, char* argv[] ) {
             // Wait for ( 10^numTrials - 1 ) seconds before retrying.
             //double const sleep = std::pow( 10, numTrials ) - 1.0;
             //boost::this_thread::sleep( boost::posix_time::seconds( sleep ) );
-
+            cout << "Did you use an absolute path to the .pxlio file?" << endl;
             if( numTrials < 3 ) {
                numTrials++;
                // Retry!
@@ -525,7 +525,7 @@ int main( int argc, char* argv[] ) {
    }
    cout << "\n\n\n" << endl;
 
-   ana -> SetEvents(e);
+   //ana -> SetEvents(e);
 
    fork.endRun();
    fork.endJob();
