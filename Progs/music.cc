@@ -321,7 +321,7 @@ int main( int argc, char* argv[] ) {
             // Wait for ( 10^numTrials - 1 ) seconds before retrying.
             //double const sleep = std::pow( 10, numTrials ) - 1.0;
             //boost::this_thread::sleep( boost::posix_time::seconds( sleep ) );
-
+            cout << "Did you use an absolute path to the .pxlio file?" << endl;
             if( numTrials < 3 ) {
                numTrials++;
                // Retry!
@@ -353,9 +353,7 @@ int main( int argc, char* argv[] ) {
             cout <<"end of file or unreadable event.    "<<endl;
             break;
         }
-
          if(!event_ptr) continue;
-
 
          pxl::Event event = *event_ptr;
 

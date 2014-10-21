@@ -373,31 +373,7 @@ void EventSelector::varyJESMET( vector< pxl::Particle* > const &jets,
 
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
-//ATTENTION: muon-vector is possibly changed!
-// void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool &isRec) {
-//    vector< pxl::Particle* > muonsAfterCut;
-//
-//    for( vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon ) {
-//       Particle* thisMuon = *muon;
-//       if( m_muo_selector.passMuon(thisMuon,isRec) ) {
-//          if (m_muo_idtag){
-//             thisMuon->setUserRecord("passed",true);
-//          }else{
-//             muonsAfterCut.push_back( thisMuon );
-//          }
-//       } else {
-//          if (m_muo_idtag){
-//             thisMuon->setUserRecord("passed",false);
-//          }else{
-//             thisMuon->owner()->remove( thisMuon );
-//          }
-//       }
-//    }
-//    if (not m_muo_idtag){
-//       //ATTENTION: changing muon-vector!
-//       muons = muonsAfterCut;
-//    }
-// }
+
 void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool &isRec) {
    if(m_muo_idtag){ // muons are tagged, not discarded
       for(vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon) {
@@ -446,7 +422,6 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
       return; // method has finished
    }
 
-   // else if(not m_ele_idtag):
    vector<pxl::Particle*> elesAfterCut;
    Particle* thisEle;
    for( vector< Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ) {
@@ -457,7 +432,6 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
          (*ele)->owner()->remove(thisEle);
       }
    }
-
    //ATTENTION: changing eles-vector!
    eles = elesAfterCut;
 }
@@ -606,7 +580,7 @@ bool EventSelector::passGam( pxl::Particle const *gam,
 
       if( m_gam_rejectOutOfTime )
         try {
-            if( gam->getUserRecord_def( "recoFlag",0 ) == 2 )
+            if( gam->getUserRecord_def( "recoFlag",0 ).toUInt32() == 2 )
                 return false;
         } catch( std::runtime_error ) {
             // In case "recoFlag" is not set, we assume, it is *not* out of
@@ -1114,7 +1088,6 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
          }
       }
    }
-
    // get all particles
    vector<pxl::Particle*> allparticles;
    EvtView->getObjectsOfType<pxl::Particle>(allparticles);
