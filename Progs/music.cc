@@ -353,9 +353,7 @@ int main( int argc, char* argv[] ) {
             cout <<"end of file or unreadable event.    "<<endl;
             break;
         }
-
          if(!event_ptr) continue;
-
 
          pxl::Event event = *event_ptr;
 

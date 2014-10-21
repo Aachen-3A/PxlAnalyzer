@@ -420,7 +420,6 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
          return false;
    }
-
    return true;
 }
 
