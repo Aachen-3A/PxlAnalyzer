@@ -525,7 +525,7 @@ int main( int argc, char* argv[] ) {
    }
    cout << "\n\n\n" << endl;
 
-   ana -> SetEvents(e);
+   //ana -> SetEvents(e);
 
    fork.endRun();
    fork.endJob();
