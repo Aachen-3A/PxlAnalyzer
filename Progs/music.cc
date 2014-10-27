@@ -363,6 +363,7 @@ int main( int argc, char* argv[] ) {
          if( event.getUserRecords().size() == 0 ) {
             cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << endl;
             cout << "WARNING: Continue with next event." << endl;
+            delete event_ptr;
             continue;
          }
 
@@ -372,6 +373,7 @@ int main( int argc, char* argv[] ) {
          lumi::ID eventNum = event.getUserRecord( "EventNum" );
          if( ! runcfg.check( run, LS ) ) {
             ++skipped;
+            delete event_ptr;
             continue;
          }
 
@@ -383,6 +385,7 @@ int main( int argc, char* argv[] ) {
                std::cerr << "Skipping Run/LS/Event: ";
                std::cerr <<  run << ":" <<  LS << ":" <<  eventNum << std::endl;
             }
+            delete event_ptr;
             continue;
          }
 
@@ -446,6 +449,7 @@ int main( int argc, char* argv[] ) {
                cerr << "[WARNING] (main): ";
                cerr << "Found unsorted particle in event no. " << e << ". ";
                cerr << "Skipping this event!" << std::endl;
+               delete event_ptr;
                continue;
             }
 
