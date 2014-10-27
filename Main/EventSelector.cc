@@ -996,10 +996,10 @@ bool EventSelector::applyGlobalEventCuts( pxl::EventView* EvtView,
 }
 
 
-void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles
-                                ) const {
+void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles ) const {
    if( particles.size() < 2 ) return;
    std::vector< pxl::Particle* >::const_iterator part = particles.begin();
+   bool resort=false;
    double first_pt = (*part)->getPt();
    ++part;
    for( ; part != particles.end(); ++part ) {
@@ -1018,10 +1018,21 @@ void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles
          for( part2 = particles.begin(); part2 != particles.end(); ++part2 ) {
             exc << "pt: " << (*part2)->getPt() << std::endl;
          }
-         throw Tools::unsorted_error( exc.str() );
+         //there are some files with this error we can not sovle it here without changing the function
+         // TODO fix the sorting
+         std::cerr<<exc.str()<<std::endl;
+         //throw Tools::unsorted_error( exc.str() );
+         resort=true;
+
+
+
       } else {
          first_pt = pt;
       }
+   }
+   if(resort){
+       //we can not resort, because it is a const vector grrrrrrr
+      //pxl::sortParticles( particles );
    }
 }
 
@@ -1102,6 +1113,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
                             jets,
                             mets,
                             s3_particles;
+
    for (vector<pxl::Particle*>::const_iterator part = allparticles.begin(); part != allparticles.end(); ++part) {
       string name = (*part)->getName();
       // Only fill the collection if we want to use the particle!
