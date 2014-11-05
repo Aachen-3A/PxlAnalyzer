@@ -35,7 +35,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_PV_ndof_min( cfg.GetItem< double >( "PV.NDOF.min" ) ),
 
    //rho default
-   m_rho_use(            cfg.GetItem< string   >( "Rho.Label" ) ),
+   m_rho_use(            cfg.GetItem< string   >( "Rho.Label", cfg.GetItem< string >( "Ele.Rho.Label" ) ) ),
 
    // Tracks:
    m_tracks_use(     cfg.GetItem< bool         >( "Tracks.use" ) ),
@@ -44,12 +44,12 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    //Muons
    m_muo_use(    cfg.GetItem< bool   >( "Muon.use" ) ),
-   m_muo_idtag( cfg.GetItem< bool   >( "Muon.IdTag") ),
+   m_muo_idtag( cfg.GetItem< bool   >( "Muon.IdTag" , false) ),
    m_muo_selector(cfg),
 
    // Electrons:
    m_ele_use(        cfg.GetItem< bool   >( "Ele.use" ) ),
-   m_ele_idtag(      cfg.GetItem< bool   >( "Ele.IdTag") ),
+   m_ele_idtag(      cfg.GetItem< bool   >( "Ele.IdTag" , false ) ),
    m_ele_rho_label(  cfg.GetItem< string >( "Ele.Rho.Label" ) ),
    m_ele_selector(cfg),
 
@@ -78,8 +78,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    //CutBasedPhotonFlag:
 
 
-   m_gam_CutBasedPhotonID2012Flag_use(  cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012Flag.use" ) ),
-   m_gam_IDFlag(                        cfg.GetItem< string >( "Gamma.IDFlag" ) ),
+   m_gam_CutBasedPhotonID2012Flag_use(  cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012Flag.use" , 1 ) ),
+   m_gam_IDFlag(                        cfg.GetItem< string >( "Gamma.IDFlag" , "PhotonCutBasedIDTight" ) ),
 
 
    // CutBasedPhotonID2012:
@@ -143,13 +143,13 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_jet_gen_hadEFrac_min(     cfg.GetItem< double >( "Jet.Gen.HadEFrac.min" ) ),
 
    // In case we do the ID on our own:
-   m_jet_nHadEFrac_max(       cfg.GetItem< double >( "Jet.NeutralHadronEnergyFraction.max" ) ),
-   m_jet_nEMEFrac_max(        cfg.GetItem< double >( "Jet.NeutralEMEnergyFraction.max" ) ),
-   m_jet_numConstituents_min( cfg.GetItem< unsigned long    >( "Jet.NumConstituents.min" ) ),
+   m_jet_nHadEFrac_max(       cfg.GetItem< double >( "Jet.NeutralHadronEnergyFraction.max" , 0.99 ) ),
+   m_jet_nEMEFrac_max(        cfg.GetItem< double >( "Jet.NeutralEMEnergyFraction.max" , 0.99 ) ),
+   m_jet_numConstituents_min( cfg.GetItem< unsigned long    >( "Jet.NumConstituents.min" , 2 ) ),
    // Only for |eta| > 2.4:
-   m_jet_cHadEFrac_min(     cfg.GetItem< double >( "Jet.ChargedHadronEnergyFraction.min" ) ),
-   m_jet_cEMEFrac_max(      cfg.GetItem< double >( "Jet.ChargedEMEnergyFraction.max" ) ),
-   m_jet_cMultiplicity_min( cfg.GetItem< unsigned long      >( "Jet.chargedMultiplicity.min" ) ),
+   m_jet_cHadEFrac_min(     cfg.GetItem< double >( "Jet.ChargedHadronEnergyFraction.min" , 0.0 ) ),
+   m_jet_cEMEFrac_max(      cfg.GetItem< double >( "Jet.ChargedEMEnergyFraction.max" , 0.99 ) ),
+   m_jet_cMultiplicity_min( cfg.GetItem< unsigned long      >( "Jet.chargedMultiplicity.min" , 1 ) ),
 
    // bJets?
    m_jet_bJets_use(            cfg.GetItem< bool   >( "Jet.BJets.use" ) ),
@@ -192,14 +192,14 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_eventCleaning( cfg ),
    m_triggerSelector( cfg )
 {
-   if( (not m_gam_Vgamma2011PhotonID_use xor m_gam_CutBasedPhotonID2012_use xor m_gam_CutBasedPhotonID2012Flag_use ) && ( not m_gam_Vgamma2011PhotonID_use && m_gam_CutBasedPhotonID2012_use && m_gam_CutBasedPhotonID2012Flag_use ) ) {
-      stringstream error;
-      error << "In config file: ";
-      error << "'" << cfg.GetConfigFilePath() << "': ";
-      error << "exactly one of 'Gamma.Vgamma2011PhotonID.use' and 'Gamma.CutBasedPhotonID2012.use' ";
-      error << "must be true!";
-      throw Tools::config_error( error.str() );
-   }
+//   if( (not m_gam_Vgamma2011PhotonID_use xor m_gam_CutBasedPhotonID2012_use xor m_gam_CutBasedPhotonID2012Flag_use ) && ( not m_gam_Vgamma2011PhotonID_use && m_gam_CutBasedPhotonID2012_use && m_gam_CutBasedPhotonID2012Flag_use ) ) {
+//      stringstream error;
+//      error << "In config file: ";
+//      error << "'" << cfg.GetConfigFilePath() << "': ";
+//      error << "exactly one of 'Gamma.Vgamma2011PhotonID.use' and 'Gamma.CutBasedPhotonID2012.use' ";
+//      error << "must be true!";
+//      throw Tools::config_error( error.str() );
+//   }
 
 }
 

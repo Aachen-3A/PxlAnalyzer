@@ -13,10 +13,10 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_invertIso(                  cfg.GetItem< bool   >( "Muon.InvertIsolation" ) ),
     m_muo_iso_type(                   cfg.GetItem< string >( "Muon.Iso.Type" ) ),
     m_muo_iso_max(                    cfg.GetItem< double >( "Muon.Iso.max" ) ),
-    m_muo_iso_useDeltaBetaCorr(       cfg.GetItem< bool   >( "Muon.Iso.UseDeltaBetaCorr" ) ),
-    m_muo_iso_useRhoCorr(             cfg.GetItem< bool   >( "Muon.Iso.UseRhoCorr" ) ),
-    m_muo_id_type(                    cfg.GetItem< string >( "Muon.ID.Type" ) ),
-    m_muo_HighPtSwitchPt(             cfg.GetItem< double >( "Muon.ID.HighPtSwitchPt" ) ),
+    m_muo_iso_useDeltaBetaCorr(       cfg.GetItem< bool   >( "Muon.Iso.UseDeltaBetaCorr" , false ) ),
+    m_muo_iso_useRhoCorr(             cfg.GetItem< bool   >( "Muon.Iso.UseRhoCorr" , false ) ),
+    m_muo_id_type(                    cfg.GetItem< string >( "Muon.ID.Type" , "isHighPtMuon.bool" ) ),
+    m_muo_HighPtSwitchPt(             cfg.GetItem< double >( "Muon.ID.HighPtSwitchPt" , 200 ) ),
     m_muo_EA( cfg , "Muon.EffectiveArea.File" ),
 
 

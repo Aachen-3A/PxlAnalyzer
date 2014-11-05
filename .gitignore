@@ -17,3 +17,4 @@ ScaledXSections.txt
 bin/*
 lib/*
 local
+Validator/MusicOutDir/
