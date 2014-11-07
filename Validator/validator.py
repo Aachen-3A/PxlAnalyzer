@@ -7,7 +7,7 @@ import numpy as np
 import logging
 import multiprocessing
 
-from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad
+from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad, TFile
 
 log = logging.getLogger( 'Validator' )
 
@@ -82,7 +82,6 @@ def run_analysis():
     item_list = []
     for item in files:
         item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
-
     pool = multiprocessing.Pool()
     pool.map_async(run_analysis_task, item_list)
     while True:
@@ -91,6 +90,12 @@ def run_analysis():
     pool.close()
     pool.join()
 
+    p = subprocess.Popen("hadd -f9 %s *_mem_log.root"%("log.root"),shell=True,stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+ 
+    p2 = subprocess.Popen("rm *_mem_log.root",shell=True,stdout=subprocess.PIPE)
+    output = p2.communicate()[0]
+ 
     #for item in item_list:
         #run_analysis_task(item)
 
@@ -141,8 +146,12 @@ def run_analysis_task(item):
     graphRSS.SetMarkerColor(kBlue)
     graphRSS.SetMarkerStyle(21)
 
-    graphRSS.SaveAs(item[1][3:]+"_rss.root")
-    graphVirtual.SaveAs(item[1][3:]+"_vir.root")
+    dummy_file = TFile(item[1][3:]+"_mem_log.root","RECREATE")
+
+    graphRSS.Write(item[1][3:]+"_rss.root")
+    graphVirtual.Write(item[1][3:]+"_vir.root")
+
+    dummy_file.Close()
 
     #c1 = TCanvas("c1","c1",800,800)
 
