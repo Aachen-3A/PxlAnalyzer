@@ -1,11 +1,13 @@
 #!/bin/env python
 
-import optparse, time, os, subprocess
+import optparse, time, os, subprocess, sys
 import resource
 from datetime import datetime
 import numpy as np
 import logging
 import multiprocessing
+sys.path.append("lib/")
+from configobj import ConfigObj
 
 from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad, TFile
 
@@ -22,6 +24,15 @@ def opt_parser():
     parser.add_option( '--debug', metavar = 'LEVEL', default = 'INFO',
                        help= 'Set the debug level. Allowed values: ERROR, WARNING, INFO, DEBUG. [default = %default]' )
 
+    parser.add_option( '--executable', metavar = 'EXECUTABLE' , default = 'music',
+                            help = 'Name of the executable. [default = %default]')
+    parser.add_option( '--exeoption', metavar = 'EXEOPTION' , default = '--SpecialAna',
+                            help = 'Options that should be passed to the executable. [default = %default]' )
+    parser.add_option( '--execonfig', metavar = 'EXECONFIG' , default = '$MUSIC_BASE/ConfigFiles/MC.cfg',
+                            help = 'Configuration file that should be passed to the executable. [default = %default]')
+    parser.add_option( '--cfgfile', metavar = 'CFGFILE' , default = './config.cfg',
+                            help = 'Name of the configuration file for the used files. [default = %default]' )
+ 
     ( options, args ) = parser.parse_args()
     if len( args ) != 0:
         parser.error( 'Exactly zero CONFIG_FILE required!' )
@@ -30,7 +41,15 @@ def opt_parser():
     date = '%F %H:%M:%S'
     logging.basicConfig( level = logging._levelNames[ options.debug ], format = format, datefmt = date )
 
-    return args,options
+    try: 
+        cfg_file= ConfigObj(options.cfgfile)
+    except IOError as e:
+        print("There was a error reading the File "+ options.cfgfile)
+        print e
+        exit()
+
+
+    return args,options,cfg_file
 
 def final_user_decision():
     raw_input("waiting for the final user decision")
@@ -59,28 +78,16 @@ def get_reference_output():
 def get_analysis_output():
     print("getting the analysis output")
 
-def run_analysis():
+def run_analysis(options,cfg_file):
     print("running the analysis")
     
-    music_prog = "music"
-    music_opt  = "--SpecialAna"
-    music_cfg  = "/home/home1/institut_3a/erdweg/Desktop/Software/MUSiC/ConfigFiles/MC.cfg"
-    music_path = "/disk1/erdweg/validation/val_files/"
-    
-    files = ["DrellYan/DYJetsToLL_madgraph_102_1_uNZ.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_219_1_ZuZ.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_280_1_yeF.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_35_1_y0a.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_55_1_wyr.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_142_1_ylE.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_224_1_Y5b.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_307_1_kSG.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_48_1_5oK.pxlio",
-             "DrellYan/DYJetsToLL_madgraph_94_1_Cqr.pxlio"
-    ]
+    music_prog = options.executable
+    music_opt  = options.exeoption
+    music_cfg  = options.execonfig
+    music_path = cfg_file["basic"]["path"]
     
     item_list = []
-    for item in files:
+    for item in cfg_file["samples"]:
         item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
     pool = multiprocessing.Pool()
     pool.map_async(run_analysis_task, item_list)
@@ -96,11 +103,6 @@ def run_analysis():
     p2 = subprocess.Popen("rm *_mem_log.root",shell=True,stdout=subprocess.PIPE)
     output = p2.communicate()[0]
  
-    #for item in item_list:
-        #run_analysis_task(item)
-
-    #run_analysis_task(item_list[0])
-
 def run_analysis_task(item):
     usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
     rssList = []
@@ -115,7 +117,6 @@ def run_analysis_task(item):
             break
         p2 = subprocess.Popen("top -b -n 1 -p %s | grep %s"%(pid,pid),shell=True,stdout=subprocess.PIPE)
         output = p2.communicate()[0]
-        #print("top -b -n 1 -p %s"%pid,"  -  ",output)
         if output != '':
             if "m" in output.split()[5]:
                 rssList.append(output.split()[5].split("m")[0]) 
@@ -129,7 +130,7 @@ def run_analysis_task(item):
 
     output = p.communicate()[0]
     exitCode = p.returncode
-    print(output,exitCode)
+
     usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
     cpu_time = usage_end.ru_utime - usage_start.ru_utime
 
@@ -153,31 +154,12 @@ def run_analysis_task(item):
 
     dummy_file.Close()
 
-    #c1 = TCanvas("c1","c1",800,800)
-
-    #legend = TLegend(0.65, 0.65, 0.98, 0.90)
-    #legend.SetFillStyle(0)
-    #legend.SetBorderSize(0)
-
-    #legend.AddEntry(graphRSS,"resident memory consumption","p")
-    #legend.AddEntry(graphVirtual,"virtual memory consumption","p")
-
-    #c1.DrawFrame(0,0,cpu_time+0.15*cpu_time,2000,";run time [s]; memory consumption [MB]")
-
-    #graphRSS.Draw("samep")
-    #graphVirtual.Draw("samep")
-    #legend.Draw("same")
-
-    #raw_input("waiting for input")
-
-    #print(exitCode,usage_end,cpu_time)
-
 def main():
     print("doing the validation")
 
-    args,options = opt_parser()
+    args,options,cfg_file = opt_parser()
 
-    run_analysis()
+    run_analysis(options,cfg_file)
 
     get_analysis_output()
 
