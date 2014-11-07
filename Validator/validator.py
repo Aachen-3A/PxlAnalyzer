@@ -19,7 +19,7 @@ def opt_parser():
     parser = optparse.OptionParser( usage = usage )
     parser.add_option( '-u', '--user', default = os.getenv( 'LOGNAME' ),
                             help = 'which user on dcache [default = %s]'%(os.getenv( 'LOGNAME' )))
-    parser.add_option( '-o', '--Output', default = '%s'%(os.getlogin())+"/TAG", metavar = 'DIRECTORY',
+    parser.add_option( '-o', '--Output', default = "./output", metavar = 'DIRECTORY',
                             help = 'Define the output directory. [default = %default]')
     parser.add_option( '--debug', metavar = 'LEVEL', default = 'INFO',
                        help= 'Set the debug level. Allowed values: ERROR, WARNING, INFO, DEBUG. [default = %default]' )
@@ -87,8 +87,11 @@ def run_analysis(options,cfg_file):
     music_path = cfg_file["basic"]["path"]
     
     item_list = []
+    sample_list = []
     for item in cfg_file["samples"]:
         item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
+        if cfg_file["samples"][item]["label"] not in sample_list:
+            sample_list.append(cfg_file["samples"][item]["label"])
     pool = multiprocessing.Pool()
     pool.map_async(run_analysis_task, item_list)
     while True:
@@ -97,12 +100,27 @@ def run_analysis(options,cfg_file):
     pool.close()
     pool.join()
 
-    p = subprocess.Popen("hadd -f9 %s *_mem_log.root"%("log.root"),shell=True,stdout=subprocess.PIPE)
+    os.mkdir(options.Output)
+
+    p = subprocess.Popen("hadd -f9 %s/%s *_mem_log.root"%(options.Output,"log.root"),shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
- 
-    p2 = subprocess.Popen("rm *_mem_log.root",shell=True,stdout=subprocess.PIPE)
-    output = p2.communicate()[0]
- 
+
+    for item in sample_list:
+        sample_files = []
+        sample_folders = []
+        for item2 in cfg_file["samples"]:
+            if cfg_file["samples"][item2]["label"] == item:
+                sample_files.append(item2[item2.find("/")+1:-6]+"/SpecialHistos.root")
+                sample_folders.append(item2[item2.find("/")+1:-6])
+        p3 = subprocess.Popen("hadd -f9 %s/%s.root "%(options.Output,item)+" ".join(sample_files),shell=True,stdout=subprocess.PIPE)
+        output = p3.communicate()[0]
+        for item2 in sample_folders:
+            p2 = subprocess.Popen("rm -r %s"%item2,shell=True,stdout=subprocess.PIPE)
+            output = p2.communicate()[0]
+
+    p4 = subprocess.Popen("rm *.root",shell=True,stdout=subprocess.PIPE)
+    output = p4.communicate()[0]
+
 def run_analysis_task(item):
     usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
     rssList = []
