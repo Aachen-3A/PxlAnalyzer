@@ -5,6 +5,7 @@ import resource
 from datetime import datetime
 import numpy as np
 import logging
+import multiprocessing
 
 from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad
 
@@ -61,16 +62,48 @@ def get_analysis_output():
 def run_analysis():
     print("running the analysis")
     
-    run_analysis_task(["music","--SpecialAna","/home/home1/institut_3a/erdweg/Desktop/Software/MUSiC/ConfigFiles/MC.cfg","/disk1/erdweg/validation/val_files/DrellYan/DYJetsToLL_madgraph_94_1_Cqr.pxlio"])
+    music_prog = "music"
+    music_opt  = "--SpecialAna"
+    music_cfg  = "/home/home1/institut_3a/erdweg/Desktop/Software/MUSiC/ConfigFiles/MC.cfg"
+    music_path = "/disk1/erdweg/validation/val_files/"
+    
+    files = ["DrellYan/DYJetsToLL_madgraph_102_1_uNZ.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_219_1_ZuZ.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_280_1_yeF.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_35_1_y0a.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_55_1_wyr.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_142_1_ylE.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_224_1_Y5b.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_307_1_kSG.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_48_1_5oK.pxlio",
+             "DrellYan/DYJetsToLL_madgraph_94_1_Cqr.pxlio"
+    ]
+    
+    item_list = []
+    for item in files:
+        item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
+
+    pool = multiprocessing.Pool()
+    pool.map_async(run_analysis_task, item_list)
+    while True:
+        time.sleep(1)
+        if not pool._cache: break
+    pool.close()
+    pool.join()
+
+    #for item in item_list:
+        #run_analysis_task(item)
+
+    #run_analysis_task(item_list[0])
 
 def run_analysis_task(item):
     usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
     rssList = []
     virtual = []
     other = []
-    cmd = [item[0], item[1], item[2], item[3]]
-    print(" ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    cmd = [item[0], item[1], item[2], item[3], item[4]]
+    #print(" ".join(cmd))
+    p = subprocess.Popen(" ".join(cmd), shell=True,stdout=subprocess.PIPE)
     pid = p.pid
     while True:
         if p.poll() != None:
@@ -91,7 +124,7 @@ def run_analysis_task(item):
 
     output = p.communicate()[0]
     exitCode = p.returncode
-
+    print(output,exitCode)
     usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
     cpu_time = usage_end.ru_utime - usage_start.ru_utime
 
@@ -108,24 +141,27 @@ def run_analysis_task(item):
     graphRSS.SetMarkerColor(kBlue)
     graphRSS.SetMarkerStyle(21)
 
-    c1 = TCanvas("c1","c1",800,800)
+    graphRSS.SaveAs(item[1][3:]+"_rss.root")
+    graphVirtual.SaveAs(item[1][3:]+"_vir.root")
 
-    legend = TLegend(0.65, 0.65, 0.98, 0.90)
-    legend.SetFillStyle(0)
-    legend.SetBorderSize(0)
+    #c1 = TCanvas("c1","c1",800,800)
 
-    legend.AddEntry(graphRSS,"resident memory consumption","p")
-    legend.AddEntry(graphVirtual,"virtual memory consumption","p")
+    #legend = TLegend(0.65, 0.65, 0.98, 0.90)
+    #legend.SetFillStyle(0)
+    #legend.SetBorderSize(0)
 
-    c1.DrawFrame(0,0,cpu_time+0.15*cpu_time,2000,";run time [s]; memory consumption [MB]")
+    #legend.AddEntry(graphRSS,"resident memory consumption","p")
+    #legend.AddEntry(graphVirtual,"virtual memory consumption","p")
 
-    graphRSS.Draw("samep")
-    graphVirtual.Draw("samep")
-    legend.Draw("same")
+    #c1.DrawFrame(0,0,cpu_time+0.15*cpu_time,2000,";run time [s]; memory consumption [MB]")
 
-    raw_input("waiting for input")
+    #graphRSS.Draw("samep")
+    #graphVirtual.Draw("samep")
+    #legend.Draw("same")
 
-    print(exitCode,usage_end,cpu_time)
+    #raw_input("waiting for input")
+
+    #print(exitCode,usage_end,cpu_time)
 
 def main():
     print("doing the validation")
