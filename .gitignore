@@ -18,3 +18,5 @@ bin/*
 lib/*
 local
 Validator/MusicOutDir/
+Validator/comparison_dir/
+Validator/output/
