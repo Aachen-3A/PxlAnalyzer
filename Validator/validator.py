@@ -10,6 +10,10 @@ import multiprocessing
 sys.path.append("lib/")
 from configobj import ConfigObj
 from math import sqrt, fabs
+import matplotlib.pyplot as plt
+from matplotlib import transforms
+from matplotlib import rc
+rc('text', usetex=True)
 
 import ROOT as ro
 from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad, TFile, TStyle, TColor
@@ -178,7 +182,11 @@ def opt_parser():
                             help = 'Name of the configuration file for the used files. [default = %default]' )
     parser.add_option( '--compdir', metavar = 'COMPDIR' , default = './old',
                             help = 'Directory of the files that should be used for the comparison. [default = %default]')
- 
+    parser.add_option( '--memtolerance', metavar = 'MEMTOLERANCE' , default = 10.,
+                            help = 'Accepted tolerance of memory usage in percent. [default = %default]' )
+    parser.add_option( '--timetolerance', metavar = 'TIMETOLERANCE' , default = 100.,
+                            help = 'Accepted tolerance of run time in percent. [default = %default]' )
+
     ( options, args ) = parser.parse_args()
     if len( args ) != 0:
         parser.error( 'Exactly zero CONFIG_FILE required!' )
@@ -200,37 +208,59 @@ def opt_parser():
 def final_user_decision():
     raw_input("waiting for the final user decision")
 
-def draw_mem_histos(c1,old_rss_histos,old_rss_time):
-    old_rss_histos[0].GetXaxis().SetRangeUser(0,np.max(old_rss_time) * 1.1)
-    old_rss_histos[0].GetXaxis().SetTitle("Run time (s)")
-    if "rss" in old_rss_histos[0].GetName():
-        old_rss_histos[0].GetYaxis().SetTitle("memory (MB)")
-    else:
-        old_rss_histos[0].GetYaxis().SetTitle("virtual memory (MB)")
-    old_rss_histos[0].Draw("APEL")
-    c1.Update()
-    old_rss_line = ro.TLine(np.mean(old_rss_time),gPad.GetUymin(),np.mean(old_rss_time),gPad.GetUymax())
-    old_rss_line.SetLineColor(ro.kRed-4)
-    old_rss_line.Draw("same")
+def draw_mem_histos(old_rss_histos,old_rss_time,p_color,ax):
+    old_rss_line = ro.TLine(np.mean(old_rss_time),0,np.mean(old_rss_time),1)
+
     dummy_x_vals = []
     dummy_y_vals = []
     for item in old_rss_histos:
-        item.Draw("same PEL")
+        temp_x_vals = []
+        temp_y_vals = []
         for i in range(0,item.GetN()-1):
             dummy_value = ro.Double(0)
             dummy_value2 = ro.Double(0)
             item.GetPoint(i,dummy_value,dummy_value2)
             dummy_x_vals.append(dummy_value)
             dummy_y_vals.append(dummy_value2)
+            temp_x_vals.append(dummy_value)
+            temp_y_vals.append(dummy_value2)
+        plt.plot(temp_x_vals, temp_y_vals,color=p_color,marker="o",linestyle="-",linewidth=1)
+    plt.xlim( 0, np.max(dummy_x_vals)*1.05 )
+    plt.ylim( np.min(dummy_y_vals)*0.95, np.max(dummy_y_vals)*1.05 )
     mean_graph = ro.TGraph(len(dummy_x_vals),array("d",dummy_x_vals),array("d",dummy_y_vals))
     res_fit = ro.TF1(old_rss_histos[0].GetName()+"_f1","pol1",np.min(dummy_x_vals),np.max(dummy_x_vals))
     mean_graph.Fit(res_fit,"Q+","",np.min(dummy_x_vals)+4,np.max(dummy_x_vals)-4)
-    res_fit.SetLineColor(ro.kMagenta)
-    res_fit.SetLineWidth(2)
-    res_fit.Draw("same")
-    c1.Update()
-    return old_rss_line,res_fit
-    #raw_input("waiting")
+    l = plt.axvline(x=np.mean(old_rss_time),color='tomato')
+    text = ax.text(np.mean(old_rss_time)+0.5, np.min(dummy_y_vals), 'mean run time: %.1f s'%(np.mean(old_rss_time)), color='tomato',
+                rotation=90, va='bottom', ha='left')
+    X = np.linspace(np.min(dummy_x_vals),np.max(dummy_x_vals), 256, endpoint=True)
+    Y = res_fit.GetParameter(0) + X * res_fit.GetParameter(1)
+    plt.plot(X,Y,color='limegreen',linewidth=2)
+    text = ax.text((np.max(dummy_x_vals)*1.05)/2., np.min(dummy_y_vals), 'memory usage: %.1f MB'%(res_fit.Eval(np.mean(old_rss_time))), color='limegreen',
+                va='bottom', ha='center')
+    return ax,res_fit.Eval(np.mean(old_rss_time)),np.mean(old_rss_time)
+
+def make_axis(ax,x_title,y_title,title):
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_linewidth(0.5)
+    ax.spines['left'].set_linewidth(0.5)
+    ax.spines['bottom'].set_color('white')
+    ax.spines['left'].set_color('white')
+    
+    ax.title.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.xaxis.label.set_color('white')
+    ax.tick_params(axis='x', colors='white')
+    ax.tick_params(axis='y', colors='white')
+    
+    ax.tick_params(axis='both', direction='in')
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    
+    ax.set_xlabel(x_title)
+    ax.set_ylabel(y_title)
+    ax.set_title(title)
 
 def comparison_performance(options):
     print("comparing the programs performance")
@@ -301,81 +331,55 @@ def comparison_performance(options):
             new_vir_histos.append(dummy_hist)
     new__log_file.Close()
 
-    setTDRStyle(0)
-    test1 = ro.TText()
-    test1.SetTextColor(ro.kRed-4)
-    test1.SetTextAlign(21)
-    test1.SetTextFont(41)
-    test1.SetTextSize(0.05)
+    fig = plt.figure(figsize=(10, 10), dpi=80, facecolor='black')
+ 
+    ax = fig.add_subplot(2,2,1,axisbg='k')
+    make_axis(ax,'run time (s)','memory (MB)','old')
+    ax,old_rss_usage,old_rss_time = draw_mem_histos(old_rss_histos,old_rss_time,"y",ax)
 
-    test2 = ro.TText()
-    test2.SetTextColor(ro.kWhite)
-    test2.SetTextAlign(21)
-    test2.SetTextFont(41)
-    test2.SetTextSize(0.1)
+    ax = fig.add_subplot(2,2,2,axisbg='k')
+    make_axis(ax,'run time (s)','virtual memory (MB)','old')
+    ax,old_vir_usage,old_vir_time = draw_mem_histos(old_vir_histos,old_vir_time,"royalblue",ax)
 
-    test3 = ro.TText()
-    test3.SetTextColor(ro.kTeal)
-    test3.SetTextAlign(21)
-    test3.SetTextFont(41)
-    test3.SetTextSize(0.05)
-    test3.SetNDC()
+    ax = fig.add_subplot(2,2,3,axisbg='k')
+    make_axis(ax,'run time (s)','memory (MB)','new')
+    ax,new_rss_usage,new_rss_time = draw_mem_histos(new_rss_histos,new_rss_time,"orange",ax)
 
-    c1 = TCanvas("c1","",1000,1000)
-    c1.UseCurrentStyle()
-    c1.Divide(2,2)
-    c1.cd(1)
-    line1,fit1 = draw_mem_histos(c1.cd(1),old_rss_histos,old_rss_time)
-    test1.DrawText(line1.GetX1()-3,(gPad.GetUymax()-gPad.GetUymin()) * 0.01 + gPad.GetUymax(),"mean run time: %.1f"%(line1.GetX1()))
-    test2.DrawText((gPad.GetUxmax()-gPad.GetUxmin()) * 0.5 + gPad.GetUxmin(),(gPad.GetUymax()-gPad.GetUymin()) * 0.1 + gPad.GetUymin(),"reference")
-    old_rss_usage = [fit1.Eval(gPad.GetUxmin()+4),fit1.Eval(gPad.GetUxmax()-4)]
+    ax = fig.add_subplot(2,2,4,axisbg='k')
+    make_axis(ax,'run time (s)','virtual memory (MB)','new')
+    ax,new_vir_usage,new_vir_time = draw_mem_histos(new_vir_histos,new_vir_time,"cornflowerblue",ax)
 
-    c1.cd(2)
-    line2,fit2 = draw_mem_histos(c1.cd(2),old_vir_histos,old_vir_time)
-    test1.DrawText(line2.GetX1()-3,(gPad.GetUymax()-gPad.GetUymin()) * 0.01 + gPad.GetUymax(),"mean run time: %.1f"%(line2.GetX1()))
-    test2.DrawText((gPad.GetUxmax()-gPad.GetUxmin()) * 0.5 + gPad.GetUxmin(),(gPad.GetUymax()-gPad.GetUymin()) * 0.1 + gPad.GetUymin(),"reference")
-    old_vir_usage = [fit2.Eval(gPad.GetUxmin()+4),fit2.Eval(gPad.GetUxmax()-4)]
+    diff_rss = (old_rss_usage - new_rss_usage)/ old_rss_usage * 100
+    diff_time = (old_rss_time - new_rss_time)/ old_rss_time * 100
+    diff_vir = (old_vir_usage - new_vir_usage)/ old_vir_usage * 100
 
-    c1.cd(3)
-    line3,fit3 = draw_mem_histos(c1.cd(3),new_rss_histos,new_rss_time)
-    test1.DrawText(line3.GetX1()-3,(gPad.GetUymax()-gPad.GetUymin()) * 0.01 + gPad.GetUymax(),"mean run time: %.1f"%(line3.GetX1()))
-    test2.DrawText((gPad.GetUxmax()-gPad.GetUxmin()) * 0.5 + gPad.GetUxmin(),(gPad.GetUymax()-gPad.GetUymin()) * 0.1 + gPad.GetUymin(),"new")
-    new_rss_usage = [fit3.Eval(gPad.GetUxmin()+4),fit3.Eval(gPad.GetUxmax()-4)]
-
-    c1.cd(4)
-    line4,fit4 = draw_mem_histos(c1.cd(4),new_vir_histos,new_vir_time)
-    test1.DrawText(line4.GetX1()-3,(gPad.GetUymax()-gPad.GetUymin()) * 0.01 + gPad.GetUymax(),"mean run time: %.1f"%(line4.GetX1()))
-    test2.DrawText((gPad.GetUxmax()-gPad.GetUxmin()) * 0.5 + gPad.GetUxmin(),(gPad.GetUymax()-gPad.GetUymin()) * 0.1 + gPad.GetUymin(),"new")
-    new_vir_usage = [fit4.Eval(gPad.GetUxmin()+4),fit4.Eval(gPad.GetUxmax()-4)]
-
-    c1.cd()
-
-    diff_rss = 0.
-    if fabs(old_rss_usage[0] - new_rss_usage[0]) > fabs(old_rss_usage[1] - new_rss_usage[1]):
-        diff_rss = (new_rss_usage[0] - old_rss_usage[0])/old_rss_usage[0] * 100
+    if diff_rss > 0.:
+        text = fig.text(0.25 , 0.01, 'memory difference: %+.1f %% \n time difference: %+.1f %%'%(diff_rss,diff_time), color='chartreuse',
+                va='bottom', ha='center', fontsize=20)
+        text.set_zorder(20)
     else:
-        diff_rss = (new_rss_usage[1] - old_rss_usage[1])/old_rss_usage[1] * 100
+        text = fig.text(0.25, 0.01, 'memory difference: %+.1f %% \n time difference: %+.1f %%'%(diff_rss,diff_time), color='red',
+                va='bottom', ha='center', fontsize=20)
+        text.set_zorder(20)
 
-    diff_vir = 0.
-    if fabs(old_vir_usage[0] - new_vir_usage[0]) > fabs(old_vir_usage[1] - new_vir_usage[1]):
-        diff_vir = (new_vir_usage[0] - old_vir_usage[0])/old_vir_usage[0] * 100
+    if diff_vir > 0.:
+        text = fig.text(0.75, 0.01, 'memory difference: %+.1f %% \n time difference: %+.1f %%'%(diff_vir,diff_time), color='chartreuse',
+                va='bottom', ha='center', fontsize=20)
+        text.set_zorder(20)
     else:
-        diff_vir = (new_vir_usage[1] - old_vir_usage[1])/old_vir_usage[1] * 100
+        text = fig.text(0.75, 0.01, 'memory difference: %+.1f %% \n time difference: %+.1f %%'%(diff_vir,diff_time), color='red',
+                va='bottom', ha='center', fontsize=20)
+        text.set_zorder(20)
 
-    pad = ro.TPad("pad","",0,0,1,1,0,0,0)
-    pad.SetFillStyle(4000)
-    pad.Draw()
-    
-    pad.cd()
-    test3.DrawText(0.2,0.5,"differnce: %.1f %%"%(diff_rss))
-    test3.DrawText(0.7,0.5,"differnce: %.1f %%"%(diff_vir))
-    c1.cd()
-    pad.Draw()
+    plt.show()
+    plt.savefig("comparison_dir/mem_comparison.pdf",facecolor='black',edgecolor='black')
 
-    c1.Update()
-
-    raw_input("waiting")
-    ro.SetOwnership(pad, False)
+    if diff_time < -1 * options.timetolerance:
+        return False
+    elif diff_rss < -1 * options.memtolerance:
+        return False
+    else:
+        return True
 
 def comparison_norm():
     print("comparing the normalization of distributions")
@@ -389,7 +393,8 @@ def comparison_events():
 def do_comparison(options):
     print("doing the comparison")
 
-    comparison_performance(options)
+    c_performance = comparison_performance(options)
+    print("performance decision:",c_performance)
 
     comparison_norm()
 
