@@ -205,8 +205,22 @@ def opt_parser():
 
     return args,options,cfg_file
 
+def make_new_reference():
+    print("making new reference plots")
+
+def check_authorization():
+    print("Now checking the user authorization")
+    return False
+
+def make_commits():
+    print("Now making the final commits")
+
 def final_user_decision():
     raw_input("waiting for the final user decision")
+    return False
+
+def control_output():
+    print("everything is fine, or not")
 
 def draw_mem_histos(old_rss_histos,old_rss_time,p_color,ax):
     old_rss_line = ro.TLine(np.mean(old_rss_time),0,np.mean(old_rss_time),1)
@@ -277,9 +291,6 @@ def comparison_performance(options):
         if "_rss" in dummy_name:
             dummy_hist = comp_log_file.Get(dummy_name)
             dummy_hist.SetName(dummy_name)
-            dummy_hist.SetMarkerStyle(20)
-            dummy_hist.SetMarkerColor(ro.kBlue)
-            dummy_hist.SetLineColor(ro.kBlue)
             dummy_value = ro.Double(0)
             dummy_value2 = ro.Double(0)
             dummy_hist.GetPoint(dummy_hist.GetN()-1,dummy_value,dummy_value2)
@@ -288,9 +299,6 @@ def comparison_performance(options):
         if "_vir" in dummy_name:
             dummy_hist = comp_log_file.Get(dummy_name)
             dummy_hist.SetName(dummy_name)
-            dummy_hist.SetMarkerStyle(20)
-            dummy_hist.SetMarkerColor(ro.kGreen)
-            dummy_hist.SetLineColor(ro.kGreen)
             dummy_value = ro.Double(0)
             dummy_value2 = ro.Double(0)
             dummy_hist.GetPoint(dummy_hist.GetN()-1,dummy_value,dummy_value2)
@@ -310,9 +318,6 @@ def comparison_performance(options):
         if "_rss" in dummy_name:
             dummy_hist = new__log_file.Get(dummy_name)
             dummy_hist.SetName(dummy_name)
-            dummy_hist.SetMarkerStyle(20)
-            dummy_hist.SetMarkerColor(ro.kBlue+2)
-            dummy_hist.SetLineColor(ro.kBlue+2)
             dummy_value = ro.Double(0)
             dummy_value2 = ro.Double(0)
             dummy_hist.GetPoint(dummy_hist.GetN()-1,dummy_value,dummy_value2)
@@ -321,9 +326,6 @@ def comparison_performance(options):
         if "_vir" in dummy_name:
             dummy_hist = new__log_file.Get(dummy_name)
             dummy_hist.SetName(dummy_name)
-            dummy_hist.SetMarkerStyle(20)
-            dummy_hist.SetMarkerColor(ro.kGreen+2)
-            dummy_hist.SetLineColor(ro.kGreen+2)
             dummy_value = ro.Double(0)
             dummy_value2 = ro.Double(0)
             dummy_hist.GetPoint(dummy_hist.GetN()-1,dummy_value,dummy_value2)
@@ -421,7 +423,6 @@ def get_analysis_output(options):
 
     p = subprocess.Popen("cp %s/*.root comparison_dir/new/"%(options.Output),shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
-
 
 def run_analysis(options,cfg_file):
     print("running the analysis")
@@ -531,7 +532,15 @@ def main():
 
     do_comparison(options)
 
-    final_user_decision()
+    decision = final_user_decision()
+
+    if decision == True:
+        make_new_reference()
+
+        authorization = check_authorization()
+
+        if authorization == True:
+            make_commits()
 
 if __name__ == '__main__':
     main()
