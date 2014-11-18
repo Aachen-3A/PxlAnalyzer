@@ -16,11 +16,32 @@ from matplotlib import rc
 rc('text', usetex=True)
 
 import ROOT as ro
-from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad, TFile, TStyle, TColor
+from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad, TFile, TStyle, TColor, TH1F
 
 log = logging.getLogger( 'Validator' )
 
 tdrStyle = TStyle("tdrStyle","Style for P-TDR");
+
+class bcolors:
+    HEADER = '\033[35m'
+    OKBLUE = '\033[34m'
+    OKGREEN = '\033[32m'
+    WARNING = '\033[33m'
+    FAIL = '\033[31m'
+    CYAN = '\033[36m'
+    WHITE = '\033[37m'
+    ENDC = '\033[0m'
+
+    ## Function to unset all colors
+    def disable(self):
+        self.HEADER = ''
+        self.OKBLUE = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.CYAN = ''
+        self.WHITE = ''
+        self.ENDC = ''
 
 def setTDRStyle(logy):
     global tdrStyle
@@ -198,29 +219,47 @@ def opt_parser():
     try: 
         cfg_file= ConfigObj(options.cfgfile)
     except IOError as e:
-        print("There was a error reading the File "+ options.cfgfile)
-        print e
+        log.error("There was a error reading the File "+ options.cfgfile)
+        log.error(e)
         exit()
 
 
     return args,options,cfg_file
 
 def make_new_reference():
-    print("making new reference plots")
+    control_output("making new reference plots",True,True)
 
 def check_authorization():
-    print("Now checking the user authorization")
+    control_output("Now checking the user authorization",True,True)
     return False
 
 def make_commits():
-    print("Now making the final commits")
+    control_output("Now making the final commits",True,True)
 
 def final_user_decision():
     raw_input("waiting for the final user decision")
     return False
 
-def control_output():
-    print("everything is fine, or not")
+def control_output(histogram,value,group):
+    if group == True:
+        log.info(" ")
+        log.info(25*"-")
+        log.info("\t"+histogram)
+        log.info(25*"-")
+        log.info(" ")
+    else:
+        text = "\t"
+        text += histogram
+        text += ":  "
+        if value == True:
+            text += bcolors.OKGREEN
+            text += "Okay"
+            text += bcolors.ENDC
+        else:
+            text += bcolors.FAIL
+            text += "Problem"
+            text += bcolors.ENDC
+        log.info(text)
 
 def draw_mem_histos(old_rss_histos,old_rss_time,p_color,ax):
     old_rss_line = ro.TLine(np.mean(old_rss_time),0,np.mean(old_rss_time),1)
@@ -261,25 +300,25 @@ def make_axis(ax,x_title,y_title,title):
     ax.spines['left'].set_linewidth(0.5)
     ax.spines['bottom'].set_color('white')
     ax.spines['left'].set_color('white')
-    
+
     ax.title.set_color('white')
     ax.yaxis.label.set_color('white')
     ax.xaxis.label.set_color('white')
     ax.tick_params(axis='x', colors='white')
     ax.tick_params(axis='y', colors='white')
-    
+
     ax.tick_params(axis='both', direction='in')
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
-    
+
     ax.set_xlabel(x_title)
     ax.set_ylabel(y_title)
     ax.set_title(title)
 
 def comparison_performance(options):
-    print("comparing the programs performance")
+    log.debug("comparing the programs performance")
 
-    print("reading the comparison histos")
+    log.debug("reading the comparison histos")
     comp_log_file = TFile("comparison_dir/old/log.root","READ")
 
     old_rss_histos = []
@@ -306,7 +345,7 @@ def comparison_performance(options):
             old_vir_histos.append(dummy_hist)
     comp_log_file.Close()
 
-    print("reading the new histos")
+    log.debug("reading the new histos")
     new__log_file = TFile("comparison_dir/new/log.root","READ")
 
     new_rss_histos = []
@@ -383,26 +422,88 @@ def comparison_performance(options):
     else:
         return True
 
-def comparison_norm():
-    print("comparing the normalization of distributions")
+def comparison_norm(item,hist,fname):
+    log.debug("comparing the normalization of distributions")
 
-def comparison_shape():
-    print("comparing the shape of distributions")
+    log.debug("Now reading: " +item+"/"+hist + " from: comparison_dir/old/%s.root"%(fname))
+    comp_file = TFile("comparison_dir/old/%s.root"%(fname),"READ")
+    ref_hist = TH1F()
+    ref_hist = comp_file.Get(item+"/"+hist)
+    ref_hist.SetDirectory(0)
+    comp_file.Close()
+    new_file = TFile("comparison_dir/new/%s.root"%(fname),"READ")
+    new_hist = TH1F()
+    new_hist = new_file.Get(item+"/"+hist)
+    new_hist.SetDirectory(0)
+    new_file.Close()
 
-def comparison_events():
-    print("comparing events")
+    chi2 = ref_hist.Chi2Test(new_hist,"UU CHI2")
 
-def do_comparison(options):
-    print("doing the comparison")
+    if chi2 == 0.0:
+        return True
+    else:
+        return False
+
+def comparison_shape(item,hist,fname):
+    log.debug("comparing the shape of distributions")
+    return False
+
+def comparison_events(item,hist,fname):
+    log.debug("comparing events")
+    return False
+
+def do_comparison(options,cfg_file,sample_list):
+    control_output("doing the comparison",True,True)
 
     c_performance = comparison_performance(options)
-    print("performance decision:",c_performance)
+    control_output("performance",True,True)
+    control_output("performance",c_performance,False)
 
-    comparison_norm()
+    histos = {}
+    for group in cfg_file["basic"]["hist_groups"]:
+        dummy_histos = []
+        for item in cfg_file["histos"]:
+            if cfg_file["histos"][item]["folder"] == group:
+                dummy_histos.append(item)
+                log.debug("Now adding histogram: " + item)
+        histos.update({group:dummy_histos})
+    log.debug(histos)
 
-    comparison_shape()
+    all_samples = True
+    for i_sample in sample_list:
+        all_hists = True
+        fname = i_sample
+        for item in histos:
+            control_output(item,True,True)
 
-    comparison_events()
+            group = True
+            for hist in histos[item]:
+                log.debug("Now comparing: " + hist)
+                c_norm = comparison_norm(item,hist,fname)
+
+                if not c_norm:
+                    c_shape = comparison_shape(item,hist,fname)
+    
+                    c_events = comparison_events(item,hist,fname)
+
+                    if c_norm and c_shape and c_events:
+                        control_output(hist,True,False)
+                    else:
+                        control_output(hist+" norm",c_norm,False)
+                        control_output(hist+" shape",c_shape,False)
+                        control_output(hist+" events",c_events,False)
+                    group = group and c_norm and c_shape and c_events
+                else:
+                    control_output(hist,True,False)
+                    group = group and c_norm
+            log.info(" ")
+            control_output(item,group,False)
+            all_hists = all_hists and group
+        control_output("All histograms",True,True)
+        control_output("All histograms",all_hists,False)
+        all_samples = all_samples and all_hists
+    control_output("All samples",True,True)
+    control_output("All samples",all_samples,False)
 
 def get_reference_output(options):
     print("getting the reference output")
@@ -424,20 +525,24 @@ def get_analysis_output(options):
     p = subprocess.Popen("cp %s/*.root comparison_dir/new/"%(options.Output),shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
 
-def run_analysis(options,cfg_file):
-    print("running the analysis")
-    
+def get_sample_list(cfg_file):
+    sample_list = []
+    for item in cfg_file["samples"]:
+        if cfg_file["samples"][item]["label"] not in sample_list:
+            sample_list.append(cfg_file["samples"][item]["label"])
+    return sample_list
+
+def run_analysis(options,cfg_file,sample_list):
+    control_output("running the analysis",True,True)
+
     music_prog = options.executable
     music_opt  = options.exeoption
     music_cfg  = options.execonfig
     music_path = cfg_file["basic"]["path"]
-    
+
     item_list = []
-    sample_list = []
     for item in cfg_file["samples"]:
         item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
-        if cfg_file["samples"][item]["label"] not in sample_list:
-            sample_list.append(cfg_file["samples"][item]["label"])
     pool = multiprocessing.Pool()
     pool.map_async(run_analysis_task, item_list)
     while True:
@@ -474,7 +579,7 @@ def run_analysis_task(item):
     virtual = []
     other = []
     cmd = [item[0], item[1], item[2], item[3], item[4]]
-    #print(" ".join(cmd))
+    log.debug(" ".join(cmd))
     p = subprocess.Popen(" ".join(cmd), shell=True,stdout=subprocess.PIPE)
     pid = p.pid
     while True:
@@ -520,9 +625,11 @@ def run_analysis_task(item):
     dummy_file.Close()
 
 def main():
-    print("doing the validation")
+    control_output("doing the validation",True,True)
 
     args,options,cfg_file = opt_parser()
+
+    sample_list = get_sample_list(cfg_file)
 
     #run_analysis(options,cfg_file)
 
@@ -530,7 +637,7 @@ def main():
 
     #get_reference_output(options)
 
-    do_comparison(options)
+    do_comparison(options,cfg_file,sample_list)
 
     decision = final_user_decision()
 
