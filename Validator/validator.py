@@ -22,6 +22,8 @@ log = logging.getLogger( 'Validator' )
 
 tdrStyle = TStyle("tdrStyle","Style for P-TDR");
 
+compare_results = {}
+
 class bcolors:
     HEADER = '\033[35m'
     OKBLUE = '\033[34m'
@@ -49,8 +51,8 @@ def setTDRStyle(logy):
     # For the canvas:
     tdrStyle.SetCanvasBorderMode(0);
     tdrStyle.SetCanvasColor(ro.kBlack);
-    tdrStyle.SetCanvasDefH(600); #Height of canvas
-    tdrStyle.SetCanvasDefW(600); #Width of canvas
+    tdrStyle.SetCanvasDefH(1000); #Height of canvas
+    tdrStyle.SetCanvasDefW(800); #Width of canvas
     tdrStyle.SetCanvasDefX(0);   #POsition on screen
     tdrStyle.SetCanvasDefY(0);
     # For the Pad:
@@ -416,10 +418,13 @@ def comparison_performance(options):
     plt.savefig("comparison_dir/mem_comparison.pdf",facecolor='black',edgecolor='black')
 
     if diff_time < -1 * options.timetolerance:
+        compare_results.update({"performance":[False,diff_time,diff_rss]})
         return False
     elif diff_rss < -1 * options.memtolerance:
+        compare_results.update({"performance":[False,diff_time,diff_rss]})
         return False
     else:
+        compare_results.update({"performance":[True,diff_time,diff_rss]})
         return True
 
 def comparison_norm(item,hist,fname):
@@ -440,8 +445,10 @@ def comparison_norm(item,hist,fname):
     chi2 = ref_hist.Chi2Test(new_hist,"UU CHI2")
 
     if chi2 == 0.0:
+        compare_results[fname + "_" + item + "_" + hist] = [True,0,0]
         return True
     else:
+        compare_results[fname + "_" + item + "_" + hist] = [False,chi2,0]
         return False
 
 def comparison_events(item,hist,fname):
@@ -461,6 +468,7 @@ def comparison_events(item,hist,fname):
 
     diff = ref_hist.GetEntries() - new_hist.GetEntries()
 
+    compare_results[fname + "_" + item + "_" + hist] = [compare_results[fname + "_" + item + "_" + hist][0],compare_results[fname + "_" + item + "_" + hist][1],diff]
     if diff == 0.0:
         return True
     else:
@@ -497,6 +505,7 @@ def do_comparison(options,cfg_file,sample_list):
             group = True
             for hist in histos[item]:
                 log.debug("Now comparing: " + hist)
+                compare_results.update({i_sample + "_" + item + "_" + hist:[False,0,0]})
                 c_norm = comparison_norm(item,hist,fname)
 
                 if not c_norm:
@@ -504,18 +513,18 @@ def do_comparison(options,cfg_file,sample_list):
 
                     c_shape = comparison_shape(item,hist,fname)
 
-                    if c_norm and c_shape and c_events:
-                        control_output(hist,True,False)
-                    else:
-                        control_output(hist+" norm",c_norm,False)
-                        control_output(hist+" shape",c_shape,False)
-                        control_output(hist+" events",c_events,False)
+                    #if c_norm and c_shape and c_events:
+                        #control_output(hist,True,False)
+                    #else:
+                        #control_output(hist+" norm",c_norm,False)
+                        #control_output(hist+" shape",c_shape,False)
+                        #control_output(hist+" events",c_events,False)
                     group = group and c_norm and c_shape and c_events
                 else:
                     control_output(hist,True,False)
                     group = group and c_norm
-            log.info(" ")
-            control_output(item,group,False)
+            #log.info(" ")
+            #control_output(item,group,False)
             all_hists = all_hists and group
         control_output("All histograms",True,True)
         control_output("All histograms",all_hists,False)
@@ -642,6 +651,189 @@ def run_analysis_task(item):
 
     dummy_file.Close()
 
+def create_tex_summary(content,sample_list,cfg_file):
+## Create the Title page
+    content += r'''
+This is the summary of the validation from \today
+\pagebreak
+\tableofcontents
+\pagebreak
+'''
+
+## Create the summary table
+    content += r'''
+\section{Summary table}
+\subsection{Performance}
+'''
+    if compare_results["performance"][0]:
+        content += r'''
+        Performance: {\color{green}True}
+'''
+    else:
+        content += r'''
+        Performance: {\color{red}False  } Run time difference (%): %.2f    Memory usage difference (%): %.2f"
+'''%(compare_results["performance"][1],compare_results["performance"][2])
+    for sample in sample_list:
+        content += r'''
+\subsection{%s}
+'''%(sample)
+        for folder in cfg_file["basic"]["hist_groups"]:
+            content += r'''
+\subsubsection{%s}
+'''%(folder)
+            for i in compare_results:
+                if sample in i and folder in i:
+                    dummy_string = ""
+                    if compare_results[i][0]:
+                        dummy_string += "{\color{green}True}"
+                    else:
+                        dummy_string += "{\color{red}False  } $\Chi^{2}:$ %.2f    $N_{events}^{reference} - N_{events}^{new}: $%.2f"%(compare_results[i][1],compare_results[i][2])
+                    content += r'''
+        %s: %s
+'''%(i,dummy_string)
+
+## End of summary table
+    content += r'''
+\pagebreak
+'''
+
+## Include the performance Plots
+    content += r'''
+\section{Performance}
+\includegraphics[width=15cm]{%s}
+'''%("comparison!dir/mem!comparison.pdf")
+## Create the different histograms
+    for sample in sample_list:
+        content += r'''
+\section{%s}
+'''%(sample)
+        for folder in cfg_file["basic"]["hist_groups"]:
+            content += r'''
+\subsubsection{%s}
+'''%(folder)
+            hist_list = []
+            for i in compare_results:
+                if sample in i and folder in i:
+                    hist_list.append([sample,folder,i])
+                    #hist_name = make_comparison_plot(sample,folder,i)
+            pool = multiprocessing.Pool()
+            test = pool.map_async(make_comparison_plot, hist_list)
+            while True:
+                time.sleep(1)
+                if not pool._cache: break
+            pool.close()
+            pool.join()
+            hist_list = test.get(timeout=1)
+            hist_list = sorted(hist_list, key=lambda hist: hist[1])
+            for i in hist_list:
+                content += r'''
+%s \\
+\includegraphics[width=15cm]{%s}
+'''%(i[0],i[0].replace("_","!"))
+    return content
+
+def make_comparison_plot(i):
+    sample = i[0]
+    folder = i[1]
+    key = i[2]
+    hist = key[key.find(folder)+len(folder)+1:]
+    log.debug("Now plotting: " +folder+"/"+hist + " from: comparison_dir/old/%s.root"%(sample))
+    comp_file = TFile("comparison_dir/old/%s.root"%(sample),"READ")
+    ref_hist = TH1F()
+    ref_hist = comp_file.Get(folder+"/"+hist)
+    ref_hist.SetDirectory(0)
+    comp_file.Close()
+    new_file = TFile("comparison_dir/new/%s.root"%(sample),"READ")
+    new_hist = TH1F()
+    new_hist = new_file.Get(folder+"/"+hist)
+    new_hist.SetDirectory(0)
+    new_file.Close()
+
+    fig = plt.figure(figsize=(8, 10), dpi=80, facecolor='black')
+    ax = fig.add_subplot(3,1,1,axisbg='k')
+    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$Events$","")
+    ax.set_yscale("symlog")
+    temp_x_vals = []
+    temp_x_err = []
+    temp_y_vals = []
+    temp_y_err = []
+    temp_new_x_vals = []
+    temp_new_x_err = []
+    temp_new_y_vals = []
+    temp_new_y_err = []
+    temp_ratio = []
+    temp_ratio_err = []
+    temp_sig = []
+    temp_sig_err = []
+    for j in range(1,ref_hist.GetNbinsX()+1):
+        if ref_hist.GetBinContent(j) != 0.0 and new_hist.GetBinContent(j) != 0.0:
+            temp_x_vals.append(ref_hist.GetBinCenter(j))
+            temp_x_err.append(ref_hist.GetBinWidth(j)/2.)
+            temp_y_vals.append(ref_hist.GetBinContent(j))
+            temp_y_err.append(ref_hist.GetBinError(j))
+            temp_new_x_vals.append(new_hist.GetBinCenter(j))
+            temp_new_x_err.append(new_hist.GetBinWidth(j)/2.)
+            temp_new_y_vals.append(new_hist.GetBinContent(j))
+            temp_new_y_err.append(new_hist.GetBinError(j))
+            temp_ratio.append(temp_new_y_vals[-1]/temp_y_vals[-1])
+            temp_ratio_err.append(sqrt(pow(temp_new_y_err[-1]/temp_y_vals[-1],2) + pow(temp_new_y_vals[-1]*temp_y_err[-1]/temp_y_vals[-1]/temp_y_vals[-1],2)))
+            temp_sig.append((temp_new_y_vals[-1] - temp_y_vals[-1]) / sqrt(pow(temp_new_y_err[-1],2) + pow(temp_y_err[-1],2)))
+            temp_sig_err.append(1.)
+    plt.errorbar(temp_x_vals, temp_y_vals, xerr = temp_x_err, yerr = temp_y_err, color='chartreuse',marker="o",linestyle="-",linewidth=1)
+    plt.errorbar(temp_new_x_vals, temp_new_y_vals, xerr = temp_new_x_err, yerr = temp_new_y_err, color='red',marker="o",linestyle="-",linewidth=1)
+
+    chi2 = ref_hist.Chi2Test(new_hist,"UU CHI2/NDF")
+    text = ax.text(0.8, 0.9, '$\chi^{2}/Ndf: %.2f$'%(chi2), color='limegreen', transform=ax.transAxes,
+                va='bottom', ha='center')
+
+    ax = fig.add_subplot(3,1,2,axisbg='k')
+    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$(N_{events}^{new} - N_{events}^{old}) / \sigma$","")
+    plt.errorbar(temp_new_x_vals, temp_sig, xerr = temp_new_x_err, yerr = temp_sig_err, color='y',marker="o",linestyle="-",linewidth=1)
+
+    ax = fig.add_subplot(3,1,3,axisbg='k')
+    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$N_{events}^{new} / N_{events}^{old}$","")
+    plt.errorbar(temp_new_x_vals, temp_ratio, xerr = temp_new_x_err, yerr = temp_ratio_err, color='y',marker="o",linestyle="-",linewidth=1)
+
+    name = "comparison_dir/" + sample + "_" + folder + "_" + hist + ".pdf"
+    plt.show()
+    plt.savefig(name,facecolor='black',edgecolor='black')
+    return [name,chi2]
+
+def make_output_file(sample_list,cfg_file):
+    #Create .tex header
+
+    content = r'''\documentclass[12pt]{article}
+\usepackage{amsmath}    % need for subequations
+\usepackage{graphicx}   % need for figures
+\usepackage{verbatim}   % useful for program listings
+\usepackage{color}      % use if color is used in text
+\usepackage{subfigure}  % use for side-by-side figures
+\usepackage{hyperref}   % use for hypertext links, including those to external documents and URLs
+
+% above is the preamble
+
+\begin{document}'''
+
+    content = create_tex_summary(content,sample_list,cfg_file)
+
+    content += r'''
+\end{document}
+'''
+    content = content.replace("_","\_")
+    content = content.replace("!","_")
+    tex_file = open("test.tex","w")
+    tex_file.write(content)
+    tex_file.close()
+
+    p = subprocess.Popen("pdflatex test.tex",shell=True,stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+
+    p1 = subprocess.Popen("pdflatex test.tex",shell=True,stdout=subprocess.PIPE)
+    output = p1.communicate()[0]
+
+    p2 = subprocess.Popen("rm test.tex test.toc test.aux test.log test.out",shell=True,stdout=subprocess.PIPE)
+    output = p2.communicate()[0]
+
 def main():
     control_output("doing the validation",True,True)
 
@@ -656,6 +848,8 @@ def main():
     #get_reference_output(options)
 
     do_comparison(options,cfg_file,sample_list)
+
+    make_output_file(sample_list,cfg_file)
 
     decision = final_user_decision()
 
