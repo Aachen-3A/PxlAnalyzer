@@ -444,12 +444,30 @@ def comparison_norm(item,hist,fname):
     else:
         return False
 
+def comparison_events(item,hist,fname):
+    log.debug("comparing the number of events in the distribution")
+
+    log.debug("Now reading: " +item+"/"+hist + " from: comparison_dir/old/%s.root"%(fname))
+    comp_file = TFile("comparison_dir/old/%s.root"%(fname),"READ")
+    ref_hist = TH1F()
+    ref_hist = comp_file.Get(item+"/"+hist)
+    ref_hist.SetDirectory(0)
+    comp_file.Close()
+    new_file = TFile("comparison_dir/new/%s.root"%(fname),"READ")
+    new_hist = TH1F()
+    new_hist = new_file.Get(item+"/"+hist)
+    new_hist.SetDirectory(0)
+    new_file.Close()
+
+    diff = ref_hist.GetEntries() - new_hist.GetEntries()
+
+    if diff == 0.0:
+        return True
+    else:
+        return False
+
 def comparison_shape(item,hist,fname):
     log.debug("comparing the shape of distributions")
-    return False
-
-def comparison_events(item,hist,fname):
-    log.debug("comparing events")
     return False
 
 def do_comparison(options,cfg_file,sample_list):
@@ -482,9 +500,9 @@ def do_comparison(options,cfg_file,sample_list):
                 c_norm = comparison_norm(item,hist,fname)
 
                 if not c_norm:
-                    c_shape = comparison_shape(item,hist,fname)
-    
                     c_events = comparison_events(item,hist,fname)
+
+                    c_shape = comparison_shape(item,hist,fname)
 
                     if c_norm and c_shape and c_events:
                         control_output(hist,True,False)
