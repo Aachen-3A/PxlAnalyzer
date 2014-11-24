@@ -1,3 +1,16 @@
+##@package validator
+# Validation code for the PxlAnalyzer in the TAPAS framework
+#
+# This package runs the analysis and measures its performance.
+# It then compares the performance and analysis output with
+# A reference output. If there are differences the user has to
+# decide if they are expected or if they need more work. If
+# the validation is successfull new reference distributions
+# are created and the new analysis is pushed to the central
+# repository.
+#
+# written by Soeren Erdweg 2014
+
 #!/bin/env python
 
 import optparse, time, os, subprocess, sys
@@ -9,6 +22,7 @@ import logging
 import multiprocessing
 sys.path.append("lib/")
 from configobj import ConfigObj
+import StringIO
 from math import sqrt, fabs
 import matplotlib.pyplot as plt
 from matplotlib import transforms
@@ -22,8 +36,15 @@ log = logging.getLogger( 'Validator' )
 
 tdrStyle = TStyle("tdrStyle","Style for P-TDR");
 
+ro.gROOT.ProcessLine( "gErrorIgnoreLevel = 3001;")
 compare_results = {}
 
+## Function to get the size of the terminal
+#
+# Reads the width and height of the current terminal and returns
+# this two values.
+# @param[out] int(cr[1]) Width of the terminal
+# @param[out] int(cr[0]) Height of the terminal
 class bcolors:
     HEADER = '\033[35m'
     OKBLUE = '\033[34m'
@@ -209,6 +230,8 @@ def opt_parser():
                             help = 'Accepted tolerance of memory usage in percent. [default = %default]' )
     parser.add_option( '--timetolerance', metavar = 'TIMETOLERANCE' , default = 100.,
                             help = 'Accepted tolerance of run time in percent. [default = %default]' )
+    parser.add_option( '--allplots', metavar = 'ALLPLOTS' , default = False,
+                            help = 'Bool if all plots should be made or only plots with Chi2 != 0. [default = %default]' )
 
     ( options, args ) = parser.parse_args()
     if len( args ) != 0:
@@ -300,14 +323,14 @@ def make_axis(ax,x_title,y_title,title):
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_linewidth(0.5)
     ax.spines['left'].set_linewidth(0.5)
-    ax.spines['bottom'].set_color('white')
-    ax.spines['left'].set_color('white')
+    ax.spines['bottom'].set_color('black')
+    ax.spines['left'].set_color('black')
 
-    ax.title.set_color('white')
-    ax.yaxis.label.set_color('white')
-    ax.xaxis.label.set_color('white')
-    ax.tick_params(axis='x', colors='white')
-    ax.tick_params(axis='y', colors='white')
+    ax.title.set_color('black')
+    ax.yaxis.label.set_color('black')
+    ax.xaxis.label.set_color('black')
+    ax.tick_params(axis='x', colors='black')
+    ax.tick_params(axis='y', colors='black')
 
     ax.tick_params(axis='both', direction='in')
     ax.get_xaxis().tick_bottom()
@@ -374,21 +397,21 @@ def comparison_performance(options):
             new_vir_histos.append(dummy_hist)
     new__log_file.Close()
 
-    fig = plt.figure(figsize=(10, 10), dpi=80, facecolor='black')
+    fig = plt.figure(figsize=(10, 10), dpi=80, facecolor='white')
  
-    ax = fig.add_subplot(2,2,1,axisbg='k')
+    ax = fig.add_subplot(2,2,1,axisbg='white')
     make_axis(ax,'run time (s)','memory (MB)','old')
     ax,old_rss_usage,old_rss_time = draw_mem_histos(old_rss_histos,old_rss_time,"y",ax)
 
-    ax = fig.add_subplot(2,2,2,axisbg='k')
+    ax = fig.add_subplot(2,2,2,axisbg='white')
     make_axis(ax,'run time (s)','virtual memory (MB)','old')
     ax,old_vir_usage,old_vir_time = draw_mem_histos(old_vir_histos,old_vir_time,"royalblue",ax)
 
-    ax = fig.add_subplot(2,2,3,axisbg='k')
+    ax = fig.add_subplot(2,2,3,axisbg='white')
     make_axis(ax,'run time (s)','memory (MB)','new')
     ax,new_rss_usage,new_rss_time = draw_mem_histos(new_rss_histos,new_rss_time,"orange",ax)
 
-    ax = fig.add_subplot(2,2,4,axisbg='k')
+    ax = fig.add_subplot(2,2,4,axisbg='white')
     make_axis(ax,'run time (s)','virtual memory (MB)','new')
     ax,new_vir_usage,new_vir_time = draw_mem_histos(new_vir_histos,new_vir_time,"cornflowerblue",ax)
 
@@ -415,7 +438,7 @@ def comparison_performance(options):
         text.set_zorder(20)
 
     plt.show()
-    plt.savefig("comparison_dir/mem_comparison.pdf",facecolor='black',edgecolor='black')
+    plt.savefig("comparison_dir/mem_comparison.pdf",facecolor='white',edgecolor='white')
 
     if diff_time < -1 * options.timetolerance:
         compare_results.update({"performance":[False,diff_time,diff_rss]})
@@ -442,7 +465,11 @@ def comparison_norm(item,hist,fname):
     new_hist.SetDirectory(0)
     new_file.Close()
 
-    chi2 = ref_hist.Chi2Test(new_hist,"UU CHI2")
+    if ref_hist.GetEntries() == 0 and new_hist.GetEntries() == 0:
+        compare_results[fname + "_" + item + "_" + hist] = [True,0,0]
+        return True
+
+    chi2 = Chi2_calcer(ref_hist,new_hist)
 
     if chi2 == 0.0:
         compare_results[fname + "_" + item + "_" + hist] = [True,0,0]
@@ -469,14 +496,6 @@ def comparison_events(item,hist,fname):
     diff = ref_hist.GetEntries() - new_hist.GetEntries()
 
     compare_results[fname + "_" + item + "_" + hist] = [compare_results[fname + "_" + item + "_" + hist][0],compare_results[fname + "_" + item + "_" + hist][1],diff]
-    if diff == 0.0:
-        return True
-    else:
-        return False
-
-def comparison_shape(item,hist,fname):
-    log.debug("comparing the shape of distributions")
-    return False
 
 def do_comparison(options,cfg_file,sample_list):
     control_output("doing the comparison",True,True)
@@ -507,22 +526,24 @@ def do_comparison(options,cfg_file,sample_list):
                 log.debug("Now comparing: " + hist)
                 compare_results.update({i_sample + "_" + item + "_" + hist:[False,0,0]})
                 c_norm = comparison_norm(item,hist,fname)
+                control_output(hist,True,False)
+                group = group and c_norm
 
                 if not c_norm:
-                    c_events = comparison_events(item,hist,fname)
+                    comparison_events(item,hist,fname)
 
-                    c_shape = comparison_shape(item,hist,fname)
+                    #c_shape = comparison_shape(item,hist,fname)
 
-                    #if c_norm and c_shape and c_events:
-                        #control_output(hist,True,False)
-                    #else:
-                        #control_output(hist+" norm",c_norm,False)
-                        #control_output(hist+" shape",c_shape,False)
-                        #control_output(hist+" events",c_events,False)
-                    group = group and c_norm and c_shape and c_events
-                else:
-                    control_output(hist,True,False)
-                    group = group and c_norm
+                    ##if c_norm and c_shape and c_events:
+                        ##control_output(hist,True,False)
+                    ##else:
+                        ##control_output(hist+" norm",c_norm,False)
+                        ##control_output(hist+" shape",c_shape,False)
+                        ##control_output(hist+" events",c_events,False)
+                    #group = group and c_norm and c_shape and c_events
+                #else:
+                    #control_output(hist,True,False)
+                    #group = group and c_norm
             #log.info(" ")
             #control_output(item,group,False)
             all_hists = all_hists and group
@@ -533,7 +554,7 @@ def do_comparison(options,cfg_file,sample_list):
     control_output("All samples",all_samples,False)
 
 def get_reference_output(options):
-    print("getting the reference output")
+    control_output("getting the reference output",True,True)
 
     if not os.path.exists("comparison_dir/old"):
         os.mkdir("comparison_dir/old")
@@ -542,7 +563,7 @@ def get_reference_output(options):
     output = p.communicate()[0]
 
 def get_analysis_output(options):
-    print("getting the analysis output")
+    control_output("getting the analysis output",True,True)
 
     if not os.path.exists("comparison_dir"):
         os.mkdir("comparison_dir")
@@ -607,7 +628,8 @@ def run_analysis_task(item):
     other = []
     cmd = [item[0], item[1], item[2], item[3], item[4]]
     log.debug(" ".join(cmd))
-    p = subprocess.Popen(" ".join(cmd), shell=True,stdout=subprocess.PIPE)
+    #print(" ".join(cmd))
+    p = subprocess.Popen(" ".join(cmd), shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     pid = p.pid
     while True:
         if p.poll() != None:
@@ -627,7 +649,12 @@ def run_analysis_task(item):
 
     output = p.communicate()[0]
     exitCode = p.returncode
-
+    if exitCode != 0:
+        log.error("exitCode: " + str(exitCode))
+        log.error(output,p.communicate()[1])
+    else:
+        log.debug("exitCode: " + str(exitCode))
+        log.debug(output)
     usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
     cpu_time = usage_end.ru_utime - usage_start.ru_utime
 
@@ -651,7 +678,8 @@ def run_analysis_task(item):
 
     dummy_file.Close()
 
-def create_tex_summary(content,sample_list,cfg_file):
+def create_tex_summary(content,sample_list,cfg_file,options):
+    log.debug("Now creating the title page for the .tex document")
 ## Create the Title page
     content += r'''
 This is the summary of the validation from \today
@@ -660,18 +688,22 @@ This is the summary of the validation from \today
 \pagebreak
 '''
 
+    log.debug("Creating the summary table")
 ## Create the summary table
     content += r'''
 \section{Summary table}
 \subsection{Performance}
+\begin{itemize}
 '''
     if compare_results["performance"][0]:
         content += r'''
-        Performance: {\color{green}True}
+\item Performance: {\color{darkgreen}True}
+\end{itemize}
 '''
     else:
         content += r'''
-        Performance: {\color{red}False  } Run time difference (%): %.2f    Memory usage difference (%): %.2f"
+\item Performance: {\color{red}False  } Run time difference (%): %.2f    Memory usage difference (%): %.2f"
+\end{itemize}
 '''%(compare_results["performance"][1],compare_results["performance"][2])
     for sample in sample_list:
         content += r'''
@@ -680,42 +712,69 @@ This is the summary of the validation from \today
         for folder in cfg_file["basic"]["hist_groups"]:
             content += r'''
 \subsubsection{%s}
+\begin{itemize}
 '''%(folder)
             for i in compare_results:
                 if sample in i and folder in i:
                     dummy_string = ""
                     if compare_results[i][0]:
-                        dummy_string += "{\color{green}True}"
+                        if options.allplots:
+                            dummy_string += "{\color{darkgreen}True} Fig.~\\ref{fig:%s!%s!%s}"%(sample,folder,i[i.find(folder)+len(folder)+1:].replace("_","!"))
+                        else:
+                            dummy_string += "{\color{darkgreen}True}"
                     else:
-                        dummy_string += "{\color{red}False  } $\Chi^{2}:$ %.2f    $N_{events}^{reference} - N_{events}^{new}: $%.2f"%(compare_results[i][1],compare_results[i][2])
+                        dummy_string += '''{\color{red}False  } Fig.~\\ref{fig:%s!%s!%s}\\\\
+$\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'''%(sample,folder,i[i.find(folder)+len(folder)+1:].replace("_","!"),compare_results[i][1],compare_results[i][2])
                     content += r'''
-        %s: %s
-'''%(i,dummy_string)
-
+\item %s: %s
+'''%(i[i.find(folder)+len(folder)+1:],dummy_string)
+            content += r'''
+\end{itemize}
+'''
+    log.debug("done")
 ## End of summary table
     content += r'''
 \pagebreak
 '''
 
+## Include Plot with Chi2 distribution
+    content += r'''
+\section{Overview}
+\includegraphics[width=15cm]{%s}
+'''%("comparison!dir/chi2!distribution.pdf")
+
+    log.debug("Creating the comparison plots for the .tex file")
 ## Include the performance Plots
     content += r'''
 \section{Performance}
 \includegraphics[width=15cm]{%s}
 '''%("comparison!dir/mem!comparison.pdf")
+    chi2_vals = []
 ## Create the different histograms
     for sample in sample_list:
         content += r'''
 \section{%s}
 '''%(sample)
         for folder in cfg_file["basic"]["hist_groups"]:
+            log.debug("Now working on %s"%(folder))
             content += r'''
 \subsubsection{%s}
 '''%(folder)
             hist_list = []
             for i in compare_results:
                 if sample in i and folder in i:
-                    hist_list.append([sample,folder,i])
-                    #hist_name = make_comparison_plot(sample,folder,i)
+                    hist_list.append([sample,folder,i,options])
+            #new_hist_list = []
+            #counter = 0
+            #for item in hist_list:
+                #dummy = make_comparison_plot(item)
+                #if not options.allplots:
+                    #if dummy[0] != "NONE" and dummy[1] != 0.0:
+                        #new_hist_list.append(dummy)
+                #else:
+                    #new_hist_list.append(dummy)
+                #counter += 1
+                #update_progress(float(counter)/len(hist_list))
             pool = multiprocessing.Pool()
             test = pool.map_async(make_comparison_plot, hist_list)
             while True:
@@ -723,14 +782,102 @@ This is the summary of the validation from \today
                 if not pool._cache: break
             pool.close()
             pool.join()
-            hist_list = test.get(timeout=1)
-            hist_list = sorted(hist_list, key=lambda hist: hist[1])
+            try:
+                new_hist_list = test.get(timeout=1)
+            except:
+                time.sleep(5)
+                try:
+                    new_hist_list = test.get(timeout=1)
+                except:
+                    log.error("Could not get the plotting output, try restarting the validator")
+            hist_list = sorted(new_hist_list, key=lambda hist: hist[1], reverse=True)
             for i in hist_list:
                 content += r'''
-%s \\
+\begin{figure}[hbtp]
+\centering
 \includegraphics[width=15cm]{%s}
-'''%(i[0],i[0].replace("_","!"))
+\caption{%s}
+\label{fig:%s!%s!%s}
+\end{figure}
+'''%(i[0].replace("_","!"),i[0],sample,folder,i[0][i[0].find(folder)+len(folder)+1:-4].replace("_","!"))
+                chi2_vals.append(i[1])
+            log.debug("done")
+    log.debug("done")
+
+    make_chi2_distribution(chi2_vals)
+
     return content
+
+def make_chi2_distribution(chi2_vals):
+    log.debug("Now plotting: Chi2 distribution")
+    fig = plt.figure(figsize=(8, 8), dpi=20, facecolor='white')
+    ax = fig.add_subplot(111)
+    make_axis(ax,"$\chi^{2} values$","Number of Distributions","")
+    min_val = 0.1 * np.min(chi2_vals)
+    if min_val == 0:
+        min_val = 0.000001
+    binning = np.logspace(np.log10(min_val), np.log10(np.max(chi2_vals)), num=100, base=10.)
+    log.debug(binning,np.log10(min_val),np.log10(np.max(chi2_vals)))
+    n, bins, patches = plt.hist(chi2_vals, bins=binning, facecolor='green', alpha=0.75)
+    plt.grid(True)
+    ax.set_xscale("symlog")
+    plt.show()
+    plt.savefig("comparison_dir/chi2_distribution.pdf",facecolor='white',edgecolor='white')
+
+## Function to get the size of the terminal
+#
+# Reads the width and height of the current terminal and returns
+# this two values.
+# @param[out] int(cr[1]) Width of the terminal
+# @param[out] int(cr[0]) Height of the terminal
+def getTerminalSize():
+    env = os.environ
+    def ioctl_GWINSZ(fd):
+        try:
+            import fcntl, termios, struct, os
+            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
+        '1234'))
+        except:
+            return
+        return cr
+    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+    if not cr:
+        cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
+    return int(cr[1]), int(cr[0])
+
+## Function to create and update a progress bar
+#
+# This function displays or updates a console progress bar
+# It accepts a float between 0 and 1. Any int will be converted to a float.
+# A value under 0 represents a 'halt'.
+# A value at 1 or bigger represents 100%
+# @param[in] progress Relative progress that should be displayed
+def update_progress(progress):
+    (width, height) = getTerminalSize()
+    barLength = width-30 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = bcolors.FAIL+"error: progress var must be float\r\n"+bcolors.ENDC
+    if progress < 0:
+        progress = 0
+        status = bcolors.WARNING+"Halt...\r\n"+bcolors.ENDC
+    if progress >= 1:
+        progress = 1
+        status = bcolors.OKGREEN+"Done...\r\n"+bcolors.ENDC
+    block = int(round(barLength*progress))
+    text = "\rPercent: [{0}] {1}% {2}".format( bcolors.HEADER+"#"*block+bcolors.ENDC + "-"*(barLength-block), int(progress*100), status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 def make_comparison_plot(i):
     sample = i[0]
@@ -742,17 +889,25 @@ def make_comparison_plot(i):
     ref_hist = TH1F()
     ref_hist = comp_file.Get(folder+"/"+hist)
     ref_hist.SetDirectory(0)
+    ref_hist.SetLineColor(ro.kGreen)
     comp_file.Close()
     new_file = TFile("comparison_dir/new/%s.root"%(sample),"READ")
     new_hist = TH1F()
     new_hist = new_file.Get(folder+"/"+hist)
     new_hist.SetDirectory(0)
+    new_hist.SetLineColor(ro.kRed)
     new_file.Close()
 
-    fig = plt.figure(figsize=(8, 10), dpi=80, facecolor='black')
-    ax = fig.add_subplot(3,1,1,axisbg='k')
-    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$Events$","")
-    ax.set_yscale("symlog")
+    if ref_hist.GetNbinsX() > 500:
+        ref_hist.Rebin(10)
+        new_hist.Rebin(10)
+
+    if not i[3].allplots:
+        if ref_hist.GetEntries() == 0 and new_hist.GetEntries() == 0:
+            return ["NONE",0.0]
+
+    chi2 = Chi2_calcer(ref_hist,new_hist)
+
     temp_x_vals = []
     temp_x_err = []
     temp_y_vals = []
@@ -765,42 +920,70 @@ def make_comparison_plot(i):
     temp_ratio_err = []
     temp_sig = []
     temp_sig_err = []
+    range_x_vals = []
+    range_y_vals = []
     for j in range(1,ref_hist.GetNbinsX()+1):
-        if ref_hist.GetBinContent(j) != 0.0 and new_hist.GetBinContent(j) != 0.0:
-            temp_x_vals.append(ref_hist.GetBinCenter(j))
-            temp_x_err.append(ref_hist.GetBinWidth(j)/2.)
-            temp_y_vals.append(ref_hist.GetBinContent(j))
-            temp_y_err.append(ref_hist.GetBinError(j))
-            temp_new_x_vals.append(new_hist.GetBinCenter(j))
-            temp_new_x_err.append(new_hist.GetBinWidth(j)/2.)
-            temp_new_y_vals.append(new_hist.GetBinContent(j))
-            temp_new_y_err.append(new_hist.GetBinError(j))
+        temp_x_vals.append(ref_hist.GetBinCenter(j))
+        temp_x_err.append(ref_hist.GetBinWidth(j)/2.)
+        temp_y_vals.append(ref_hist.GetBinContent(j))
+        if ref_hist.GetBinContent(j) != 0.0:
+            range_x_vals.append(ref_hist.GetBinCenter(j))
+            range_y_vals.append(ref_hist.GetBinContent(j))
+        temp_y_err.append(ref_hist.GetBinError(j))
+        temp_new_x_vals.append(new_hist.GetBinCenter(j))
+        temp_new_x_err.append(new_hist.GetBinWidth(j)/2.)
+        temp_new_y_vals.append(new_hist.GetBinContent(j))
+        if new_hist.GetBinContent(j) != 0.0:
+            range_x_vals.append(new_hist.GetBinCenter(j))
+            range_y_vals.append(new_hist.GetBinContent(j))
+        temp_new_y_err.append(new_hist.GetBinError(j))
+        if ref_hist.GetBinContent(j) != 0.0:# and new_hist.GetBinContent(j) != 0.0:
             temp_ratio.append(temp_new_y_vals[-1]/temp_y_vals[-1])
             temp_ratio_err.append(sqrt(pow(temp_new_y_err[-1]/temp_y_vals[-1],2) + pow(temp_new_y_vals[-1]*temp_y_err[-1]/temp_y_vals[-1]/temp_y_vals[-1],2)))
             temp_sig.append((temp_new_y_vals[-1] - temp_y_vals[-1]) / sqrt(pow(temp_new_y_err[-1],2) + pow(temp_y_err[-1],2)))
             temp_sig_err.append(1.)
-    plt.errorbar(temp_x_vals, temp_y_vals, xerr = temp_x_err, yerr = temp_y_err, color='chartreuse',marker="o",linestyle="-",linewidth=1)
-    plt.errorbar(temp_new_x_vals, temp_new_y_vals, xerr = temp_new_x_err, yerr = temp_new_y_err, color='red',marker="o",linestyle="-",linewidth=1)
+        else:
+            temp_ratio.append(0.)
+            temp_ratio_err.append(0.)
+            temp_sig.append(0.)
+            temp_sig_err.append(0.)
+    if len(range_x_vals) < 1:
+        range_x_vals.append(0)
+        range_x_vals.append(1)
+    if len(range_y_vals) < 1:
+        range_y_vals.append(0)
+        range_y_vals.append(1)
+    fig = plt.figure(figsize=(8, 10), dpi=20, facecolor='white')
+    ax = fig.add_subplot(3,1,1,axisbg='white')
+    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$Events$","")
+    ax.set_yscale("symlog")
+    log.debug(hist + ":   " + str((np.min(range_y_vals) - 1)*0.8) +"  "+ str((np.max(range_y_vals) + 1)*1.2))
+    plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
+    plt.ylim( (np.min(range_y_vals) - 1)*0.95, (np.max(range_y_vals) + 1)*1.05 )
+    plt.errorbar(temp_x_vals, temp_y_vals, xerr = temp_x_err, yerr = temp_y_err, color='chartreuse',marker="o",linestyle="-",linewidth=1,label='Reference')
+    plt.errorbar(temp_new_x_vals, temp_new_y_vals, xerr = temp_new_x_err, yerr = temp_new_y_err, color='red',marker="o",linestyle="-",linewidth=1,label='New (for validation)')
+    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=2, mode="expand", borderaxespad=0.)
 
-    chi2 = ref_hist.Chi2Test(new_hist,"UU CHI2/NDF")
-    text = ax.text(0.8, 0.9, '$\chi^{2}/Ndf: %.2f$'%(chi2), color='limegreen', transform=ax.transAxes,
+    text = ax.text(0.8, 0.9, 'chi2/Ndf: %.2f'%(chi2), color='limegreen', transform=ax.transAxes,
                 va='bottom', ha='center')
 
-    ax = fig.add_subplot(3,1,2,axisbg='k')
+    ax = fig.add_subplot(3,1,2,axisbg='white')
     make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$(N_{events}^{new} - N_{events}^{old}) / \sigma$","")
+    plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
     plt.errorbar(temp_new_x_vals, temp_sig, xerr = temp_new_x_err, yerr = temp_sig_err, color='y',marker="o",linestyle="-",linewidth=1)
 
-    ax = fig.add_subplot(3,1,3,axisbg='k')
+    ax = fig.add_subplot(3,1,3,axisbg='white')
     make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$N_{events}^{new} / N_{events}^{old}$","")
+    plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
     plt.errorbar(temp_new_x_vals, temp_ratio, xerr = temp_new_x_err, yerr = temp_ratio_err, color='y',marker="o",linestyle="-",linewidth=1)
 
     name = "comparison_dir/" + sample + "_" + folder + "_" + hist + ".pdf"
     plt.show()
-    plt.savefig(name,facecolor='black',edgecolor='black')
+    plt.savefig(name,facecolor='white',edgecolor='white')
     return [name,chi2]
 
-def make_output_file(sample_list,cfg_file):
-    #Create .tex header
+def make_output_file(sample_list,cfg_file,options):
+    control_output("Creating the summary file",True,True)
 
     content = r'''\documentclass[12pt]{article}
 \usepackage{amsmath}    % need for subequations
@@ -809,12 +992,14 @@ def make_output_file(sample_list,cfg_file):
 \usepackage{color}      % use if color is used in text
 \usepackage{subfigure}  % use for side-by-side figures
 \usepackage{hyperref}   % use for hypertext links, including those to external documents and URLs
+\usepackage{morefloats}
+\definecolor{darkgreen}{rgb}{0,0.5,0.1}
 
 % above is the preamble
 
 \begin{document}'''
 
-    content = create_tex_summary(content,sample_list,cfg_file)
+    content = create_tex_summary(content,sample_list,cfg_file,options)
 
     content += r'''
 \end{document}
@@ -825,31 +1010,49 @@ def make_output_file(sample_list,cfg_file):
     tex_file.write(content)
     tex_file.close()
 
+    log.debug("Compiling .tex document")
     p = subprocess.Popen("pdflatex test.tex",shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
+    log.debug(output)
 
+    log.debug("Second compilation of .tex file")
     p1 = subprocess.Popen("pdflatex test.tex",shell=True,stdout=subprocess.PIPE)
     output = p1.communicate()[0]
+    log.debug(output)
 
+    log.debug("done. Now cleaning up")
     p2 = subprocess.Popen("rm test.tex test.toc test.aux test.log test.out",shell=True,stdout=subprocess.PIPE)
     output = p2.communicate()[0]
+    log.debug(output)
+    log.debug("done")
+
+def Chi2_calcer(hist1,hist2):
+    if hist1.GetEntries() == 0 and hist2.GetEntries() == 0:
+        return 0.0
+    elif hist1.GetEntries() == 0:
+        return float(hist2.GetEntries())/hist2.GetNbinsX()
+    elif hist2.GetEntries() == 0:
+        return float(hist1.GetEntries())/hist1.GetNbinsX()
+    else:
+        return hist1.Chi2Test(hist2,"WW CHI2/NDF")
 
 def main():
+    t0 = time.time()
     control_output("doing the validation",True,True)
 
     args,options,cfg_file = opt_parser()
 
     sample_list = get_sample_list(cfg_file)
 
-    #run_analysis(options,cfg_file)
+    run_analysis(options,cfg_file,sample_list)
 
-    #get_analysis_output(options)
+    get_analysis_output(options)
 
-    #get_reference_output(options)
+    get_reference_output(options)
 
     do_comparison(options,cfg_file,sample_list)
 
-    make_output_file(sample_list,cfg_file)
+    make_output_file(sample_list,cfg_file,options)
 
     decision = final_user_decision()
 
@@ -860,6 +1063,8 @@ def main():
 
         if authorization == True:
             make_commits()
+    t1 = time.time()
+    print("\n \t Runtime: %.2f s"%(t1-t0))
 
 if __name__ == '__main__':
     main()
