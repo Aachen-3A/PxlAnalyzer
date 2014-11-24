@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./validator.py --execonfig=/home/home1/institut_3a/erdweg/Desktop/Software/MUSiC/ConfigFiles/MC.cfg --cfgfile=config2.cfg
+./validator.py --execonfig=$MUSIC_BASE/ConfigFiles/MC_miniAOD_8TeV.cfg --cfgfile=config2.cfg
