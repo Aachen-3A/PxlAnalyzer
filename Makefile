@@ -18,6 +18,8 @@ YELLOW    = \e[0;33m
 
 # Prepare the compiler/linker flags.
 
+SHELL = /bin/bash
+
 # Debug flags?
 ifdef DEBUG
    CXXFLAGS += -O0 -fstack-protector-all -Wfatal-errors
@@ -105,6 +107,13 @@ PROGSDIR = Progs
 #pxl needs extra
 PXLDIR = Pxl/Pxl
 
+ifneq ("$(wildcard specialAna/)","")
+$(shell   echo " ")
+else
+$(shell   mkdir -p "specialAna")
+$(shell   cp Validator/specialAna.* specialAna/)
+endif
+
 # Define all targets:
 # List all executables and .so's here.
 TARGETS := $(BINDIR)/music
@@ -174,6 +183,7 @@ TEVENTCLASSFACTORY := $(TEVENTCLASS) $(TEC)
 .PHONY: all clean install-python validation
 
 all: $(TARGETS) install-python
+	@echo $(TEST)
 
 clean:
 ifndef VERBOSE
