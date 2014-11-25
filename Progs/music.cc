@@ -25,7 +25,12 @@
 #include "Main/RunLumiRanges.hh"
 #include "Main/SkipEvents.hh"
 
+#ifdef validation
+#include "Validator/specialAna.hh"
+#endif
+#ifndef validation
 #include "specialAna/specialAna.hh"
+#endif
 #include "Main/Systematics.hh"
 
 namespace fs = boost::filesystem;

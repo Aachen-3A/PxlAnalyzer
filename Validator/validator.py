@@ -140,31 +140,25 @@ def opt_parser():
     return args,options,cfg_file
 
 def make_new_reference():
-    control_output("making new reference plots",True,True)
+    control_output("making new reference plots")
 
 def check_authorization():
-    control_output("Now checking the user authorization",True,True)
+    control_output("Now checking the user authorization")
     return False
 
 def make_commits():
-    control_output("Now making the final commits",True,True)
+    control_output("Now making the final commits")
 
 def final_user_decision():
     raw_input("waiting for the final user decision")
     return False
 
-def control_output(histogram,value,group):
-    if group == True:
-        log.info(" ")
-        log.info(25*"-")
-        log.info("\t"+histogram)
-        log.info(25*"-")
-        log.info(" ")
-    else:
+def control_output(*args):
+    if len(args) == 2:
         text = "\t"
-        text += histogram
+        text += args[0]
         text += ":  "
-        if value == True:
+        if args[1] == True:
             text += bcolors.OKGREEN
             text += "Okay"
             text += bcolors.ENDC
@@ -173,6 +167,12 @@ def control_output(histogram,value,group):
             text += "Problem"
             text += bcolors.ENDC
         log.info(text)
+    elif len(args) == 1:
+        log.info(" ")
+        log.info(25*"-")
+        log.info("\t"+args[0])
+        log.info(25*"-")
+        log.info(" ")
 
 def draw_mem_histos(old_rss_histos,old_rss_time,p_color,ax):
     old_rss_line = ro.TLine(np.mean(old_rss_time),0,np.mean(old_rss_time),1)
@@ -386,11 +386,11 @@ def comparison_events(item,hist,fname):
     compare_results[fname + "_" + item + "_" + hist] = [compare_results[fname + "_" + item + "_" + hist][0],compare_results[fname + "_" + item + "_" + hist][1],diff]
 
 def do_comparison(options,cfg_file,sample_list):
-    control_output("doing the comparison",True,True)
+    control_output("doing the comparison")
 
     c_performance = comparison_performance(options)
-    control_output("performance",True,True)
-    control_output("performance",c_performance,False)
+    control_output("performance")
+    control_output("performance",c_performance)
 
     histos = {}
     for group in cfg_file["basic"]["hist_groups"]:
@@ -407,14 +407,14 @@ def do_comparison(options,cfg_file,sample_list):
         all_hists = True
         fname = i_sample
         for item in histos:
-            control_output(item,True,True)
+            control_output(item)
 
             group = True
             for hist in histos[item]:
                 log.debug("Now comparing: " + hist)
                 compare_results.update({i_sample + "_" + item + "_" + hist:[False,0,0]})
                 c_norm = comparison_norm(item,hist,fname)
-                control_output(hist,True,False)
+                control_output(hist,c_norm)
                 group = group and c_norm
 
                 if not c_norm:
@@ -435,14 +435,14 @@ def do_comparison(options,cfg_file,sample_list):
             #log.info(" ")
             #control_output(item,group,False)
             all_hists = all_hists and group
-        control_output("All histograms",True,True)
-        control_output("All histograms",all_hists,False)
+        control_output("All histograms")
+        control_output("All histograms",all_hists)
         all_samples = all_samples and all_hists
-    control_output("All samples",True,True)
-    control_output("All samples",all_samples,False)
+    control_output("All samples")
+    control_output("All samples",all_samples)
 
 def get_reference_output(options):
-    control_output("getting the reference output",True,True)
+    control_output("getting the reference output")
 
     if not os.path.exists("comparison_dir/old"):
         os.mkdir("comparison_dir/old")
@@ -451,7 +451,7 @@ def get_reference_output(options):
     output = p.communicate()[0]
 
 def get_analysis_output(options):
-    control_output("getting the analysis output",True,True)
+    control_output("getting the analysis output")
 
     if not os.path.exists("comparison_dir"):
         os.mkdir("comparison_dir")
@@ -469,7 +469,7 @@ def get_sample_list(cfg_file):
     return sample_list
 
 def run_analysis(options,cfg_file,sample_list):
-    control_output("running the analysis",True,True)
+    control_output("running the analysis")
 
     music_prog = options.executable
     music_opt  = options.exeoption
@@ -828,7 +828,7 @@ def make_comparison_plot(i):
     return [name,chi2,to_be_logged]
 
 def make_output_file(sample_list,cfg_file,options):
-    control_output("Creating the summary file",True,True)
+    control_output("Creating the summary file")
 
     content = r'''\documentclass[12pt]{article}
 \usepackage{amsmath}    % need for subequations
@@ -888,7 +888,7 @@ def main():
 
     welcome_output(options)
 
-    control_output("doing the validation",True,True)
+    control_output("doing the validation")
 
     sample_list = get_sample_list(cfg_file)
 

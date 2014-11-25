@@ -85,6 +85,9 @@ EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LI
 CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
 LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 
+all: CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
+validation: CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS) -Dvalidation
+
 ECHO = @echo -e "$(BOLDGREEN)Building$(NO_COLOR) $@ ..."
 
 BUILDBIN    = $(CXX) -o $@ $(LDFLAGS) $^
@@ -115,6 +118,16 @@ TARGETS += $(BINDIR)/printData
 TARGETS += $(BINDIR)/scanClass
 TARGETS += $(LIBDIR)/TEventClass.so
 
+TARGETS2 := $(BINDIR)/music2
+TARGETS2 += $(BINDIR)/ECMerger
+TARGETS2 += $(BINDIR)/ECFileUtil
+TARGETS2 += $(BINDIR)/FakeClass
+TARGETS2 += $(BINDIR)/ECCrossSectionRescaler
+TARGETS2 += $(BINDIR)/dicePseudoData
+TARGETS2 += $(BINDIR)/printClass
+TARGETS2 += $(BINDIR)/printData
+TARGETS2 += $(BINDIR)/scanClass
+TARGETS2 += $(LIBDIR)/TEventClass.so
 
 # Sources and objects for ControlPlotFactory:
 SRCS := $(wildcard ControlPlotFactory/*.cc)
@@ -131,6 +144,10 @@ MAIN := $(patsubst %.cc,%.o,$(SRCS))
 # Sources and objects for specialAna:
 SRCS  := $(wildcard specialAna/*.cc)
 SANA := $(patsubst %.cc,%.o,$(SRCS))
+
+# Sources and objects for Validator:
+SRCS  := $(wildcard Validator/*.cc)
+SVAL := $(patsubst %.cc,%.o,$(SRCS))
 
 # Sources and objects for MISv2:
 SRCS  := $(wildcard MISv2/*.cc)
@@ -154,7 +171,7 @@ TEVENTCLASSFACTORY := $(TEVENTCLASS) $(TEC)
 
 # Define rules:
 
-.PHONY: all clean install-python
+.PHONY: all clean install-python validation
 
 all: $(TARGETS) install-python
 
@@ -206,6 +223,8 @@ install-python: | $(BINDIR)
 	@ln -sf ../python/radio.py $(BINDIR)/radio
 	@ln -sf ../Tools/plotPtilde.py $(BINDIR)/plotPtilde
 
+validation: $(TARGETS2) install-python
+
 # Directory rules:
 $(BINDIR):
 	@mkdir $(BINDIR)
@@ -223,6 +242,16 @@ ifndef VERBOSE
 	@$(BUILDBIN)
 else
 	$(BUILDBIN)
+endif
+
+$(BINDIR)/music2: $(PROGSDIR)/music.o $(MAIN) $(SVAL) $(TEVENTCLASSFACTORY) $(TOOLS) $(CPF) $(CP2) | $(BINDIR)/ECMerger $(BINDIR) $(PXL)
+ifndef VERBOSE
+	$(ECHO)
+	@$(BUILDBIN)
+	@mv $(BINDIR)/music2 $(BINDIR)/music
+else
+	$(BUILDBIN)
+	@mv $(BINDIR)/music2 $(BINDIR)/music
 endif
 
 # Rules to build the standalone helper programs:
