@@ -272,9 +272,14 @@ def final_user_decision(ctr_string):
         else:
             log.info(bcolors.FAIL + " The input was not correct." + bcolors.ENDC)
             log.info(" ")
+            log.info("  By the way, do you mind if I ask you a personal question? ")
+            log.info(" ")
             log.info(" Do you want to declare the validation failed? (yes/no)")
             dummy_string = raw_input()
             if dummy_string == "yes" or dummy_string == "y" or dummy_string == "Y" or dummy_string == "Yes":
+                log.info(" ")
+                log.info("  This mission is too important for me to allow you to jeopardize it. ")
+                log.info(" ")
                 log.info(" The validation is therefore: " + bcolors.FAIL + " failed." + bcolors.ENDC)
                 log.info(" ")
                 time.sleep(5)
@@ -802,7 +807,13 @@ def create_tex_summary(content,sample_list,cfg_file,options):
     log.debug("Now creating the title page for the .tex document")
 ## Create the Title page
     content += r'''
+\begin{center}
+{\huge
+VAL9000 \\
 This is the summary of the validation from \today
+}
+\includegraphics[width=15cm]{lib/2000px-HAL9000.png}
+\end{center}
 \pagebreak
 \tableofcontents
 \pagebreak
