@@ -703,7 +703,6 @@ def run_analysis(options,cfg_file,sample_list):
         for item2 in sample_folders:
             p2 = subprocess.Popen("rm -r %s"%item2,shell=True,stdout=subprocess.PIPE)
             output = p2.communicate()[0]
-
     p4 = subprocess.Popen("rm *.root",shell=True,stdout=subprocess.PIPE)
     output = p4.communicate()[0]
 
@@ -717,60 +716,67 @@ def run_analysis(options,cfg_file,sample_list):
 # After that everything is cleaned up.
 # @param[in] item Array of options given to the analysis task
 def run_analysis_task(item):
-    usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
-    rssList = []
-    virtual = []
-    other = []
-    cmd = [item[0], item[1], item[2], item[3], item[4]]
-    log.debug(" ".join(cmd))
-    p = subprocess.Popen(" ".join(cmd), shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    pid = p.pid
-    while True:
-        if p.poll() != None:
-            break
-        p2 = subprocess.Popen("top -b -n 1 -p %s | grep %s"%(pid,pid),shell=True,stdout=subprocess.PIPE)
-        output = p2.communicate()[0]
-        if output != '':
-            if "m" in output.split()[5]:
-                rssList.append(output.split()[5].split("m")[0]) 
-            else:
-                rssList.append(output.split()[5]) 
-            if "m" in output.split()[4]:
-                virtual.append(output.split()[4].split("m")[0]) 
-            else:
-                virtual.append(output.split()[4])
-        time.sleep(1)
-
-    output = p.communicate()[0]
-    exitCode = p.returncode
-    if exitCode != 0:
-        log.error("exitCode: " + str(exitCode))
-        log.error(output,p.communicate()[1])
-    else:
-        log.debug("exitCode: " + str(exitCode))
-        log.debug(output)
-    usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
-    cpu_time = usage_end.ru_utime - usage_start.ru_utime
-
-    rssArray = np.array(rssList,"d")
-    virtualArray = np.array(virtual,"d")
-    xAxis = []
-    for i in range(0,len(rssArray)):
-        xAxis.append(i*(cpu_time/len(rssArray)))
-
-    xAxisArray = np.array(xAxis,"d")
-    graphRSS = TGraph(len(rssArray),xAxisArray,rssArray)
-    graphVirtual = TGraph(len(virtualArray),xAxisArray,virtualArray)
-
-    graphRSS.SetMarkerColor(kBlue)
-    graphRSS.SetMarkerStyle(21)
-
-    dummy_file = TFile(item[1][3:]+"_mem_log.root","RECREATE")
-
-    graphRSS.Write(item[1][3:]+"_rss")
-    graphVirtual.Write(item[1][3:]+"_vir")
-
-    dummy_file.Close()
+    try:
+        usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
+        rssList = []
+        virtual = []
+        other = []
+        cmd = [item[0], item[1], item[2], item[3], item[4]]
+        log.debug(" ".join(cmd))
+        f_out = open("log/"+item[1][3:]+".out","w")
+        f_err = open("log/"+item[1][3:]+".err","w")
+        p = subprocess.Popen(" ".join(cmd), shell=True,stdout=f_out,stderr=f_err)
+        pid = p.pid
+        while True:
+            if p.poll() != None:
+                break
+            p2 = subprocess.Popen("top -b -n 1 -p %s | grep %s"%(pid,pid),shell=True,stdout=subprocess.PIPE)
+            output = p2.communicate()[0]
+            if output != '':
+                if "m" in output.split()[5]:
+                    rssList.append(output.split()[5].split("m")[0]) 
+                else:
+                    rssList.append(output.split()[5]) 
+                if "m" in output.split()[4]:
+                    virtual.append(output.split()[4].split("m")[0]) 
+                else:
+                    virtual.append(output.split()[4])
+            time.sleep(1)
+    
+        output = p.communicate()[0]
+        f_out.close()
+        f_err.close()
+        exitCode = p.returncode
+        if exitCode != 0:
+            log.error("exitCode: " + str(exitCode))
+            log.error(output,p.communicate()[1])
+        else:
+            log.debug("exitCode: " + str(exitCode))
+            log.debug(output)
+        usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
+        cpu_time = usage_end.ru_utime - usage_start.ru_utime
+    
+        rssArray = np.array(rssList,"d")
+        virtualArray = np.array(virtual,"d")
+        xAxis = []
+        for i in range(0,len(rssArray)):
+            xAxis.append(i*(cpu_time/len(rssArray)))
+    
+        xAxisArray = np.array(xAxis,"d")
+        graphRSS = TGraph(len(rssArray),xAxisArray,rssArray)
+        graphVirtual = TGraph(len(virtualArray),xAxisArray,virtualArray)
+    
+        graphRSS.SetMarkerColor(kBlue)
+        graphRSS.SetMarkerStyle(21)
+    
+        dummy_file = TFile(item[1][3:]+"_mem_log.root","RECREATE")
+    
+        graphRSS.Write(item[1][3:]+"_rss")
+        graphVirtual.Write(item[1][3:]+"_vir")
+    
+        dummy_file.Close()
+    except:
+        print("something went wrong")
 
 ## Function to create a arbritary control string
 #
@@ -880,28 +886,31 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
 '''%(sample)
         for folder in cfg_file["basic"]["hist_groups"]:
             log.debug("Now working on %s"%(folder))
-            content += r'''
-\subsubsection{%s}
-'''%(folder)
             hist_list = []
             for i in compare_results:
                 if sample in i and folder in i:
-                    hist_list.append([sample,folder,i,options])
-            pool = multiprocessing.Pool()
-            test = pool.map_async(make_comparison_plot, hist_list)
-            while True:
-                time.sleep(1)
-                if not pool._cache: break
-            pool.close()
-            pool.join()
-            try:
-                new_hist_list = test.get(timeout=1)
-            except:
-                time.sleep(5)
+                    if compare_results[i][1] != 0.0 and not options.allplots:
+                        hist_list.append([sample,folder,i,options])
+                    elif options.allplots:
+                        hist_list.append([sample,folder,i,options])
+            new_hist_list = []
+            if len(hist_list) > 0:
+                pool = multiprocessing.Pool()
+                test = pool.map_async(make_comparison_plot, hist_list)
+                while True:
+                    time.sleep(1)
+                    if not pool._cache: break
+                pool.close()
+                pool.join()
                 try:
                     new_hist_list = test.get(timeout=1)
                 except:
-                    log.error("Could not get the plotting output, try restarting the validator")
+                    time.sleep(5)
+                    try:
+                        new_hist_list = test.get(timeout=1)
+                    except:
+                        log.error("Could not get the plotting output, try restarting the validator")
+                        sys.exit(1)
             for i in new_hist_list:
                 for j in i[2]:
                     #print j
@@ -914,16 +923,20 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
                     else:
                         log.error(j[1])
             hist_list = sorted(new_hist_list, key=lambda hist: hist[1], reverse=True)
-            for i in hist_list:
+            if len(hist_list) > 0:
                 content += r'''
-\begin{figure}[hbtp]
-\centering
-\includegraphics[width=15cm]{%s}
-\caption{%s}
-\label{fig:%s!%s!%s}
-\end{figure}
-'''%(i[0].replace("_","!"),i[0],sample,folder,i[0][i[0].find(folder)+len(folder)+1:-4].replace("_","!"))
-                chi2_vals.append(i[1])
+\subsubsection{%s}
+'''%(folder)
+                for i in hist_list:
+                    content += r'''
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{%s}
+    \caption{%s}
+    \label{fig:%s!%s!%s}
+    \end{figure}
+    '''%(i[0].replace("_","!"),i[0],sample,folder,i[0][i[0].find(folder)+len(folder)+1:-4].replace("_","!"))
+                    chi2_vals.append(i[1])
             log.debug("done")
     log.debug("done")
 
@@ -1084,6 +1097,7 @@ def make_output_file(sample_list,cfg_file,options):
 \usepackage{color}      % use if color is used in text
 \usepackage{subfigure}  % use for side-by-side figures
 \usepackage{hyperref}   % use for hypertext links, including those to external documents and URLs
+\usepackage{float}
 \usepackage{morefloats}
 \definecolor{darkgreen}{rgb}{0,0.5,0.1}
 
