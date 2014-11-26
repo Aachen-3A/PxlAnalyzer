@@ -22,3 +22,7 @@ Validator/comparison_dir/
 Validator/output/
 Validator/test.pdf
 specialAna/
+doc/doxy*
+doc/html/
+doc/latex/
+doc/man

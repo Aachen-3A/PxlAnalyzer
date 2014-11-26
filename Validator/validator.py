@@ -19,7 +19,6 @@ from datetime import datetime
 from array import array
 import numpy as np
 import logging
-import logging.handlers
 import multiprocessing
 sys.path.append("lib/")
 from configobj import ConfigObj
@@ -33,13 +32,21 @@ rc('text', usetex=True)
 import ROOT as ro
 from ROOT import TCanvas, TGraph, TF1, TLegend, kBlue, gStyle, gPad, TPad, TFile, TStyle, TColor, TH1F
 
+## Logging object for the validation code
 log = logging.getLogger( 'Validator' )
 
-tdrStyle = TStyle("tdrStyle","Style for P-TDR");
-
+# Options to not print root error messages in functions that have no quiet option (e.g. Chi2Test)
 ro.gROOT.ProcessLine( "gErrorIgnoreLevel = 3001;")
+
+## Dictionary of the different results of the comparison
 compare_results = {}
 
+## Function to print the welcome output at the beginning of the programm
+#
+# Prints the welcome output and the program starting time, with the 
+# noascii options the ascii art output can be supressed (but do you want
+# to do this, the ascii art is magnificent)
+# @param[in] options Command line options object
 def welcome_output(options):
     if not options.noasciiart:
         log.info("\033[38;5;207m##     ##    ###    ##        #######    #####     #####     #####   \033[0m"+bcolors.ENDC)
@@ -91,6 +98,14 @@ def welcome_output(options):
         log.info("\033[0m\033[38;5;231m#\033[0m\033[38;5;231m##################\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;95m#\033[0m\033[38;5;102m##\033[0m\033[38;5;102m#\033[0m\033[38;5;102m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;181m#\033[0m\033[38;5;188m#\033[0m\033[38;5;188m#\033[0m\033[38;5;188m#\033[0m\033[38;5;181m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;102m#\033[0m\033[38;5;102m#\033[0m\033[38;5;102m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;231m###################"+bcolors.ENDC)
         log.info("\033[0m\033[38;5;231m#\033[0m\033[38;5;231m#######################\033[0m\033[38;5;145m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;102m#\033[0m\033[38;5;231m########################"+bcolors.ENDC)
 
+## Function to print the farewell output at the end of the programm
+#
+# Prints the farewell output, the program run time and the program end
+# time, with the noascii options the ascii art output can be supressed
+# (but do you want to do this, the ascii art is magnificent)
+# @param[in] options Command line options object
+# @param[in] t1 Ending time of the program
+# @param[in] t0 Starting time of the program
 def farewell_output(options,t1,t0):
     log.info(" ")
     log.info("\t Runtime: %.2f s"%(t1-t0))
@@ -135,6 +150,14 @@ def farewell_output(options,t1,t0):
         log.info("\033[0m\033[38;5;231m#\033[0m\033[38;5;231m##################\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;95m#\033[0m\033[38;5;102m##\033[0m\033[38;5;102m#\033[0m\033[38;5;102m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;181m#\033[0m\033[38;5;188m#\033[0m\033[38;5;188m#\033[0m\033[38;5;188m#\033[0m\033[38;5;181m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;145m#\033[0m\033[38;5;102m#\033[0m\033[38;5;102m#\033[0m\033[38;5;102m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;231m###################"+bcolors.ENDC)
         log.info("\033[0m\033[38;5;231m#\033[0m\033[38;5;231m#######################\033[0m\033[38;5;145m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;59m#\033[0m\033[38;5;102m#\033[0m\033[38;5;231m########################"+bcolors.ENDC)
 
+## Function to parse the command line options and do some initializing
+#
+# Defines the user command line options and parses them, also the default
+# values are defined here. The logging object is initialized and the
+# configuration file is read.
+# @param[out] args Command line parameters, should be empty at the moment
+# @param[out] options Command line options object
+# @param[out] cfg_file Configuration file object
 def opt_parser():
     date_time = datetime.now()
     usage = '%prog [options] CONFIG_FILE'
@@ -182,23 +205,51 @@ def opt_parser():
         log.error(e)
         exit()
 
-
     return args,options,cfg_file
 
+## Function to create the new reference distributions and track them
+#
+# After the validation is successfull this function creates the new
+# reference distributions and files for the next validation cycle.
+# @todo include functionallity
 def make_new_reference():
     control_output("making new reference plots")
 
+## Function to check if the user may push into the repository
+#
+# @todo include functionallity
+# @param[out] bool Boolean if the user is authorized or not
 def check_authorization():
     control_output("Now checking the user authorization")
     return False
 
+## Function to add, commit and push everything into the repository
+#
+# Add the new reference distributions to the repository, commit
+# them and merge everything into the dev and master branches. At
+# the end push everything to the remote repository.
+# @todo include functionallity
 def make_commits():
     control_output("Now making the final commits")
 
+## Function to collect the user desicion on the validation results
+#
+# If there are changes in any distribution the user has to decide
+# if the validation is successfull, therefore this functions presents
+# to the user the plots he needs to decide if the validation is
+# successfull and collects this user decision.
+# @todo include functionallity
+# @param[out] bool Boolean if the decision is positive or not
 def final_user_decision():
     raw_input("waiting for the final user decision")
     return False
 
+## Function to print a control output
+#
+# Function to either print a general status output (with one argument
+# of a string which should be printed) or a boolean result to a text
+# (with two arguments, the variable name and the boolean)
+# @param[in] *args Array of arguments
 def control_output(*args):
     if len(args) == 2:
         text = "\t"
@@ -220,12 +271,25 @@ def control_output(*args):
         log.info(25*"-")
         log.info(" ")
 
-def draw_mem_histos(old_rss_histos,old_rss_time,p_color,ax):
-    old_rss_line = ro.TLine(np.mean(old_rss_time),0,np.mean(old_rss_time),1)
-
+## Function to draw the memory usage histogram
+#
+# This function plots the memory usage histograms from an
+# array of histograms, it resizes the canvas to show every
+# distribution, caldulates and plots the lines for the mean
+# run time and the mean memory usage and also prints the
+# values for them into the canvas.
+# @param[in] histos Array of all memory usage histograms for this plot
+# @param[in] runtimes Array of runtimes for each histogram
+# @param[in] p_color Color that the histograms should get (matplotlib)
+# @param[in] ax Plot axis object (matplotlib)
+# @param[out] ax Modified plot axis object (matplotlib)
+# @param[out] m_mem Mean memory usage
+# @param[out] m_run Mean run time
+def draw_mem_histos(histos,runtimes,p_color,ax):
+    old_rss_line = ro.TLine(np.mean(runtimes),0,np.mean(runtimes),1)
     dummy_x_vals = []
     dummy_y_vals = []
-    for item in old_rss_histos:
+    for item in histos:
         temp_x_vals = []
         temp_y_vals = []
         for i in range(0,item.GetN()-1):
@@ -240,18 +304,28 @@ def draw_mem_histos(old_rss_histos,old_rss_time,p_color,ax):
     plt.xlim( 0, np.max(dummy_x_vals)*1.05 )
     plt.ylim( np.min(dummy_y_vals)*0.95, np.max(dummy_y_vals)*1.05 )
     mean_graph = ro.TGraph(len(dummy_x_vals),array("d",dummy_x_vals),array("d",dummy_y_vals))
-    res_fit = ro.TF1(old_rss_histos[0].GetName()+"_f1","pol1",np.min(dummy_x_vals),np.max(dummy_x_vals))
+    res_fit = ro.TF1(histos[0].GetName()+"_f1","pol1",np.min(dummy_x_vals),np.max(dummy_x_vals))
     mean_graph.Fit(res_fit,"Q+","",np.min(dummy_x_vals)+4,np.max(dummy_x_vals)-4)
-    l = plt.axvline(x=np.mean(old_rss_time),color='tomato')
-    text = ax.text(np.mean(old_rss_time)+0.5, np.min(dummy_y_vals), 'mean run time: %.1f s'%(np.mean(old_rss_time)), color='tomato',
+    l = plt.axvline(x=np.mean(runtimes),color='tomato')
+    text = ax.text(np.mean(runtimes)+0.5, np.min(dummy_y_vals), 'mean run time: %.1f s'%(np.mean(runtimes)), color='tomato',
                 rotation=90, va='bottom', ha='left')
     X = np.linspace(np.min(dummy_x_vals),np.max(dummy_x_vals), 256, endpoint=True)
     Y = res_fit.GetParameter(0) + X * res_fit.GetParameter(1)
     plt.plot(X,Y,color='limegreen',linewidth=2)
-    text = ax.text((np.max(dummy_x_vals)*1.05)/2., np.min(dummy_y_vals), 'memory usage: %.1f MB'%(res_fit.Eval(np.mean(old_rss_time))), color='limegreen',
+    text = ax.text((np.max(dummy_x_vals)*1.05)/2., np.min(dummy_y_vals), 'memory usage: %.1f MB'%(res_fit.Eval(np.mean(runtimes))), color='limegreen',
                 va='bottom', ha='center')
-    return ax,res_fit.Eval(np.mean(old_rss_time)),np.mean(old_rss_time)
+    m_mem = res_fit.Eval(np.mean(runtimes))
+    m_run = np.mean(runtimes)
+    return ax,m_mem,m_run
 
+## Function to set the drawing options of matplotlib for one plot
+#
+# Function to set line width, colors, styles etc. for one plot,
+# and to also set the plot title and the axis lables.
+# @param[in] ax Plot axis object (matplotlib)
+# @param[in] x_title Title of the x-axis
+# @param[in] y_title Title of the y-axis
+# @param[in] title Title of this plot
 def make_axis(ax,x_title,y_title,title):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -274,6 +348,15 @@ def make_axis(ax,x_title,y_title,title):
     ax.set_ylabel(y_title)
     ax.set_title(title)
 
+## Function to make the performance comparison
+#
+# Read in the performance measurments from the analysis run
+# and compare them to the reference values. If the difference
+# in performance exceeds prefdefined limits (can be modified
+# with command line arguments) the comparison fails, otherwise
+# it is successfull.
+# @param[in] options Command line options object
+# @param[out] bool Boolean if the performance comparision is successfull
 def comparison_performance(options):
     log.debug("comparing the programs performance")
 
@@ -384,6 +467,16 @@ def comparison_performance(options):
         compare_results.update({"performance":[True,diff_time,diff_rss]})
         return True
 
+## Function to make the Chi2 comparison between two distributions
+#
+# Read in the distributions from the validation run and from
+# the reference, calculate the Chi2 of this two distributions.
+# If the Chi2 == 0 the comparison is successfull otherwise it
+# failed.
+# @param[in] item Name of the histogram group that should be studied
+# @param[in] hist Name of the histogram the should be studied
+# @param[in] fname Name of the sample that should be studied
+# @param[out] bool Boolean if the Chi2 comparision is successfull
 def comparison_norm(item,hist,fname):
     log.debug("comparing the normalization of distributions")
 
@@ -412,6 +505,14 @@ def comparison_norm(item,hist,fname):
         compare_results[fname + "_" + item + "_" + hist] = [False,chi2,0]
         return False
 
+## Function to compare the number of events between two distributions
+#
+# Read in the distributions from the validation run and from
+# the reference, get the number of events for both distributions
+# and save the difference.
+# @param[in] item Name of the histogram group that should be studied
+# @param[in] hist Name of the histogram the should be studied
+# @param[in] fname Name of the sample that should be studied
 def comparison_events(item,hist,fname):
     log.debug("comparing the number of events in the distribution")
 
@@ -431,6 +532,15 @@ def comparison_events(item,hist,fname):
 
     compare_results[fname + "_" + item + "_" + hist] = [compare_results[fname + "_" + item + "_" + hist][0],compare_results[fname + "_" + item + "_" + hist][1],diff]
 
+## Function to do the comparison between reference and new run
+#
+# Function to call the performance comparison, and then loop over
+# all histograms as defined by the config file and call the Chi2
+# comparison. If this comparison fails number of events comaprison
+# is called. All this results are saved and printed to the terminal.
+# @param[in] options Command line options object
+# @param[in] cfg_file Configuration file object
+# @param[in] sample_list List of samples that should be studied
 def do_comparison(options,cfg_file,sample_list):
     control_output("doing the comparison")
 
@@ -454,7 +564,6 @@ def do_comparison(options,cfg_file,sample_list):
         fname = i_sample
         for item in histos:
             control_output(item)
-
             group = True
             for hist in histos[item]:
                 log.debug("Now comparing: " + hist)
@@ -462,24 +571,8 @@ def do_comparison(options,cfg_file,sample_list):
                 c_norm = comparison_norm(item,hist,fname)
                 control_output(hist,c_norm)
                 group = group and c_norm
-
                 if not c_norm:
                     comparison_events(item,hist,fname)
-
-                    #c_shape = comparison_shape(item,hist,fname)
-
-                    ##if c_norm and c_shape and c_events:
-                        ##control_output(hist,True,False)
-                    ##else:
-                        ##control_output(hist+" norm",c_norm,False)
-                        ##control_output(hist+" shape",c_shape,False)
-                        ##control_output(hist+" events",c_events,False)
-                    #group = group and c_norm and c_shape and c_events
-                #else:
-                    #control_output(hist,True,False)
-                    #group = group and c_norm
-            #log.info(" ")
-            #control_output(item,group,False)
             all_hists = all_hists and group
         control_output("All histograms")
         control_output("All histograms",all_hists)
@@ -487,6 +580,11 @@ def do_comparison(options,cfg_file,sample_list):
     control_output("All samples")
     control_output("All samples",all_samples)
 
+## Function to collect the reference output
+#
+# Collect the files from the reference directory (can be modified
+# by a command line option) and copy them into the comaprison_dir.
+# @param[in] options Command line options object
 def get_reference_output(options):
     control_output("getting the reference output")
 
@@ -496,6 +594,11 @@ def get_reference_output(options):
     p = subprocess.Popen("cp %s/*.root comparison_dir/old/"%(options.compdir),shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
 
+## Function to collect the new analysis output
+#
+# Collect the files from the output directory (can be modified
+# by a command line option) and copy them into the comaprison_dir.
+# @param[in] options Command line options object
 def get_analysis_output(options):
     control_output("getting the analysis output")
 
@@ -507,6 +610,10 @@ def get_analysis_output(options):
     p = subprocess.Popen("cp %s/*.root comparison_dir/new/"%(options.Output),shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
 
+## Function to get the list of samples from the config file
+#
+# @param[in] cfg_file Configuration file object
+# @param[out] sample_list List of samples
 def get_sample_list(cfg_file):
     sample_list = []
     for item in cfg_file["samples"]:
@@ -514,6 +621,15 @@ def get_sample_list(cfg_file):
             sample_list.append(cfg_file["samples"][item]["label"])
     return sample_list
 
+## Function to run the analysis over all samples
+#
+# Function to run the analysis parallelized over all samples as
+# defined in the config file. The resulting output files are then
+# merged for each sample and collected in the output directory.
+# After that everything is cleaned up.
+# @param[in] options Command line options object
+# @param[in] cfg_file Configuration file object
+# @param[in] sample_list List of samples that should be studied
 def run_analysis(options,cfg_file,sample_list):
     control_output("running the analysis")
 
@@ -555,6 +671,15 @@ def run_analysis(options,cfg_file,sample_list):
     p4 = subprocess.Popen("rm *.root",shell=True,stdout=subprocess.PIPE)
     output = p4.communicate()[0]
 
+## Function that runs one analysis task and measures its performance
+#
+# This function is called in parallel to run one analysis job on
+# one file. It also measures its performance (memory usage and run
+# time) and saves them into a root file.
+# defined in the config file. The resulting output files are then
+# merged for each sample and collected in the output directory.
+# After that everything is cleaned up.
+# @param[in] item Array of options given to the analysis task
 def run_analysis_task(item):
     usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
     rssList = []
@@ -562,7 +687,6 @@ def run_analysis_task(item):
     other = []
     cmd = [item[0], item[1], item[2], item[3], item[4]]
     log.debug(" ".join(cmd))
-    #print(" ".join(cmd))
     p = subprocess.Popen(" ".join(cmd), shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     pid = p.pid
     while True:
@@ -612,6 +736,17 @@ def run_analysis_task(item):
 
     dummy_file.Close()
 
+## Function to create the tex code for the summary file
+#
+# This function creates the different pages of the summary file,
+# Titlepage, TOC, the summary table, Chi2 plot and the plot
+# collection. For this it also calls the function to produce the
+# comparison plots.
+# @param[in] content Content of the .tex summary file
+# @param[in] sample_list List of samples that should be studied
+# @param[in] cfg_file Configuration file object
+# @param[in] options Command line options object
+# @param[out] content Modified content of the .tex summary file
 def create_tex_summary(content,sample_list,cfg_file,options):
     log.debug("Now creating the title page for the .tex document")
 ## Create the Title page
@@ -698,17 +833,6 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
             for i in compare_results:
                 if sample in i and folder in i:
                     hist_list.append([sample,folder,i,options])
-            #new_hist_list = []
-            #counter = 0
-            #for item in hist_list:
-                #dummy = make_comparison_plot(item)
-                #if not options.allplots:
-                    #if dummy[0] != "NONE" and dummy[1] != 0.0:
-                        #new_hist_list.append(dummy)
-                #else:
-                    #new_hist_list.append(dummy)
-                #counter += 1
-                #update_progress(float(counter)/len(hist_list))
             pool = multiprocessing.Pool()
             test = pool.map_async(make_comparison_plot, hist_list)
             while True:
@@ -753,6 +877,11 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
 
     return content
 
+## Function to create the Chi2 overview plot
+#
+# This function creates the plot with all different Chi2 values
+# that are present in the distributions.
+# @param[in] chi2_vals Array of Chi2 values that should be plotted
 def make_chi2_distribution(chi2_vals):
     log.debug("Now plotting: Chi2 distribution")
     fig = plt.figure(figsize=(8, 8), dpi=20, facecolor='white')
@@ -769,6 +898,16 @@ def make_chi2_distribution(chi2_vals):
     plt.show()
     plt.savefig("comparison_dir/chi2_distribution.pdf",facecolor='white',edgecolor='white')
 
+## Function to create one comparison plot
+#
+# This function creates one comparison plot, for a given
+# distribution. It produces the normal plot with both
+# distributions (the reference and the new one). Also a
+# ratio plot and a significance plot are created and saved.
+# @param[in] i Array of parameters for the plot creation
+# @param[out] name Path to the plot that was created and saved
+# @param[out] chi2 Chi2 value of this comparison
+# @param[out] to_be_logged Array of mesages to be logged
 def make_comparison_plot(i):
     sample = i[0]
     folder = i[1]
@@ -873,6 +1012,13 @@ def make_comparison_plot(i):
     plt.savefig(name,facecolor='white',edgecolor='white')
     return [name,chi2,to_be_logged]
 
+## Function to create and compile the summary file
+#
+# Function that created the .tex summary file, compiles it
+# and cleans everything up in the end.
+# @param[in] sample_list List of samples that should be studied
+# @param[in] cfg_file Configuration file object
+# @param[in] options Command line options object
 def make_output_file(sample_list,cfg_file,options):
     control_output("Creating the summary file")
 
@@ -917,6 +1063,16 @@ def make_output_file(sample_list,cfg_file,options):
     log.debug(output)
     log.debug("done")
 
+## Function to calculate the chi2 of two histograms
+#
+# Function to calculate the chi2 of two histograms, if
+# both are empty zero will be returned, if one of the
+# histograms is empty the number of entries divided by
+# the number of bins. Otherwise the chi2 test from root
+# is called.
+# @param[in] hist1 First histogram
+# @param[in] hist2 Second histogram
+# @param[in] chi2 Returned Chi2 value
 def Chi2_calcer(hist1,hist2):
     if hist1.GetEntries() == 0 and hist2.GetEntries() == 0:
         return 0.0
@@ -927,10 +1083,17 @@ def Chi2_calcer(hist1,hist2):
     else:
         return hist1.Chi2Test(hist2,"WW CHI2/NDF")
 
+## Function clean everything up at the end of the validation
+#
+# Function to clean every tempory file at the end of the
+# validation, this can be skipped with the command line
+# option nocleanup.
+# @todo include functionallity
 def clean_up(options):
     if not options.nocleanup:
         control_output("Cleaning everything up")
 
+## Main function to call the different sub functions
 def main():
     t0 = time.time()
 
