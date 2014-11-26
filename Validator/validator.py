@@ -20,6 +20,8 @@ from array import array
 import numpy as np
 import logging
 import multiprocessing
+import string
+import random
 sys.path.append("lib/")
 from configobj import ConfigObj
 import StringIO
@@ -237,12 +239,46 @@ def make_commits():
 # If there are changes in any distribution the user has to decide
 # if the validation is successfull, therefore this functions presents
 # to the user the plots he needs to decide if the validation is
-# successfull and collects this user decision.
-# @todo include functionallity
+# successfull and collects this user decision. To give a positive user
+# decision, the user has to type in the control string printed in the
+# pdf file after the summary table.
+# @param[in] ctr_string Random control string
 # @param[out] bool Boolean if the decision is positive or not
-def final_user_decision():
-    raw_input("waiting for the final user decision")
-    return False
+def final_user_decision(ctr_string):
+    control_output("User decision on the validation")
+    log.info(" Now openeing the summary file with an overview table")
+    log.info(" and the deviating plots. Please have a carefull look")
+    log.info(" at all distributions. If the deviations are expected")
+    log.info(" you can just enter the control sequence which is    ")
+    log.info(" in the pdf file after the summary table. Every other")
+    log.info(" will be interpreted as if the validation has failed.")
+    log.info(" ")
+
+    p = subprocess.Popen(["evince","test.pdf"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+
+    while(True):
+        log.info(" Please enter the control sequence (6 Characters):")
+        user_ctr = raw_input()
+        log.info(" ")
+        if user_ctr == ctr_string:
+            log.info(bcolors.OKGREEN + " The input was successfull." + bcolors.ENDC)
+            log.info(" ")
+            log.info(" The validation is therefore: " + bcolors.OKGREEN + " successfull." + bcolors.ENDC)
+            log.info(" ")
+            time.sleep(5)
+            return True
+        else:
+            log.info(bcolors.FAIL + " The input was not correct." + bcolors.ENDC)
+            log.info(" ")
+            log.info(" Do you want to declare the validation failed? (yes/no)")
+            dummy_string = raw_input()
+            if dummy_string == "yes" or dummy_string == "y" or dummy_string == "Y" or dummy_string == "Yes":
+                log.info(" The validation is therefore: " + bcolors.FAIL + " failed." + bcolors.ENDC)
+                log.info(" ")
+                time.sleep(5)
+                return False
 
 ## Function to print a control output
 #
@@ -736,6 +772,14 @@ def run_analysis_task(item):
 
     dummy_file.Close()
 
+## Function to create a arbritary control string
+#
+# @param[in] size Length of the random string [default = 6]
+# @param[in] chars List of characters from which the random string should be created [default = all uppercase ASCII characters]
+# @param[out] rand Random string with the given parameters
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
 ## Function to create the tex code for the summary file
 #
 # This function creates the different pages of the summary file,
@@ -747,6 +791,7 @@ def run_analysis_task(item):
 # @param[in] cfg_file Configuration file object
 # @param[in] options Command line options object
 # @param[out] content Modified content of the .tex summary file
+# @param[out] ctr_string Random control string
 def create_tex_summary(content,sample_list,cfg_file,options):
     log.debug("Now creating the title page for the .tex document")
 ## Create the Title page
@@ -800,6 +845,15 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
             content += r'''
 \end{itemize}
 '''
+    ctr_string = id_generator()
+    content += r'''
+\pagebreak
+\begin{center}
+\huge
+%s
+\end{center}
+'''%(ctr_string)
+
     log.debug("done")
 ## End of summary table
     content += r'''
@@ -875,7 +929,7 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
 
     make_chi2_distribution(chi2_vals)
 
-    return content
+    return content,ctr_string
 
 ## Function to create the Chi2 overview plot
 #
@@ -1019,6 +1073,7 @@ def make_comparison_plot(i):
 # @param[in] sample_list List of samples that should be studied
 # @param[in] cfg_file Configuration file object
 # @param[in] options Command line options object
+# @param[out] ctr_string Random control string
 def make_output_file(sample_list,cfg_file,options):
     control_output("Creating the summary file")
 
@@ -1036,7 +1091,7 @@ def make_output_file(sample_list,cfg_file,options):
 
 \begin{document}'''
 
-    content = create_tex_summary(content,sample_list,cfg_file,options)
+    content,ctr_string = create_tex_summary(content,sample_list,cfg_file,options)
 
     content += r'''
 \end{document}
@@ -1062,6 +1117,8 @@ def make_output_file(sample_list,cfg_file,options):
     output = p2.communicate()[0]
     log.debug(output)
     log.debug("done")
+
+    return ctr_string
 
 ## Function to calculate the chi2 of two histograms
 #
@@ -1113,9 +1170,9 @@ def main():
 
     do_comparison(options,cfg_file,sample_list)
 
-    make_output_file(sample_list,cfg_file,options)
+    ctr_string = make_output_file(sample_list,cfg_file,options)
 
-    decision = final_user_decision()
+    decision = final_user_decision(ctr_string)
 
     if decision == True:
         make_new_reference()
