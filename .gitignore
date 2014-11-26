@@ -21,6 +21,7 @@ Validator/MusicOutDir/
 Validator/comparison_dir/
 Validator/output/
 Validator/test.pdf
+Validator/log/*
 specialAna/
 doc/doxy*
 doc/html/
