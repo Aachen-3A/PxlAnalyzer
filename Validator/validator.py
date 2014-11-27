@@ -269,6 +269,9 @@ def make_commits(options,sample_list):
         p = subprocess.Popen(['git','add','Validator/old/log.root'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
+        p = subprocess.Popen(['git','commit','-m','Included the results of the validation process'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
         c_branch = get_current_branch()
         # Merge with the dev branch
         p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
