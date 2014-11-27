@@ -266,20 +266,32 @@ def make_commits(options,sample_list):
     output = p.communicate()[0]
     log.debug(output)
     c_branch = get_current_branch()
-    raw_input("1:"+c_branch)
     # Merge with the dev branch
     p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     output = p.communicate()[0]
-    raw_input("2:"+output)
+    log.debug(output)
     p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     output = p.communicate()[0]
-    raw_input("3:"+output)
+    log.debug(output)
+    p = subprocess.Popen(['git','push'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
     p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     output = p.communicate()[0]
-    raw_input("4:"+output)
+    log.debug(output)
     # Merge with the master branch
-    
-    #Push everything
+    p = subprocess.Popen(['git','checkout','master'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+    p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+    p = subprocess.Popen(['git','push'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+    p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
 
 ## Function to get the current branch of the repository
 #
