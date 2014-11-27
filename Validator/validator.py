@@ -195,6 +195,9 @@ def opt_parser():
                             help = 'Bool if you want to skip the compilation step. [default = %default]' )
     parser.add_option( '--cleancompilation', metavar = 'CLEANCOMPILATION' , default = False,
                             help = 'Bool if you want to do a cleaned compilation. [default = %default]' )
+    parser.add_option( '--nogit', metavar = 'NOGIT' , default = False,
+                            help = 'Bool if you want to do the repository stuff (commiting, merging and pushing). [default = %default]' )
+
 
     ( options, args ) = parser.parse_args()
     if len( args ) != 0:
@@ -223,10 +226,10 @@ def opt_parser():
 def make_new_reference(options,sample_list):
     control_output("making new reference plots")
     for item in sample_list:
-        p = subprocess.Popen(['cp','%s/%s.root'%(options.Output,item),'%s/%s_2.root'%(options.compdir,item)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        p = subprocess.Popen(['cp','%s/%s.root'%(options.Output,item),'%s/%s.root'%(options.compdir,item)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
-    p = subprocess.Popen(['cp','%s/log.root'%(options.Output),'%s/log_2.root'%(options.compdir)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(['cp','%s/log.root'%(options.Output),'%s/log.root'%(options.compdir)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     output = p.communicate()[0]
     log.debug(output)
     log.info(" ")
@@ -249,49 +252,50 @@ def check_authorization():
 # @param[in] options Command line options object
 # @param[in] sample_list List of samples that should be studied
 def make_commits(options,sample_list):
-    control_output("Now making the final commits")
-    var = 'MUSIC_BASE'
-    music_path = os.getenv( var )
-    os.chdir(music_path)
-    # First get a repo status for debugging cases
-    p = subprocess.Popen(['git','status'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    # Add the new refernce files to the repo
-    for item in sample_list:
-        p = subprocess.Popen(['git','add','Validator/old/%s.root'%(item)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    if not options.nogit:
+        control_output("Now making the final commits")
+        var = 'MUSIC_BASE'
+        music_path = os.getenv( var )
+        os.chdir(music_path)
+        # First get a repo status for debugging cases
+        p = subprocess.Popen(['git','status'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
-    p = subprocess.Popen(['git','add','Validator/old/log.root'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    c_branch = get_current_branch()
-    # Merge with the dev branch
-    p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    p = subprocess.Popen(['git','push'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    # Merge with the master branch
-    p = subprocess.Popen(['git','checkout','master'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    p = subprocess.Popen(['git','push'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
-    p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    log.debug(output)
+        # Add the new refernce files to the repo
+        for item in sample_list:
+            p = subprocess.Popen(['git','add','Validator/old/%s.root'%(item)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = p.communicate()[0]
+            log.debug(output)
+        p = subprocess.Popen(['git','add','Validator/old/log.root'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        c_branch = get_current_branch()
+        # Merge with the dev branch
+        p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        p = subprocess.Popen(['git','push'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        # Merge with the master branch
+        p = subprocess.Popen(['git','checkout','master'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        p = subprocess.Popen(['git','push'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
 
 ## Function to get the current branch of the repository
 #
@@ -1283,6 +1287,15 @@ def Chi2_calcer(hist1,hist2):
 def clean_up(options):
     if not options.nocleanup:
         control_output("Cleaning everything up")
+        # Clean up the repository
+        if not options.nogit:
+            c_branch = get_current_branch()
+            p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = p.communicate()[0]
+            log.debug(output)
+            p = subprocess.Popen(['git','branch','-d',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = p.communicate()[0]
+            log.debug(output)
 
 ## Function to compile the PxlAnalyzer with the validation options
 #
@@ -1361,36 +1374,36 @@ def main():
 
     control_output("doing the validation")
 
-    #make_val_compilation(options)
+    make_val_compilation(options)
 
     sample_list = get_sample_list(cfg_file)
 
-    #run_analysis(options,cfg_file,sample_list)
+    run_analysis(options,cfg_file,sample_list)
 
-    #get_analysis_output(options)
+    get_analysis_output(options)
 
-    #get_reference_output(options)
+    get_reference_output(options)
 
-    #all_samples = do_comparison(options,cfg_file,sample_list)
+    all_samples = do_comparison(options,cfg_file,sample_list)
 
-    #decision = False
+    decision = False
 
-    #if not all_samples:
-        #ctr_string = make_output_file(sample_list,cfg_file,options)
+    if not all_samples:
+        ctr_string = make_output_file(sample_list,cfg_file,options)
 
-        #decision = final_user_decision(ctr_string)
+        decision = final_user_decision(ctr_string)
 
-    #if decision == True or all_samples == True:
-        #make_new_reference(options,sample_list)
+    if decision == True or all_samples == True:
+        make_new_reference(options,sample_list)
 
-        #authorization = check_authorization()
+        authorization = check_authorization()
 
-        #if authorization == True:
-    make_commits(options,sample_list)
+        if authorization == True:
+            make_commits(options,sample_list)
 
     clean_up(options)
 
-    #make_compilation(options)
+    make_compilation(options)
 
     t1 = time.time()
 
