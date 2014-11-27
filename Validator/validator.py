@@ -22,8 +22,6 @@ import logging
 import multiprocessing
 import string
 import random
-sys.path.append("git-python/")
-from git import *
 sys.path.append("lib/")
 from configobj import ConfigObj
 import StringIO
@@ -254,7 +252,26 @@ def make_commits(options,sample_list):
     control_output("Now making the final commits")
     var = 'MUSIC_BASE'
     music_path = os.getenv( var )
-    repo = Repo(music_path)
+    os.chdir(music_path)
+    # First get a repo status for debugging cases
+    p = subprocess.Popen(['git','status'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+    # Add the new refernce files to the repo
+    for item in sample_list:
+        p = subprocess.Popen(['git','add','Validator/old/%s.root'%(item)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+    p = subprocess.Popen(['git','add','Validator/old/log.root'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+    # Merge with the dev branch
+    p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    print(output)
+    # Merge with the master branch
+    
+    #Push everything
 
 ## Function to collect the user desicion on the validation results
 #
@@ -1313,36 +1330,36 @@ def main():
 
     control_output("doing the validation")
 
-    make_val_compilation(options)
+    #make_val_compilation(options)
 
     sample_list = get_sample_list(cfg_file)
 
-    run_analysis(options,cfg_file,sample_list)
+    #run_analysis(options,cfg_file,sample_list)
 
-    get_analysis_output(options)
+    #get_analysis_output(options)
 
-    get_reference_output(options)
+    #get_reference_output(options)
 
-    all_samples = do_comparison(options,cfg_file,sample_list)
+    #all_samples = do_comparison(options,cfg_file,sample_list)
 
-    decision = False
+    #decision = False
 
-    if not all_samples:
-        ctr_string = make_output_file(sample_list,cfg_file,options)
+    #if not all_samples:
+        #ctr_string = make_output_file(sample_list,cfg_file,options)
 
-        decision = final_user_decision(ctr_string)
+        #decision = final_user_decision(ctr_string)
 
-    if decision == True or all_samples == True:
-        make_new_reference(options,sample_list)
+    #if decision == True or all_samples == True:
+        #make_new_reference(options,sample_list)
 
-        authorization = check_authorization()
+        #authorization = check_authorization()
 
-        if authorization == True:
-            make_commits(options,sample_list)
+        #if authorization == True:
+    make_commits(options,sample_list)
 
     clean_up(options)
 
-    make_compilation(options)
+    #make_compilation(options)
 
     t1 = time.time()
 
