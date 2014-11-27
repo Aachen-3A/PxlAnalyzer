@@ -191,6 +191,10 @@ def opt_parser():
                             help = 'Bool if to skip the welcoming ASCII art ( keep in mind that there is no real reson to do so). [default = %default]' )
     parser.add_option( '--nocleanup', metavar = 'NOCLEANUP' , default = False,
                             help = 'Bool if you want to skip the final clean up step. [default = %default]' )
+    parser.add_option( '--nocompilation', metavar = 'NOCOMPILATION' , default = False,
+                            help = 'Bool if you want to skip the compilation step. [default = %default]' )
+    parser.add_option( '--cleancompilation', metavar = 'CLEANCOMPILATION' , default = False,
+                            help = 'Bool if you want to do a cleaned compilation. [default = %default]' )
 
     ( options, args ) = parser.parse_args()
     if len( args ) != 0:
@@ -1171,9 +1175,77 @@ def Chi2_calcer(hist1,hist2):
 # validation, this can be skipped with the command line
 # option nocleanup.
 # @todo include functionallity
+# @param[in] options Command line options object
 def clean_up(options):
     if not options.nocleanup:
         control_output("Cleaning everything up")
+
+## Function to compile the PxlAnalyzer with the validation options
+#
+# To use the validation specialAna, it has to be compiled in the
+# PxlAnalyzer. This can be done manually with 'make validation' or
+# by this function. With the option nocompilation this step is 
+# skipped, while with the option cleancompilation as a first step
+# a 'make clean' is called.
+# @param[in] options Command line options object
+def make_val_compilation(options):
+    if not options.nocompilation:
+        control_output("Compiling the validation package")
+        pwd_ = os.getcwd()
+        var = 'MUSIC_BASE'
+        music_path = os.getenv( var )
+        os.chdir(music_path)
+        if options.cleancompilation:
+            log.info(" ")
+            log.info(" But first cleaning everything up")
+            log.info(" ")
+            log.debug("Calling 'make clean' on the PxlAnalyzer")
+            p = subprocess.Popen(['make','clean'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = p.communicate()[0]
+            log.debug(output)
+        log.info(" ")
+        log.info(" Now we will compile")
+        log.info(" ")
+        p = subprocess.Popen(['make','validation','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        os.chdir(pwd_)
+        log.info(" ")
+        log.info(bcolors.OKGREEN+" Everything done"+bcolors.ENDC)
+        log.info(" ")
+
+## Function to compile the PxlAnalyzer without the validation options
+#
+# To use the original specialAna without the validation package, it
+# has to be recompiled in the PxlAnalyzer. This can be done manually
+# with 'make' or by this function. With the option nocompilation this
+# step is skipped, while with the option cleancompilation as a first
+# step a 'make clean' is called.
+# @param[in] options Command line options object
+def make_compilation(options):
+    if not options.nocompilation:
+        control_output("Compiling your analysis")
+        pwd_ = os.getcwd()
+        var = 'MUSIC_BASE'
+        music_path = os.getenv( var )
+        os.chdir(music_path)
+        if options.cleancompilation:
+            log.info(" ")
+            log.info(" But first cleaning everything up")
+            log.info(" ")
+            p = subprocess.Popen(['make','clean'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = p.communicate()[0]
+            log.debug(output)
+        log.info(" ")
+        log.info(" Now we will compile")
+        log.info(" ")
+        p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+        os.chdir(pwd_)
+        log.info(" ")
+        log.info(bcolors.OKGREEN+" Everything done"+bcolors.ENDC)
+        log.info(" ")
 
 ## Main function to call the different sub functions
 def main():
@@ -1184,6 +1256,8 @@ def main():
     welcome_output(options)
 
     control_output("doing the validation")
+
+    make_val_compilation(options)
 
     sample_list = get_sample_list(cfg_file)
 
@@ -1208,6 +1282,8 @@ def main():
             make_commits()
 
     clean_up(options)
+
+    make_compilation(options)
 
     t1 = time.time()
 
