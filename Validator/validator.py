@@ -22,6 +22,8 @@ import logging
 import multiprocessing
 import string
 import random
+sys.path.append("git-python/")
+from git import *
 sys.path.append("lib/")
 from configobj import ConfigObj
 import StringIO
@@ -218,16 +220,27 @@ def opt_parser():
 # After the validation is successfull this function creates the new
 # reference distributions and files for the next validation cycle.
 # @todo include functionallity
-def make_new_reference():
+# @param[in] options Command line options object
+# @param[in] sample_list List of samples that should be studied
+def make_new_reference(options,sample_list):
     control_output("making new reference plots")
+    for item in sample_list:
+        p = subprocess.Popen(['cp','%s/%s.root'%(options.Output,item),'%s/%s_2.root'%(options.compdir,item)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0]
+        log.debug(output)
+    p = subprocess.Popen(['cp','%s/log.root'%(options.Output),'%s/log_2.root'%(options.compdir)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    log.debug(output)
+    log.info(" ")
+    log.info(bcolors.OKGREEN+" Everything done"+bcolors.ENDC)
+    log.info(" ")
 
 ## Function to check if the user may push into the repository
 #
-# @todo include functionallity
-# @param[out] bool Boolean if the user is authorized or not
+# @param[out] bool Boolean if the user is authorized or not, at the moment always true
 def check_authorization():
     control_output("Now checking the user authorization")
-    return False
+    return True
 
 ## Function to add, commit and push everything into the repository
 #
@@ -235,8 +248,13 @@ def check_authorization():
 # them and merge everything into the dev and master branches. At
 # the end push everything to the remote repository.
 # @todo include functionallity
-def make_commits():
+# @param[in] options Command line options object
+# @param[in] sample_list List of samples that should be studied
+def make_commits(options,sample_list):
     control_output("Now making the final commits")
+    var = 'MUSIC_BASE'
+    music_path = os.getenv( var )
+    repo = Repo(music_path)
 
 ## Function to collect the user desicion on the validation results
 #
@@ -586,6 +604,7 @@ def comparison_events(item,hist,fname):
 # @param[in] options Command line options object
 # @param[in] cfg_file Configuration file object
 # @param[in] sample_list List of samples that should be studied
+# @param[out] all_samples Boolean if there are deviations in all samples
 def do_comparison(options,cfg_file,sample_list):
     control_output("doing the comparison")
 
@@ -624,6 +643,7 @@ def do_comparison(options,cfg_file,sample_list):
         all_samples = all_samples and all_hists
     control_output("All samples")
     control_output("All samples",all_samples)
+    return all_samples
 
 ## Function to collect the reference output
 #
@@ -785,7 +805,10 @@ def run_analysis_task(item):
     
         dummy_file.Close()
     except:
-        print("something went wrong")
+        print("Unexpected error in the running the analysis on %s:"%(item[1][3:]))
+        print(sys.exc_info()[0])
+        print(sys.exc_info()[1])
+        print(sys.exc_info()[2])
 
 ## Function to create a arbritary control string
 #
@@ -837,7 +860,7 @@ This is the summary of the validation from \today
 '''
     else:
         content += r'''
-\item Performance: {\color{red}False  } Run time difference (%): %.2f    Memory usage difference (%): %.2f"
+\item Performance: {\color{red}False  } Run time difference (percent): %.2f    Memory usage difference (percent): %.2f"
 \end{itemize}
 '''%(compare_results["performance"][1],compare_results["performance"][2])
     for sample in sample_list:
@@ -894,6 +917,8 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
 \includegraphics[width=15cm]{%s}
 '''%("comparison!dir/mem!comparison.pdf")
     chi2_vals = []
+    file_folder_num = len(sample_list) * len(cfg_file["basic"]["hist_groups"])
+    file_folder_count = 0
 ## Create the different histograms
     for sample in sample_list:
         content += r'''
@@ -909,6 +934,9 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
                     elif options.allplots:
                         hist_list.append([sample,folder,i,options])
             new_hist_list = []
+            #for i in hist_list:
+                #dummy= make_comparison_plot(i)
+                #new_hist_list.append(dummy)
             if len(hist_list) > 0:
                 pool = multiprocessing.Pool()
                 test = pool.map_async(make_comparison_plot, hist_list)
@@ -927,16 +955,16 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
                         log.error("Could not get the plotting output, try restarting the validator")
                         sys.exit(1)
             for i in new_hist_list:
-                for j in i[2]:
-                    #print j
-                    if j[0] == "debug":
-                        log.debug(j[1])
-                    elif j[0] == "info":
-                        log.info(j[1])
-                    elif j[0] == "NONE":
-                        log.debug(" ")
-                    else:
-                        log.error(j[1])
+                if i[0] == "NONE":
+                    log.debug(" ")
+                else:
+                    for j in i[2]:
+                        if j[0] == "debug":
+                            log.debug(j[1])
+                        elif j[0] == "info":
+                            log.info(j[1])
+                        else:
+                            log.error(j[1])
             hist_list = sorted(new_hist_list, key=lambda hist: hist[1], reverse=True)
             if len(hist_list) > 0:
                 content += r'''
@@ -953,6 +981,8 @@ $\chi^{2}$: %.2f \hspace{1cm} $N!{events}^{reference} - N!{events}^{new}: $%.2f'
     '''%(i[0].replace("_","!"),i[0],sample,folder,i[0][i[0].find(folder)+len(folder)+1:-4].replace("_","!"))
                     chi2_vals.append(i[1])
             log.debug("done")
+            update_progress(float(file_folder_count)/float(file_folder_num))
+            file_folder_count += 1
     log.debug("done")
 
     make_chi2_distribution(chi2_vals)
@@ -991,108 +1021,134 @@ def make_chi2_distribution(chi2_vals):
 # @param[out] chi2 Chi2 value of this comparison
 # @param[out] to_be_logged Array of mesages to be logged
 def make_comparison_plot(i):
-    sample = i[0]
-    folder = i[1]
-    key = i[2]
-    hist = key[key.find(folder)+len(folder)+1:]
-    to_be_logged = []
-    to_be_logged.append(["debug","Now plotting: " +folder+"/"+hist + " from: comparison_dir/old/%s.root"%(sample)])
-    comp_file = TFile("comparison_dir/old/%s.root"%(sample),"READ")
-    ref_hist = TH1F()
-    ref_hist = comp_file.Get(folder+"/"+hist)
-    ref_hist.SetDirectory(0)
-    ref_hist.SetLineColor(ro.kGreen)
-    comp_file.Close()
-    new_file = TFile("comparison_dir/new/%s.root"%(sample),"READ")
-    new_hist = TH1F()
-    new_hist = new_file.Get(folder+"/"+hist)
-    new_hist.SetDirectory(0)
-    new_hist.SetLineColor(ro.kRed)
-    new_file.Close()
+    counting = 0
+    limit = 10
+    while(True):
+        try:
+            sample = i[0]
+            folder = i[1]
+            key = i[2]
+            hist = key[key.find(folder)+len(folder)+1:]
+            to_be_logged = []
+            to_be_logged.append(["debug","Now plotting: " +folder+"/"+hist + " from: comparison_dir/old/%s.root"%(sample)])
+            comp_file = TFile("comparison_dir/old/%s.root"%(sample),"READ")
+            ref_hist = TH1F()
+            ref_hist = comp_file.Get(folder+"/"+hist)
+            ref_hist.SetDirectory(0)
+            ref_hist.SetLineColor(ro.kGreen)
+            comp_file.Close()
+            new_file = TFile("comparison_dir/new/%s.root"%(sample),"READ")
+            new_hist = TH1F()
+            new_hist = new_file.Get(folder+"/"+hist)
+            new_hist.SetDirectory(0)
+            new_hist.SetLineColor(ro.kRed)
+            new_file.Close()
+    
+            if ref_hist.GetNbinsX() > 500:
+                ref_hist.Rebin(10)
+                new_hist.Rebin(10)
+    
+            if not i[3].allplots:
+                if ref_hist.GetEntries() == 0 and new_hist.GetEntries() == 0:
+                    return ["NONE",0.0,["NONE",""]]
+    
+            chi2 = Chi2_calcer(ref_hist,new_hist)
+    
+            temp_x_vals = []
+            temp_x_err = []
+            temp_y_vals = []
+            temp_y_err = []
+            temp_new_x_vals = []
+            temp_new_x_err = []
+            temp_new_y_vals = []
+            temp_new_y_err = []
+            temp_ratio = []
+            temp_ratio_err = []
+            temp_sig = []
+            temp_sig_err = []
+            range_x_vals = []
+            range_y_vals = []
+            for j in range(1,ref_hist.GetNbinsX()+1):
+                temp_x_vals.append(ref_hist.GetBinCenter(j))
+                temp_x_err.append(ref_hist.GetBinWidth(j)/2.)
+                temp_y_vals.append(ref_hist.GetBinContent(j))
+                if ref_hist.GetBinContent(j) != 0.0:
+                    range_x_vals.append(ref_hist.GetBinCenter(j))
+                    range_y_vals.append(ref_hist.GetBinContent(j))
+                temp_y_err.append(ref_hist.GetBinError(j))
+                temp_new_x_vals.append(new_hist.GetBinCenter(j))
+                temp_new_x_err.append(new_hist.GetBinWidth(j)/2.)
+                temp_new_y_vals.append(new_hist.GetBinContent(j))
+                if new_hist.GetBinContent(j) != 0.0:
+                    range_x_vals.append(new_hist.GetBinCenter(j))
+                    range_y_vals.append(new_hist.GetBinContent(j))
+                temp_new_y_err.append(new_hist.GetBinError(j))
+                if ref_hist.GetBinContent(j) != 0.0:# and new_hist.GetBinContent(j) != 0.0:
+                    temp_ratio.append(temp_new_y_vals[-1]/temp_y_vals[-1])
+                    temp_ratio_err.append(sqrt(pow(temp_new_y_err[-1]/temp_y_vals[-1],2) + pow(temp_new_y_vals[-1]*temp_y_err[-1]/temp_y_vals[-1]/temp_y_vals[-1],2)))
+                    temp_sig.append((temp_new_y_vals[-1] - temp_y_vals[-1]) / sqrt(pow(temp_new_y_err[-1],2) + pow(temp_y_err[-1],2)))
+                    temp_sig_err.append(1.)
+                else:
+                    temp_ratio.append(0.)
+                    temp_ratio_err.append(0.)
+                    temp_sig.append(0.)
+                    temp_sig_err.append(0.)
+            if len(range_x_vals) < 1:
+                range_x_vals.append(0)
+                range_x_vals.append(1)
+            if len(range_y_vals) < 1:
+                range_y_vals.append(0)
+                range_y_vals.append(1)
+    
+            fig = plt.figure(figsize=(8, 10), dpi=20, facecolor='white')
+            ax = fig.add_subplot(3,1,1,axisbg='white')
+            make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$Events$","")
+            ax.set_yscale("symlog")
+            to_be_logged.append(["debug",hist + ":   " + str((np.min(range_y_vals) - 1)*0.8) +"  "+ str((np.max(range_y_vals) + 1)*1.2)])
+            plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
+            plt.ylim( (np.min(range_y_vals) - 1)*0.95, (np.max(range_y_vals) + 1)*1.05 )
+            plt.errorbar(temp_x_vals, temp_y_vals, xerr = temp_x_err, yerr = temp_y_err, color='chartreuse',marker="o",linestyle="-",linewidth=1,label='Reference')
+            plt.errorbar(temp_new_x_vals, temp_new_y_vals, xerr = temp_new_x_err, yerr = temp_new_y_err, color='red',marker="o",linestyle="-",linewidth=1,label='New (for validation)')
+            plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=2, mode="expand", borderaxespad=0.)
+    
+            t_label = '%.2f'%(chi2)
+            t_label2 = r'$chi^{2}$/Ndf: %s'%(t_label)
 
-    if ref_hist.GetNbinsX() > 500:
-        ref_hist.Rebin(10)
-        new_hist.Rebin(10)
+            text = ax.text(0.8,0.9, t_label2, color='limegreen', transform=ax.transAxes,
+                        va='bottom', ha='center')
 
-    if not i[3].allplots:
-        if ref_hist.GetEntries() == 0 and new_hist.GetEntries() == 0:
-            return ["NONE",0.0,["NONE",""]]
-
-    chi2 = Chi2_calcer(ref_hist,new_hist)
-
-    temp_x_vals = []
-    temp_x_err = []
-    temp_y_vals = []
-    temp_y_err = []
-    temp_new_x_vals = []
-    temp_new_x_err = []
-    temp_new_y_vals = []
-    temp_new_y_err = []
-    temp_ratio = []
-    temp_ratio_err = []
-    temp_sig = []
-    temp_sig_err = []
-    range_x_vals = []
-    range_y_vals = []
-    for j in range(1,ref_hist.GetNbinsX()+1):
-        temp_x_vals.append(ref_hist.GetBinCenter(j))
-        temp_x_err.append(ref_hist.GetBinWidth(j)/2.)
-        temp_y_vals.append(ref_hist.GetBinContent(j))
-        if ref_hist.GetBinContent(j) != 0.0:
-            range_x_vals.append(ref_hist.GetBinCenter(j))
-            range_y_vals.append(ref_hist.GetBinContent(j))
-        temp_y_err.append(ref_hist.GetBinError(j))
-        temp_new_x_vals.append(new_hist.GetBinCenter(j))
-        temp_new_x_err.append(new_hist.GetBinWidth(j)/2.)
-        temp_new_y_vals.append(new_hist.GetBinContent(j))
-        if new_hist.GetBinContent(j) != 0.0:
-            range_x_vals.append(new_hist.GetBinCenter(j))
-            range_y_vals.append(new_hist.GetBinContent(j))
-        temp_new_y_err.append(new_hist.GetBinError(j))
-        if ref_hist.GetBinContent(j) != 0.0:# and new_hist.GetBinContent(j) != 0.0:
-            temp_ratio.append(temp_new_y_vals[-1]/temp_y_vals[-1])
-            temp_ratio_err.append(sqrt(pow(temp_new_y_err[-1]/temp_y_vals[-1],2) + pow(temp_new_y_vals[-1]*temp_y_err[-1]/temp_y_vals[-1]/temp_y_vals[-1],2)))
-            temp_sig.append((temp_new_y_vals[-1] - temp_y_vals[-1]) / sqrt(pow(temp_new_y_err[-1],2) + pow(temp_y_err[-1],2)))
-            temp_sig_err.append(1.)
+            ax = fig.add_subplot(3,1,2,axisbg='white')
+            make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$(N_{events}^{new} - N_{events}^{old}) / \sigma$","")
+            plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
+            plt.errorbar(temp_new_x_vals, temp_sig, xerr = temp_new_x_err, yerr = temp_sig_err, color='y',marker="o",linestyle="-",linewidth=1)
+    
+            ax = fig.add_subplot(3,1,3,axisbg='white')
+            make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$N_{events}^{new} / N_{events}^{old}$","")
+            plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
+            plt.errorbar(temp_new_x_vals, temp_ratio, xerr = temp_new_x_err, yerr = temp_ratio_err, color='y',marker="o",linestyle="-",linewidth=1)
+    
+            name = "comparison_dir/" + sample + "_" + folder + "_" + hist + ".pdf"
+            plt.show()
+            plt.savefig(name,facecolor='white',edgecolor='white')
+        except:
+            counting += 1
+            time.sleep(1)
+            log.debug("Unexpected error in the plotting of %s:"%(i[2]))
+            log.debug(sys.exc_info()[0])
+            log.debug(sys.exc_info()[1])
+            log.debug(sys.exc_info()[2])
+            if counting < limit:
+                log.debug("Retrying now!")
+                continue
+            else:
+                log.debug("Unexpected error in the plotting of %s:"%(i[2]))
+                log.debug(sys.exc_info()[0])
+                log.debug(sys.exc_info()[1])
+                log.debug(sys.exc_info()[2])
+                log.error("tried ten times")
+                return ["NONE",0.0,["NONE",""]]
         else:
-            temp_ratio.append(0.)
-            temp_ratio_err.append(0.)
-            temp_sig.append(0.)
-            temp_sig_err.append(0.)
-    if len(range_x_vals) < 1:
-        range_x_vals.append(0)
-        range_x_vals.append(1)
-    if len(range_y_vals) < 1:
-        range_y_vals.append(0)
-        range_y_vals.append(1)
-    fig = plt.figure(figsize=(8, 10), dpi=20, facecolor='white')
-    ax = fig.add_subplot(3,1,1,axisbg='white')
-    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$Events$","")
-    ax.set_yscale("symlog")
-    to_be_logged.append(["debug",hist + ":   " + str((np.min(range_y_vals) - 1)*0.8) +"  "+ str((np.max(range_y_vals) + 1)*1.2)])
-    plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
-    plt.ylim( (np.min(range_y_vals) - 1)*0.95, (np.max(range_y_vals) + 1)*1.05 )
-    plt.errorbar(temp_x_vals, temp_y_vals, xerr = temp_x_err, yerr = temp_y_err, color='chartreuse',marker="o",linestyle="-",linewidth=1,label='Reference')
-    plt.errorbar(temp_new_x_vals, temp_new_y_vals, xerr = temp_new_x_err, yerr = temp_new_y_err, color='red',marker="o",linestyle="-",linewidth=1,label='New (for validation)')
-    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=2, mode="expand", borderaxespad=0.)
-
-    text = ax.text(0.8, 0.9, 'chi2/Ndf: %.2f'%(chi2), color='limegreen', transform=ax.transAxes,
-                va='bottom', ha='center')
-
-    ax = fig.add_subplot(3,1,2,axisbg='white')
-    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$(N_{events}^{new} - N_{events}^{old}) / \sigma$","")
-    plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
-    plt.errorbar(temp_new_x_vals, temp_sig, xerr = temp_new_x_err, yerr = temp_sig_err, color='y',marker="o",linestyle="-",linewidth=1)
-
-    ax = fig.add_subplot(3,1,3,axisbg='white')
-    make_axis(ax,"$"+ref_hist.GetXaxis().GetTitle().replace("#","\\")+"$","$N_{events}^{new} / N_{events}^{old}$","")
-    plt.xlim( np.min(range_x_vals)*0.95, np.max(range_x_vals)*1.05 )
-    plt.errorbar(temp_new_x_vals, temp_ratio, xerr = temp_new_x_err, yerr = temp_ratio_err, color='y',marker="o",linestyle="-",linewidth=1)
-
-    name = "comparison_dir/" + sample + "_" + folder + "_" + hist + ".pdf"
-    plt.show()
-    plt.savefig(name,facecolor='white',edgecolor='white')
-    return [name,chi2,to_be_logged]
+            return [name,chi2,to_be_logged]
 
 ## Function to create and compile the summary file
 #
@@ -1132,12 +1188,12 @@ def make_output_file(sample_list,cfg_file,options):
     tex_file.close()
 
     log.debug("Compiling .tex document")
-    p = subprocess.Popen("pdflatex test.tex",shell=True,stdout=subprocess.PIPE)
+    p = subprocess.Popen("pdflatex -interaction=batchmode test.tex",shell=True,stdout=subprocess.PIPE)
     output = p.communicate()[0]
     log.debug(output)
 
     log.debug("Second compilation of .tex file")
-    p1 = subprocess.Popen("pdflatex test.tex",shell=True,stdout=subprocess.PIPE)
+    p1 = subprocess.Popen("pdflatex -interaction=batchmode test.tex",shell=True,stdout=subprocess.PIPE)
     output = p1.communicate()[0]
     log.debug(output)
 
@@ -1267,19 +1323,22 @@ def main():
 
     get_reference_output(options)
 
-    do_comparison(options,cfg_file,sample_list)
+    all_samples = do_comparison(options,cfg_file,sample_list)
 
-    ctr_string = make_output_file(sample_list,cfg_file,options)
+    decision = False
 
-    decision = final_user_decision(ctr_string)
+    if not all_samples:
+        ctr_string = make_output_file(sample_list,cfg_file,options)
 
-    if decision == True:
-        make_new_reference()
+        decision = final_user_decision(ctr_string)
+
+    if decision == True or all_samples == True:
+        make_new_reference(options,sample_list)
 
         authorization = check_authorization()
 
         if authorization == True:
-            make_commits()
+            make_commits(options,sample_list)
 
     clean_up(options)
 
