@@ -265,13 +265,32 @@ def make_commits(options,sample_list):
     p = subprocess.Popen(['git','add','Validator/old/log.root'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     output = p.communicate()[0]
     log.debug(output)
+    #c_branch = get_current_branch()
+    #raw_input("1:"+c_branch)
     # Merge with the dev branch
     p = subprocess.Popen(['git','checkout','dev'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     output = p.communicate()[0]
-    print(output)
+    raw_input("2:"+output)
+    #p = subprocess.Popen(['git','merge','--no-ff',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    #output = p.communicate()[0]
+    #raw_input("3:"+output)
+    #p = subprocess.Popen(['git','checkout',c_branch],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    #output = p.communicate()[0]
+    #raw_input("4:"+output)
     # Merge with the master branch
     
     #Push everything
+
+## Function to get the current branch of the repository
+#
+# @param[out] c_branch Current branch
+def get_current_branch():
+    p = subprocess.Popen(['git','branch'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    for line in output.split('\n'):
+        if '*' in line:
+            log.debug("Current branch: " + line.split()[1])
+            return line.split()[1]
 
 ## Function to collect the user desicion on the validation results
 #
