@@ -23,6 +23,7 @@ Validator/output/
 Validator/test.pdf
 Validator/log/*
 specialAna/
+specialAna/*
 doc/doxy*
 doc/html/
 doc/latex/
