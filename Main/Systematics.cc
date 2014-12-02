@@ -1,6 +1,7 @@
 #include "Systematics.hh"
 #include <vector>
 #include "Tools/PXL/Sort.hh"
+#include "TRandom3.h"
 
 
 //--------------------Constructor-----------------------------------------------------------------
@@ -9,7 +10,8 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    // read uncertainties from config
    m_ratioEleBarrel(cfg.GetItem< double      >( "Syst.Ele.Scale.Barrel" ) ),
    m_ratioEleEndcap(cfg.GetItem< double      >( "Syst.Ele.Scale.Endcap" ) ),
-   m_ratioMuo(      cfg.GetItem< double      >( "Syst.Muo.Scale" ) ),
+   m_scaleMuo(      cfg.GetItem< double      >( "Syst.Muo.Scale" ) ),
+   m_resMuo(        cfg.GetItem< double      >( "Syst.Muo.Res" ) ),
    m_ratioTau(      cfg.GetItem< double      >( "Syst.Tau.Scale" ) ),
    // read lepton names from config
    m_TauType(       cfg.GetItem< std::string >( "Tau.Type.Rec" ) ),
@@ -69,6 +71,9 @@ void Systematics::init(pxl::Event* event){
       else if( Name == m_METType+"uncert_10") UnclusteredEnUp.push_back( part );
       else if( Name == m_METType+"uncert_11") UnclusteredEnDown.push_back( part );
    }
+
+   rand = new TRandom3();
+
    return;
 }
 
@@ -288,12 +293,13 @@ void Systematics::shiftMETUnclustered(std::string const shiftType){
 //private-----
 //------------
 
-void inline Systematics::checkshift(std::string const shiftType) const {
+bool inline Systematics::checkshift(std::string const shiftType) const {
    // check if given shiftType is supported
    if(not (shiftType == "Resolution") && not (shiftType == "Scale")){
-      throw std::runtime_error("Systematics.cc: only accepted shift types at the moment are 'Resolution' and 'Scale'");
+      std::cout << "Systematics.cc: only accepted shift types at the moment are 'Resolution' and 'Scale'" << std::endl;
+      return false;
    }
-   return;
+   return true;
 }
 
 

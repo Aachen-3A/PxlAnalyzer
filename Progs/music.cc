@@ -466,7 +466,7 @@ int main( int argc, char* argv[] ) {
             syst_shifter.shiftEleAndMET("Scale");
             //syst_shifter.shiftEleAndMET("Resolution");
             syst_shifter.shiftMuoAndMET("Scale");
-            //syst_shifter.shiftMuoAndMET("Resolution");
+            syst_shifter.shiftMuoAndMET("Resolution");
             syst_shifter.shiftTauAndMET("Scale");
             //syst_shifter.shiftTauAndMET("Resolution");
             //syst_shifter.shiftJetAndMET("Scale");
