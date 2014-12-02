@@ -75,37 +75,46 @@ void Systematics::init(pxl::Event* event){
 
 
 void Systematics::shiftMuoAndMET(std::string const shiftType){
-   checkshift(shiftType);
+   if(!checkshift(shiftType)) return;
 
-   // shiftType == "Resolution"
+   bool do_resolution = false;
+
    if(shiftType == "Resolution"){
-      // TODO: not implemented yet!
-      std::cout << "shift type 'Resolution' not implemented yet" << std::endl;
-      return;
+      do_resolution = true;
    }
 
-   //else shiftType == "Scale"
-
-   double ratio = m_ratioMuo;
+   double sca_ratio = m_scaleMuo;
+   double res_ratio = m_resMuo;
    double ratio_up, ratio_down;
    double dPx_up=0;
    double dPy_up=0;
    double dPx_down=0;
    double dPy_down=0;
-   std::string prefix = std::string("Muon_syst") + shiftType;
-   pxl::EventView* evup   = 0;
-   pxl::EventView* evdown = 0;
 
-   createEventViews(prefix, &evup, &evdown);
-   fillMETLists(evup, evdown);
+   // create new EventViews inside the event
+   pxl::EventView* EventViewMuonUp   = m_event->getObjectOwner().create< pxl::EventView >();
+   pxl::EventView* EventViewMuonDown = m_event->getObjectOwner().create< pxl::EventView >();
+   m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Up",   EventViewMuonUp);
+   m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Down", EventViewMuonDown);
+
+   fillMETLists(EventViewMuonUp, EventViewMuonDown);
 
    // add shifted particles to these EventViews
    for(unsigned int i = 0; i < MuonList.size(); i++){
-      //use the high pt definition x% per TeV
-      ratio_up   = MuonList.at(i)->getPt()*(1.+ratio)/1000.;
-      shiftParticle(evup,   MuonList.at(i), ratio_up,   dPx_up,   dPy_up);
-      ratio_down = MuonList.at(i)->getPt()*(1.-ratio)/1000.;
-      shiftParticle(evdown, MuonList.at(i), ratio_down, dPx_down, dPy_down);
+      if(do_resolution){
+         /// muon momentum resolution
+         //double resolution_ratio = rand->Gaus(0,muon_resolution_histo -> FindBin(MuonList.at(i)->getPt()) * res_ratio);
+         double resolution_ratio = rand->Gaus(0,0.1 * res_ratio);
+         ratio_up   = 1 + fabs(resolution_ratio);
+         ratio_down = 1 - fabs(resolution_ratio);
+      }else{
+         /// muon momentum scale (5% per TeV from https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceResolution)
+         ratio_up   = 1 + (sca_ratio * MuonList.at(i)->getPt()/1000.);
+         ratio_down = 1 - (sca_ratio * MuonList.at(i)->getPt()/1000.);
+      }
+      /// use 1/ratio for scaling to scale 1/pT
+      shiftParticle(EventViewMuonUp,   MuonList.at(i), 1./ratio_up,   dPx_up,   dPy_up);
+      shiftParticle(EventViewMuonDown, MuonList.at(i), 1./ratio_down, dPx_down, dPy_down);
    }
 
    shiftMET(dPx_up, dPx_down, dPy_up, dPy_down);
