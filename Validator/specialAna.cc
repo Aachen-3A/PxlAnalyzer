@@ -1,9 +1,11 @@
 #include "specialAna.hh"
 #include "HistClass.hh"
 #include "Tools/Tools.hh"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include "boost/format.hpp"
-
-
+#pragma GCC diagnostic pop
 
 specialAna::specialAna( const Tools::MConfig &cfg ) :
    runOnData(       cfg.GetItem< bool >( "General.RunOnData" ) ),
