@@ -3,6 +3,7 @@
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Pxl/Pxl/interface/pxl/core.hh"
 #include <iostream>
+#include <csignal>
 #include <iomanip>
 #include "ControlPlotFactory/CcControl.hh"
 #include "ControlPlots2/RecControl.hh"
@@ -37,9 +38,67 @@ namespace fs = boost::filesystem;
 
 using namespace std;
 
+pxl::InputFile inFile;
+pdf::PDFTool *pdfTool;
+int e;
+unsigned int skipped;
+double dTime1;
+unsigned int lost_files;
+unsigned int analyzed_files;
+
+// pxl::AnalysisFork fork;
+
+unsigned int ECMerger;
+
+bool runCcEventClass;
+bool runOnData;
+
+string outputDirectory;
+
+ProcInfo_t info;
 //----------------------------------------------------------------------
 
 void PrintProcessInfo( ProcInfo_t &info );
+
+void KeyboardInterrupt_endJob(int signum) {
+    inFile.close();
+    // Don't need the PDFTool any more after file loop!
+   delete pdfTool;
+   pdfTool = 0;
+
+   double dTime2 = pxl::getCpuTime();
+   cout << "Analyzed " << e << " Events, skipped " << skipped << ", elapsed CPU time: " << dTime2-dTime1 << " ("<< double(e)/(dTime2-dTime1) <<" evts per sec)" << endl;
+   if( lost_files >= 0.5*( lost_files + analyzed_files ) ) {
+      cout << "Error: Too many files lost!" << endl;
+      throw std::runtime_error( "Too many files lost." );
+   } else if( lost_files > 0 ) {
+      cout << "Warning: " << lost_files << " of " << ( lost_files + analyzed_files ) << " files lost due to timeouts or read errors." << endl;
+   }
+   if( (e+skipped) == 0 ) {
+      cout << "Error: No event analayzed!" << endl;
+      throw std::runtime_error( "No event analayzed!" );
+   }
+   cout << "\n\n\n" << endl;
+ 
+   // fork.endRun();
+   // fork.endJob();
+
+   if( ECMerger > 0 and runCcEventClass and not runOnData ) {
+      if( ECMerger == 1 ) {
+         cout << "Calling ECMerger..." << endl;
+         chdir( ".." );
+         system( ( Tools::musicAbsPath( "bin/ECMerger" ) + " " + outputDirectory + "/EC_*.root -o " + outputDirectory +  "/EC_Final.root" ).c_str() );
+      } else if( ECMerger == 2 ) {
+         cout << "Calling ECMerger2 ..." << endl;
+         chdir( ".." );
+         system( ( Tools::musicAbsPath( "bin/ECMerger.py" ) + " --jes " + outputDirectory + "/EC_*.root -o " + outputDirectory + "/EC_Final.root" ).c_str() );
+      }
+      cout << "Done." << endl;
+   }
+
+   PrintProcessInfo( info );
+   exit(signum);
+}
 
 int main( int argc, char* argv[] ) {
    if( getenv( "MUSIC_BASE" ) == NULL ) throw std::runtime_error( "MUSIC_BASE not set!" );
@@ -53,7 +112,7 @@ int main( int argc, char* argv[] ) {
    // it within condor/grid.
    // All analysis based options/configurations belong into the config file!!!
    //
-   string outputDirectory = "./MusicOutDir";
+   outputDirectory = "./MusicOutDir";
    int numberOfEvents = -1;
    string XSectionsFile( "$MUSIC_BASE/ConfigFiles/XSections.txt" );
    string PlotConfigFile( "$MUSIC_BASE/ConfigFiles/ControlPlots2.cfg" );
@@ -81,7 +140,7 @@ int main( int argc, char* argv[] ) {
    // When running on the local T2, the output of a classification job can
    // become too large for the output SandBox. When switching off the JES
    // merging, the output is effectively reduced by almost a factor of 2.
-   unsigned int ECMerger = 2;
+   ECMerger = 2;
    bool NoCcControl    = false;
    bool runSpecialAna   = false;
    bool NoCcEventClass = false;
@@ -148,7 +207,7 @@ int main( int argc, char* argv[] ) {
       NoCcControl=true;
    }
 
-   const bool runCcEventClass = not NoCcEventClass;
+   runCcEventClass = not NoCcEventClass;
    const bool runCcControl    = not NoCcControl;
 
 
@@ -158,7 +217,7 @@ int main( int argc, char* argv[] ) {
 
    bool const muoCocktailUse = config.GetItem< bool >( "Muon.UseCocktail" );
    bool const jetResCorrUse = config.GetItem< bool >( "Jet.Resolutions.Corr.use" );
-   bool runOnData = config.GetItem< bool >( "General.RunOnData" );
+   runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
       if( not fs::exists( RunConfigFile ) ) {
@@ -195,8 +254,11 @@ int main( int argc, char* argv[] ) {
    pxl::Core::initialize();
    pxl::Hep::initialize();
 
+    pxl::AnalysisFork fork;
+
+    signal(SIGINT,KeyboardInterrupt_endJob);
+
    // Configure fork:
-   pxl::AnalysisFork fork;
    fork.setName("MISFork");
 
    //initialize the EventSelector
@@ -213,7 +275,7 @@ int main( int argc, char* argv[] ) {
 
    // When running on data, we do not want to initialize the PDFSets as this
    // takes lots of resources.
-   pdf::PDFTool *pdfTool = 0;
+    pdfTool = 0;
    if( not runOnData && NoSpecialAna ){
        pdfTool = new pdf::PDFTool( config, debug );
    }
@@ -277,25 +339,23 @@ int main( int argc, char* argv[] ) {
    fork.beginRun();
 
    // performance monitoring
-   double dTime1 = pxl::getCpuTime();    // Start Time
-   int    e = 0;                         // Event counter
-   unsigned int skipped=0; //number of events skipped from run/LS config
+   dTime1 = pxl::getCpuTime();    // Start Time
+   e = 0;                                // Event counter
+   skipped=0; //number of events skipped from run/LS config
 
 
    ReWeighter reweighter = ReWeighter( config );
 
-   unsigned int analyzed_files = 0;
-   unsigned int lost_files = 0;
+   analyzed_files = 0;
+   lost_files = 0;
 
    // loop over all files
    vector<string>::const_iterator file_iter = input_files.begin();
 
    // initialize process info object
-   ProcInfo_t info;
    // Get file handler to access files.
    // New PXL version knows how to handle dcap protocol.
    //std::auto_prt< pxl::InputFile > inFile = pxl::InputFile();
-   pxl::InputFile inFile;
    for( unsigned int f = 0; f < input_files.size() && ( numberOfEvents == -1 || e < numberOfEvents ); f++ ) {
       std::string const fileName = *file_iter;
       // Open File:
