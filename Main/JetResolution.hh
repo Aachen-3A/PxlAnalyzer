@@ -2,32 +2,40 @@
 #define JETRESOLUTION
 
 #include "TRandom3.h"
+#include "TFormula.h"
 
 #include "Tools/MConfig.hh"
 #include "BinnedMapping.hh"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 
 namespace pxl {
-   class Particle;
+    class Particle;
 }
 
 class JetResolution {
-   public:
-      JetResolution( Tools::MConfig const &config );
-      ~JetResolution() {}
+    public:
+        JetResolution( Tools::MConfig const &config );
+        ~JetResolution() {}
 
-      double getScalingFactor( double const eta ) const;
-      double getJetPtCorrFactor( pxl::Particle const *recJet,
-                                 pxl::Particle const *genJet
-                                 );
+        double getScalingFactor( double const eta ) const;
+        double getJetPtCorrFactor( pxl::Particle const *recJet,
+                                            pxl::Particle const *genJet,
+                                            double truthpu
+                                            );
+        double getSigmaMC( double const pt, double const eta, double const pu ) const;
 
-   private:
-      Tools::MConfig const m_jet_res_config;
+    private:
+        Tools::MConfig const m_jet_res_config;
 
-      double const m_sigma_MC;
+        BinnedMapping const m_eta_corr_map;
 
-      BinnedMapping const m_eta_corr_map;
+        TRandom3 m_rand;
 
-      TRandom3 m_rand;
+        JetCorrectorParameters CorParr;
+
+        double m_sigma_MC;
+
+        TFormula *mFunc;
 };
 
 #endif /*JETRESOLUTION*/
