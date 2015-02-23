@@ -769,6 +769,9 @@ def run_analysis(options,cfg_file,sample_list):
     pool.close()
     pool.join()
 
+    #for item in item_list:
+    #    run_analysis_task(item)
+
     if not os.path.exists(options.Output):
         os.mkdir(options.Output)
 
