@@ -26,6 +26,10 @@ sys.path.append("lib/")
 from configobj import ConfigObj
 import StringIO
 from math import sqrt, fabs
+
+import matplotlib
+matplotlib.use('AGG')
+
 import matplotlib.pyplot as plt
 from matplotlib import transforms
 from matplotlib import rc
@@ -757,6 +761,9 @@ def run_analysis(options,cfg_file,sample_list):
     music_opt  = options.exeoption
     music_cfg  = options.execonfig
     music_path = cfg_file["basic"]["path"]
+
+    if not os.path.exists('log/'):
+        os.mkdir('log')
 
     item_list = []
     for item in cfg_file["samples"]:
