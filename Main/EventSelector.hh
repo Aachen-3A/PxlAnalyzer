@@ -16,7 +16,10 @@ Decision.
 #include "EleSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#pragma GCC diagnostic pop
 
 #include "Main/GenSelector.hh"
 #include "Main/EventCleaning.hh"
