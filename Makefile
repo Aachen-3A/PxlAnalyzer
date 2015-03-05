@@ -66,12 +66,12 @@ CMSSW_LIBS += -lboost_serialization
 CMSSW_LIBS += -lz
 
 # For the headers there are symlinks.
-CMSSW_INC_PATHS := -I$(CMSSW_BASE)/src
-CMSSW_INC_PATHS += -I$(CMSSW_RELEASE_BASE)/src
-CMSSW_INC_PATHS += -I$(CMSSW_DCAP_BASE)/include
-CMSSW_INC_PATHS += -I$(CMSSW_BOOST_BASE)/include
-CMSSW_INC_PATHS += -I$(CMSSW_GSL_BASE)/include
-CMSSW_INC_PATHS += -I$(LIBS3A)/include
+CMSSW_INC_PATHS := -isystem$(CMSSW_BASE)/src
+CMSSW_INC_PATHS += -isystem$(CMSSW_RELEASE_BASE)/src
+CMSSW_INC_PATHS += -isystem$(CMSSW_DCAP_BASE)/include
+CMSSW_INC_PATHS += -isystem$(CMSSW_BOOST_BASE)/include
+CMSSW_INC_PATHS += -isystem$(CMSSW_GSL_BASE)/include
+CMSSW_INC_PATHS += -isystem$(LIBS3A)/include
 
 #LHAPDF_LIB_PATH := -L$(MUSIC_BASE)/local/lib
 #LHAPDF_INC_PATH := -I$(MUSIC_BASE)/local/include

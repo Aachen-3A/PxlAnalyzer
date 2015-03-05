@@ -1,6 +1,24 @@
 #ifndef TOOLS_MCONFIG
 #define TOOLS_MCONFIG
 
+#if ((__GNUC__ * 100) + __GNUC_MINOR__) >= 402
+#define GCC_DIAG_STR(s) #s
+#define GCC_DIAG_JOINSTR(x,y) GCC_DIAG_STR(x ## y)
+# define GCC_DIAG_DO_PRAGMA(x) _Pragma (#x)
+# define GCC_DIAG_PRAGMA(x) GCC_DIAG_DO_PRAGMA(GCC diagnostic x)
+# if ((__GNUC__ * 100) + __GNUC_MINOR__) >= 406
+#  define GCC_DIAG_OFF(x) GCC_DIAG_PRAGMA(push) \
+          GCC_DIAG_PRAGMA(ignored GCC_DIAG_JOINSTR(-W,x))
+#  define GCC_DIAG_ON(x) GCC_DIAG_PRAGMA(pop)
+# else
+#  define GCC_DIAG_OFF(x) GCC_DIAG_PRAGMA(ignored GCC_DIAG_JOINSTR(-W,x))
+#  define GCC_DIAG_ON(x)  GCC_DIAG_PRAGMA(warning GCC_DIAG_JOINSTR(-W,x))
+# endif
+#else
+# define GCC_DIAG_OFF(x)
+# define GCC_DIAG_ON(x)
+#endif
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -9,9 +27,12 @@
 #include <stdexcept>
 #include <string>
 
+GCC_DIAG_OFF(unused-local-typedefs);
+#include <boost/algorithm/string.hpp>
+GCC_DIAG_ON(unused-local-typedefs);
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #pragma GCC diagnostic pop
