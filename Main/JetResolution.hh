@@ -6,7 +6,10 @@
 
 #include "Tools/MConfig.hh"
 #include "BinnedMapping.hh"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#pragma GCC diagnostic pop
 
 namespace pxl {
     class Particle;
