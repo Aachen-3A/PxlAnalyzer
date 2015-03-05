@@ -6,6 +6,9 @@
 
 #include <stdio.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 namespace pxl
 {
 
@@ -137,5 +140,5 @@ void dCapFileImpl::destroy()
 }
 
 }
-
+#pragma GCC diagnostic pop
 #endif
