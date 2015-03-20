@@ -67,10 +67,22 @@ void Systematics::init(pxl::Event* event){
       else if( Name == m_TauType ) TauList.push_back( part );
       else if( Name == m_JetType ) JetList.push_back( part );
       else if( Name == m_METType ) METList.push_back( part );
-      //copy already shifted MET from Event:
-      else if( Name == m_METType+"uncert_10") UnclusteredEnUp.push_back( part );
-      else if( Name == m_METType+"uncert_11") UnclusteredEnDown.push_back( part );
+
+
    }
+
+   m_GeneventView = m_event->getObjectOwner().findObject< pxl::EventView >( "Gen" );
+   std::vector< pxl::Particle* > GenParticles;
+   m_GeneventView->getObjectsOfType< pxl::Particle >( GenParticles );
+   for( std::vector< pxl::Particle* >::const_iterator part_it = GenParticles.begin(); part_it != GenParticles.end(); ++part_it ) {
+      pxl::Particle *part = *part_it;
+      std::string Name = part->getName();
+      // Only fill the collection if we want to use the particle!
+      //copy already shifted MET from Event:
+      if( Name == m_METType+"uncert_10") UnclusteredEnUp.push_back( part );
+      else if( Name == m_METType+"uncert_11") UnclusteredEnDown.push_back( part );
+  }
+
 
    rand = new TRandom3();
 
@@ -269,13 +281,14 @@ void Systematics::shiftMETUnclustered(std::string const shiftType){
 
 
    std::string find   = m_METType+"uncert_";
-   std::string prefix = m_METType + shiftType;
+   std::string prefix = m_METType + "_syst"+shiftType;
    pxl::EventView* evup   = 0;
    pxl::EventView* evdown = 0;
    pxl::Particle*  part   = 0;
 
    createEventViews(prefix, &evup, &evdown);
    // create previously copied uncert MET
+
    for(unsigned int i = 0; i < UnclusteredEnUp.size(); i++){
        part = evup->getObjectOwner().create< pxl::Particle >(UnclusteredEnUp.at(i));
        part->setName(m_METType);

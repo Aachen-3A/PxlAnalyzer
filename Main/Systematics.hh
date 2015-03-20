@@ -45,6 +45,8 @@ private:
    std::vector< pxl::Particle* > UnclusteredEnUp;
    std::vector< pxl::Particle* > UnclusteredEnDown;
 
+   pxl::EventView* m_GeneventView;
+
     TRandom3* rand;
 
    // methods

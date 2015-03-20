@@ -500,7 +500,7 @@ int main( int argc, char* argv[] ) {
             //syst_shifter.shiftTauAndMET("Resolution");
             //syst_shifter.shiftJetAndMET("Scale");
             //syst_shifter.shiftJetAndMET("Resolution");
-            //syst_shifter.shiftMETUnclustered("Scale");
+            syst_shifter.shiftMETUnclustered("Scale");
             //syst_shifter.shiftMETUnclustered("Resolution");
 
             // Redo the matching, because the selection can remove particles.
