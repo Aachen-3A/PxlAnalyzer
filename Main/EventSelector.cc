@@ -1169,8 +1169,8 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    if(m_useTrigger){
        // Check if there are any unprescaled single muon or single electron
        // triggers.
-       bool const MuEaccept = m_triggerSelector.checkHLTMuEle( EvtView, isRec );
-
+       //~ bool const MuEaccept = m_triggerSelector.checkHLTMuEle( EvtView, isRec );
+       bool const MuEaccept = true;
        if( MuEaccept ) {
           //check if the events must be vetoed
           bool const vetoed = m_triggerSelector.checkVeto( isRec,
@@ -1191,11 +1191,11 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
                                                                    gammas,
                                                                    jets,
                                                                    mets,
-                                                                   EvtView
+                                                                   TrigEvtView
                                                                    );
           EvtView->setUserRecord( "HLT_accept", HLT_accept );
 
-          bool const triggerAccept = HLT_accept and L1_accept;
+          bool const triggerAccept = HLT_accept;
           EvtView->setUserRecord( "trigger_accept", triggerAccept );
 
           bool const non_topo_accept = global_accept && filterAccept && triggerAccept && !vetoed;
