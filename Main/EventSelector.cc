@@ -1036,12 +1036,6 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
    const bool filterAccept = passFilterSelection( EvtView, isRec );
    EvtView->setUserRecord( "filter_accept", filterAccept );
 
-   const bool L1_accept = m_triggerSelector.passL1Trigger( EvtView, isRec );
-   EvtView->setUserRecord( "L1_accept", L1_accept );
-   if(!m_useTrigger){
-       EvtView->setUserRecord( "L1_accept", true );
-   }
-
    double eleRho = 0.0;
    double gamRho = 0.0;
    // rho is only available in Rec.
