@@ -776,23 +776,6 @@ void EventSelector::applyCutsOnJet( std::vector< pxl::Particle* > &jets, const b
       // If any of the three is false, we don't count the jet as PF.
       thisJet->setUserRecord( "isPF", isRec and m_jet_isPF and acceptJet );
 
-      // bJet?
-      if( m_jet_bJets_use and acceptJet ) {
-         if( isRec ) {
-            if( thisJet->getUserRecord( m_jet_bJets_algo ).toDouble() > m_jet_bJets_discr_min ) {
-               thisJet->setUserRecord( "bJetType", m_jet_bJets_algo );
-            } else {
-               thisJet->setUserRecord( "bJetType", "nonB" );
-            }
-         } else {
-            if( abs( thisJet->getUserRecord( m_jet_bJets_genFlavourAlgo ).toInt32() ) == 5 ) {
-               thisJet->setUserRecord( "bJetType", m_jet_bJets_gen_label );
-            } else {
-               thisJet->setUserRecord( "bJetType", "nonB" );
-            }
-         }
-      }
-
       if( acceptJet ) jetsAfterCuts.push_back( thisJet );
       else            thisJet->owner()->remove( thisJet );
    }
