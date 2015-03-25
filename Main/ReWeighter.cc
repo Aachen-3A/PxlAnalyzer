@@ -30,5 +30,7 @@ void ReWeighter::ReWeightEvent( const pxl::Event &event ) {
       double const pileupWeight = m_LumiWeights.weight( numVerticesPUTrue );
 
       GenEvtView->setUserRecord( "PUWeight", pileupWeight );
+   }else{
+      GenEvtView->setUserRecord( "PUWeight", 1. );
    }
 }
