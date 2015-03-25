@@ -94,25 +94,6 @@ bool TriggerSelector::passHLTrigger( bool const isRec,
    return all_required_groups_accepted and any_group_accepted;
 }
 
-
-// TODO: Do we really need this?
-bool TriggerSelector::passL1Trigger( pxl::EventView const *evtView, bool const isRec ) const {
-   // Ignore L1?
-   if( m_ignoreL1 ) return true;
-
-   // No "L1 simulation" on Gen level.
-   if( not isRec ) return true;
-
-   // Get the bits.
-   bool b0 = evtView->getUserRecord( m_triggerPrefix + "L1_0" );
-
-   // Bit 0 is not always properly simulated, but it doesn't make sense in MC anyway.
-   if( not m_runOnData ) b0 = true;
-
-   return b0;
-}
-
-
 bool TriggerSelector::passEventTopology( int const numMuo,
                                          int const numEle,
                                          int const numTau,
