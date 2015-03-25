@@ -19,6 +19,7 @@
 #pragma GCC diagnostic pop
 
 #include "Main/EventAdaptor.hh"
+#include "Main/JetTypeWriter.hh"
 #include "Main/EventSelector.hh"
 #include "Main/ParticleMatcher.hh"
 #include "Main/PDFTool.hh"
@@ -167,6 +168,7 @@ int main( int argc, char* argv[] ) {
 
    bool const muoCocktailUse = config.GetItem< bool >( "Muon.UseCocktail" );
    bool const jetResCorrUse = config.GetItem< bool >( "Jet.Resolutions.Corr.use" );
+   bool const bJetUse = config.GetItem< bool >( "Jet.BJets.use" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
@@ -209,6 +211,12 @@ int main( int argc, char* argv[] ) {
    // Configure fork:
    pxl::AnalysisFork fork;
    fork.setName("MISFork");
+
+
+   // Initialize JetTypeWriter
+   JetTypeWriter TypeWriter( config );
+
+
 
    //initialize the EventSelector
    EventSelector Selector( config );
@@ -415,6 +423,8 @@ int main( int argc, char* argv[] ) {
          }
 
          if( runOnData ){
+            // Write B Tag Info
+            if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
             //for data we just need to run the selection
             Selector.performSelection(RecEvtView, TrigEvtView, 0);
          } else {
@@ -424,6 +434,12 @@ int main( int argc, char* argv[] ) {
             }
             reweighter.ReWeightEvent( event );
             pxl::EventView* GenEvtView = event.getObjectOwner().findObject<pxl::EventView>("Gen");
+
+            // Write B Tag Info
+            if( bJetUse ){
+                TypeWriter.writeJetTypes(RecEvtView);
+                TypeWriter.writeJetTypes(GenEvtView);
+            }
 
             Selector.preSynchronizeGenRec( GenEvtView, RecEvtView );
 
