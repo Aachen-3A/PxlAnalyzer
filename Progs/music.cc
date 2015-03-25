@@ -406,6 +406,7 @@ int main( int argc, char* argv[] ) {
          }
 
          pxl::EventView *RecEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Rec" );
+         pxl::EventView *TrigEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Trig" );
 
          if( muoCocktailUse ) {
             // Switch to cocktail muons (use the four momentum from
@@ -415,7 +416,7 @@ int main( int argc, char* argv[] ) {
 
          if( runOnData ){
             //for data we just need to run the selection
-            Selector.performSelection(RecEvtView, 0);
+            Selector.performSelection(RecEvtView, TrigEvtView, 0);
          } else {
             // Don't do this on data, haha! And also not for special Ana hoho
             if (NoSpecialAna){
@@ -459,8 +460,8 @@ int main( int argc, char* argv[] ) {
             // you should investigate!
             try {
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               Selector.performSelection(GenEvtView, 0);
-               Selector.performSelection(RecEvtView, 0);
+               Selector.performSelection(GenEvtView, TrigEvtView, 0);
+               Selector.performSelection(RecEvtView, TrigEvtView, 0);
             } catch( Tools::unsorted_error &exc ) {
                cerr << "[WARNING] (main): ";
                cerr << "Found unsorted particle in event no. " << e << ". ";
@@ -487,17 +488,16 @@ int main( int argc, char* argv[] ) {
 
             // Redo the matching, because the selection can remove particles.
             Matcher.matchObjects( GenEvtView, RecEvtView, "priv-gen-rec", true );
-
             //synchronize some user records
             Selector.synchronizeGenRec( GenEvtView, RecEvtView );
 
             if( runCcEventClass ) {
                // SAME for JES_UP: modify Jets apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               Selector.performSelection(GenEvtView_JES_UP, +1);
-               Selector.performSelection(RecEvtView_JES_UP, +1);
+               Selector.performSelection(GenEvtView_JES_UP, TrigEvtView, +1);
+               Selector.performSelection(RecEvtView_JES_UP, TrigEvtView, +1);
                // SAME for JES_DOWN: modify Jets,  apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               Selector.performSelection(GenEvtView_JES_DOWN, -1);
-               Selector.performSelection(RecEvtView_JES_DOWN, -1);
+               Selector.performSelection(GenEvtView_JES_DOWN, TrigEvtView, -1);
+               Selector.performSelection(RecEvtView_JES_DOWN, TrigEvtView, -1);
                // Redo matching for JES.
                Matcher.matchObjects( GenEvtView_JES_UP, RecEvtView_JES_UP );
                Matcher.matchObjects( GenEvtView_JES_DOWN, RecEvtView_JES_DOWN );

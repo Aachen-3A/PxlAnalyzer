@@ -1022,7 +1022,7 @@ void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles )
 
 
 //--------------------This is the main method to perform the selection-----------------------------------------
-void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //used with either GenEvtView or RecEvtView
+void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView, const int& JES) {   //used with either GenEvtView or RecEvtView
    string process = EvtView->getUserRecord("Process");
    bool isRec = (EvtView->getUserRecord("Type").asString() == "Rec");
    if (JES == -1){
@@ -1174,7 +1174,7 @@ void EventSelector::performSelection(EventView* EvtView, const int& JES) {   //u
                                                            gammas,
                                                            jets,
                                                            mets,
-                                                           EvtView
+                                                           TrigEvtView
                                                            );
           EvtView->setUserRecord( "Veto", vetoed );
 

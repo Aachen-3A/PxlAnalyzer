@@ -32,7 +32,7 @@ public:
    // Destruktor
    ~EventSelector();
    // main method to perform the selection
-   void performSelection(pxl::EventView*  EvtView, const int& JES);
+   void performSelection(pxl::EventView*  EvtView, pxl::EventView* TrigEvtView, const int& JES);
    //synchronize certain values between gen and rec event views
    void preSynchronizeGenRec( pxl::EventView *GenEvtView, pxl::EventView *RecEvtView );
    void synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventView* RecEvtView );

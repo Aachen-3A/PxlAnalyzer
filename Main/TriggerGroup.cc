@@ -239,15 +239,23 @@ TriggerGroup::TriggerResults TriggerGroup::getTriggerResults( pxl::EventView con
 
    for( Triggers::const_iterator trigger = m_triggers.begin(); trigger != m_triggers.end(); ++trigger ) {
       string const triggerName = m_triggerPrefix + *trigger;
-
       try{
-         triggerResults[ triggerName ] = evtView->getUserRecord( triggerName );
-         any_trigger_found = true;
+         if( evtView->hasUserRecord( triggerName ) ){
+             triggerResults[ triggerName ] = true;
+             any_trigger_found = true;
+         }else triggerResults[ triggerName ] = false;
       } catch( std::runtime_error &exc ) {
-         continue;
+         std::cout << "Weird try catch in getTriggerResults in TriggerGroup.cc" << std::endl;
       }
    }
+   pxl::UserRecords allTriggerRecords = evtView->getUserRecords();
 
+   for(  pxl::UserRecords::const_iterator trigger = allTriggerRecords.begin(); trigger != allTriggerRecords.end(); ++trigger ){
+      if ( trigger->first.find( m_triggerPrefix ) != std::string::npos ){
+         any_trigger_found = true;
+         //~ std::cout << "Fired Trigger" << trigger->first << std::endl;
+      }
+   }
    if( not any_trigger_found ) {
       std::stringstream err;
       err << "In TriggerSelector::passHLTrigger(...): ";
