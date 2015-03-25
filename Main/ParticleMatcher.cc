@@ -1,4 +1,4 @@
-#include "ParticleMatcher.hh"
+﻿#include "ParticleMatcher.hh"
 
 #include <iostream>
 
@@ -35,6 +35,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
    vector< Particle* > gen_particles;
    vector< Particle* > rec_particles;
    pxl::ParticleFilter particleFilter;
+
    for( GenRecNameMap::const_iterator objType = m_gen_rec_map.begin(); objType != m_gen_rec_map.end(); ++objType ) {
       gen_particles.clear();
       rec_particles.clear();
@@ -42,10 +43,9 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
       // Choose name filter criterion
       ParticlePtEtaNameCriterion const critRec( (*objType).second.RecName );
       ParticlePtEtaNameCriterion const critGen( (*objType).second.GenName );
-      
+
       particleFilter.apply( RecEvtView->getObjectOwner(), rec_particles, critRec );
       particleFilter.apply( GenEvtView->getObjectOwner(), gen_particles, critGen );
-
       makeMatching( gen_particles, rec_particles, "Match", "hctaM", defaultLinkName );
    }
 
@@ -180,9 +180,6 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
 }
 
 // ------------ implementation of the matching Gen <--> Rec ------------
-
-
-
 void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
                                    std::vector<Particle*>& rec_particles,
                                    const string& Match,
@@ -190,14 +187,17 @@ void ParticleMatcher::makeMatching(std::vector<Particle*>& gen_particles,
                                    const string& linkname
                                    ) const {
    // First set for Gen all Matches to -1 and reset bools:
+   // make sure that default value for ChargeMatch user record is set
    for (std::vector<Particle*>::iterator gen_iter = gen_particles.begin(); gen_iter != gen_particles.end(); gen_iter++) {
       (*gen_iter)->setUserRecord(Match, -1);
       (*gen_iter)->setUserRecord(hctaM, false);
+      (*gen_iter)->setUserRecord( "Charge"+Match, -1);
    }
    // same for Rec
    for (std::vector<Particle*>::iterator rec_iter = rec_particles.begin(); rec_iter != rec_particles.end(); rec_iter++) {
       (*rec_iter)->setUserRecord(Match, -1);
       (*rec_iter)->setUserRecord(hctaM, false);
+      (*rec_iter)->setUserRecord( "Charge"+Match, -1);
    }
    unsigned int num_gen = gen_particles.size();
    unsigned int num_rec = rec_particles.size();
