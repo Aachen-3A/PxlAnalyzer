@@ -15,6 +15,7 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#pragma GCC diagnostic ignored "-Wattributes"
 #include <boost/filesystem/path.hpp>
 #pragma GCC diagnostic pop
 
