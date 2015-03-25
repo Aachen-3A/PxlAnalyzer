@@ -18,6 +18,8 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    // CutBasedID (Tight):
    //m_ele_cbid_use( cfg.GetItem< bool >( "Ele.CBID.use" ) ),
    // lowEta: |eta| < 1.0
+   m_ele_cbid_usebool(       cfg.GetItem< bool   >( "Ele.CBID.usebool" , 1 ) ),
+   m_ele_cbid_boolname(         cfg.GetItem< std::string >( "Ele.CBID.boolname" , "DefaultBoolname") ),
    m_ele_cbid_lowEta_EoP_min( cfg.GetItem< double >( "Ele.CBID.lowEta.EoverPin.min" , 0.95 ) ), // Only for 2011!
    m_ele_cbid_fBrem_min(      cfg.GetItem< double >( "Ele.CBID.fBrem.min" , 0.15 ) ), // Only for 2011!
    // Barrel values:
@@ -45,6 +47,8 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
 
    // HEEP ID v4.1:
    //m_ele_heepid_use(             cfg.GetItem< bool   >( "Ele.HEEPID.use" ) ),
+   m_ele_heepid_usebool(       cfg.GetItem< bool   >( "Ele.HEEPID.usebool" , 1 ) ),
+   m_ele_heepid_boolname(         cfg.GetItem< std::string >( "Ele.HEEPID.boolname" , "DefaultBoolname") ),
    m_ele_heepid_EoP_max(           cfg.GetItem< double >( "Ele.HEEPID.EoP.max" , 10 ) ),
    m_ele_heepid_requireEcalDriven( cfg.GetItem< bool   >( "Ele.HEEPID.RequireEcalDriven" , 1 ) ),
    m_ele_heepid_rejectOutOfTime(   cfg.GetItem< bool   >( "Ele.HEEPID.RejectOutOfTime" , 1 ) ),
@@ -201,8 +205,19 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
                               bool const eleEndcap,
                               double const eleRho
                               ) const {
-   // Retrieve each variable and IMMEDIATELY check if it passes the cut!
+   // First check if we want to use only id flags from miniaod or
+   // reperform cuts
+   if( m_ele_cbid_usebool ){
+      if(ele->hasUserRecord( m_ele_cbid_boolname ) ){
+         return ele->getUserRecord( m_ele_cbid_boolname );
+      }else{
+         std::cerr << "Error: You are tring to select Ele with CBID"<< std::endl;
+         std::cerr << "But no user record is found for boolname: "<< m_ele_cbid_boolname <<std::endl;
+         exit(1);
+      }
+    }
 
+   // Retrieve each variable and IMMEDIATELY check if it passes the cut!
    double const DEtaIn = ele->getUserRecord( "DEtaSCVtx" );
    if( eleBarrel and DEtaIn > m_ele_cbid_barrel_DEtaIn_max )
       return false;
@@ -296,6 +311,19 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
                                 bool const eleEndcap,
                                 double const eleRho
                                 ) const {
+
+   // First check if we want to use only id flags from miniaod or
+   // reperform cuts
+   if( m_ele_heepid_usebool ){
+      if(ele->hasUserRecord( m_ele_heepid_boolname ) ){
+         return ele->getUserRecord( m_ele_heepid_boolname );
+      }else{
+         std::cerr << "Error: You are tring to select Ele with HEEPID"<< std::endl;
+         std::cerr << "But no user record is found for boolname: "<< m_ele_heepid_boolname <<std::endl;
+         exit(1);
+      }
+    }
+
    // Require electron to be ECAL driven?
    if( m_ele_heepid_requireEcalDriven and
        not ele->getUserRecord( "ecalDriven" )

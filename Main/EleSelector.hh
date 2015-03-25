@@ -57,6 +57,9 @@ private:
 
    // CutBasedID:
    //bool const   m_ele_cbid_use;
+   bool const   m_ele_cbid_usebool;
+   std::string const m_ele_cbid_boolname;
+
    double const m_ele_cbid_lowEta_EoP_min; // lowEta: |eta| < 1.0
    double const m_ele_cbid_fBrem_min;
 
@@ -84,6 +87,8 @@ private:
 
    // HEEP:
    //bool const   m_ele_heepid_use;
+   bool const   m_ele_heepid_usebool;
+   std::string const m_ele_heepid_boolname;
    double const m_ele_heepid_EoP_max;
    bool const   m_ele_heepid_requireEcalDriven;
    bool const   m_ele_heepid_rejectOutOfTime;
