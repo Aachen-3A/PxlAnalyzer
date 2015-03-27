@@ -88,7 +88,7 @@ EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LI
 CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
 LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 
-all: CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
+all: CXXFLAGS += --ansi -w -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
 validation: CXXFLAGS += --ansi -Wall -fpic -c -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS) -Dvalidation
 
 ECHO = @echo -e "$(BOLDGREEN)Building$(NO_COLOR) $@ ..."
