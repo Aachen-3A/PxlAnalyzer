@@ -19,7 +19,10 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    m_METType(       cfg.GetItem< std::string >( "MET.Type.Rec" ) ),
 
    m_debug(debug)
+
+
 {
+    rand = new TRandom3();
 }
 
 
@@ -27,6 +30,7 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
 //--------------------Destructor------------------------------------------------------------------
 
 Systematics::~Systematics(){
+    delete rand;
 }
 
 
@@ -84,7 +88,7 @@ void Systematics::init(pxl::Event* event){
   }
 
 
-   rand = new TRandom3();
+
 
    return;
 }

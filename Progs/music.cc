@@ -184,7 +184,7 @@ int main( int argc, char* argv[] ) {
 
    const string startDir = getcwd( NULL, 0 );
 
-    signal(SIGINT,KeyboardInterrupt_endJob);
+   signal(SIGINT,KeyboardInterrupt_endJob);
 
    // (Re)create outputDirectory dir and cd into it.
    //
@@ -562,7 +562,6 @@ int main( int argc, char* argv[] ) {
    }
    cout << "\n\n\n" << endl;
 
-   //ana -> SetEvents(e);
 
    fork.endRun();
    fork.endJob();
