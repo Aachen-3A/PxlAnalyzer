@@ -231,8 +231,8 @@ double TriggerSelector::getSumptMin( int const numMuo,
                                                                     numMET,
                                                                     inclusive
                                                                     ) );
-   }
 
+   }
    std::sort( sumpts.begin(), sumpts.end() );
 
    // Return the smallest value.
