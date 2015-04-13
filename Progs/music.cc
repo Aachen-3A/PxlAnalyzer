@@ -76,7 +76,7 @@ int main( int argc, char* argv[] ) {
    // it within condor/grid.
    // All analysis based options/configurations belong into the config file!!!
    //
-   string outputDirectory = "./MusicOutDir";
+   std::string outputDirectory = "./AnalysisOutput";
    int numberOfEvents = -1;
    std::string FinalCutsFile;
    std::vector<std::string> input_files;
@@ -152,19 +152,13 @@ int main( int argc, char* argv[] ) {
     }
 
    if( not fs::exists( FinalCutsFile ) ) throw Tools::file_not_found( FinalCutsFile, "Config file" );
-   else cout << "INFO: Using Config file: " << FinalCutsFile << endl;
-
-   if( not fs::exists( XSectionsFile ) ) throw Tools::file_not_found( XSectionsFile, "Cross-sections file" );
-   else cout << "INFO: Using XSections file: " << XSectionsFile << endl;
-
-   if( not fs::exists( PlotConfigFile ) ) throw Tools::file_not_found( PlotConfigFile, "Plot-config file" );
-   else cout << "INFO: Using plot-config file: " << PlotConfigFile << endl;
+   else std::cout << "INFO: Using Config file: " << FinalCutsFile << std::endl;
 
    const Tools::MConfig config( FinalCutsFile );
 
    // Get the run config file from config file.
    //
-   string RunConfigFile;
+   std::string RunConfigFile;
 
    bool const muoCocktailUse = config.GetItem< bool >( "Muon.UseCocktail" );
    bool const jetResCorrUse = config.GetItem< bool >( "Jet.Resolutions.Corr.use" );
@@ -175,13 +169,13 @@ int main( int argc, char* argv[] ) {
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
       if( not fs::exists( RunConfigFile ) ) {
-         stringstream error;
+         std::stringstream error;
          error << "RunConfigFile '" << RunConfigFile << "' ";
          error << "in config file: '" << FinalCutsFile << "' not found!";
          throw Tools::config_error( error.str() );
       }
    }
-   if( !RunConfigFile.empty() ) cout << "INFO: Using Run config file: " << RunConfigFile << endl;
+   if( !RunConfigFile.empty() ) std::cout << "INFO: Using Run config file: " << RunConfigFile << std::endl;
 
    const string startDir = getcwd( NULL, 0 );
 
@@ -249,14 +243,13 @@ int main( int argc, char* argv[] ) {
    int    e = 0;                         // Event counter
    unsigned int skipped=0; //number of events skipped from run/LS config
 
-
    ReWeighter reweighter = ReWeighter( config );
 
    unsigned int analyzed_files = 0;
    unsigned int lost_files = 0;
 
    // loop over all files
-   vector<string>::const_iterator file_iter = input_files.begin();
+   std::vector<string>::const_iterator file_iter = input_files.begin();
 
    // initialize process info object
    ProcInfo_t info;
@@ -288,13 +281,13 @@ int main( int argc, char* argv[] ) {
          try {
             time_t rawtime;
             time ( &rawtime );
-            cout << "Opening time: " << ctime ( &rawtime );
+            std::cout << "Opening time: " << ctime ( &rawtime );
             inFile.open( fileName );
          } catch( std::runtime_error& e ) {
             // Wait for ( 10^numTrials - 1 ) seconds before retrying.
             //double const sleep = std::pow( 10, numTrials ) - 1.0;
             //boost::this_thread::sleep( boost::posix_time::seconds( sleep ) );
-            cout << "Did you use an absolute path to the .pxlio file?" << endl;
+            std::cout << "Did you use an absolute path to the .pxlio file?" << std::endl;
             if( numTrials < 3 ) {
                numTrials++;
                // Retry!
@@ -323,7 +316,7 @@ int main( int argc, char* argv[] ) {
          try{
              event_ptr=dynamic_cast<pxl::Event*>(inFile.readNextObject());
         }catch( std::runtime_error& e ){
-            cout <<"end of file or unreadable event.    "<<endl;
+            std::cout <<"end of file or unreadable event.    "<<std::endl;
             break;
         }
          if(!event_ptr) continue;
@@ -334,8 +327,8 @@ int main( int argc, char* argv[] ) {
 
          // Break the event loop if the current event is not sensible (formatted correctly).
          if( event.getUserRecords().size() == 0 ) {
-            cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << endl;
-            cout << "WARNING: Continue with next event." << endl;
+            std::cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << std::endl;
+            std::cout << "WARNING: Continue with next event." << std::endl;
             delete event_ptr;
             continue;
          }
@@ -419,9 +412,9 @@ int main( int argc, char* argv[] ) {
                Selector.performSelection(GenEvtView, TrigEvtView, 0);
                Selector.performSelection(RecEvtView, TrigEvtView, 0);
             } catch( Tools::unsorted_error &exc ) {
-               cerr << "[WARNING] (main): ";
-               cerr << "Found unsorted particle in event no. " << e << ". ";
-               cerr << "Skipping this event!" << std::endl;
+               std::cerr << "[WARNING] (main): ";
+               std::cerr << "Found unsorted particle in event no. " << e << ". ";
+               std::cerr << "Skipping this event!" << std::endl;
                delete event_ptr;
                continue;
             }
@@ -483,7 +476,7 @@ int main( int argc, char* argv[] ) {
             ( e < 1000 && e % 100 == 0 ) ||
             ( e < 10000 && e % 1000 == 0 ) ||
             ( e >= 10000 && e % 10000 == 0 ) ) {
-            cout << e << " Events analyzed (" << skipped << " skipped)" << endl;
+            std::cout << e << " Events analyzed (" << skipped << " skipped)" << std::endl;
          }
 
          //if( e % 100000 == 0 ) PrintProcessInfo( info );
@@ -524,12 +517,12 @@ int main( int argc, char* argv[] ) {
 
 void PrintProcessInfo( ProcInfo_t &info ) {
    gSystem->GetProcInfo( &info );
-   cout.precision( 1 );
-   cout << fixed;
-   cout << "--> Process info:" << endl;
-   cout << "    -------------" << endl;
-   cout << "    CPU time elapsed: " << info.fCpuUser << " s" << endl;
-   cout << "    Sys time elapsed: " << info.fCpuSys  << " s" << endl;
-   cout << "    Resident memory:  " << info.fMemResident / 1024. <<  " MB" << endl;
-   cout << "    Virtual memory:   " << info.fMemVirtual / 1024.  <<  " MB" << endl;
+   std::cout.precision( 1 );
+   std::cout << std::fixed;
+   std::cout << "--> Process info:" << std::endl;
+   std::cout << "    -------------" << std::endl;
+   std::cout << "    CPU time elapsed: " << info.fCpuUser << " s" << std::endl;
+   std::cout << "    Sys time elapsed: " << info.fCpuSys  << " s" << std::endl;
+   std::cout << "    Resident memory:  " << info.fMemResident / 1024. <<  " MB" << std::endl;
+   std::cout << "    Virtual memory:   " << info.fMemVirtual / 1024.  <<  " MB" << std::endl;
 }
