@@ -5,10 +5,6 @@
 #include <iostream>
 #include <csignal>
 #include <iomanip>
-#include "ControlPlotFactory/CcControl.hh"
-#include "ControlPlots2/RecControl.hh"
-#include "ControlPlots2/GenControl.hh"
-#include "EventClassFactory/CcEventClass.hh"
 
 #include "Tools/argstream.h"
 #include "Tools/Tools.hh"
@@ -28,12 +24,18 @@
 #include "Main/RunLumiRanges.hh"
 #include "Main/SkipEvents.hh"
 
-#ifdef validation
-#include "Validator/specialAna.hh"
+// Include user defined Analysis or use Validator as default
+// Implement your own analysis composer and use export to define the
+// header file as environment variable MYPXLCOMP.
+#define Q(x) #x
+#define QUOTE(x) Q(x)
+
+#ifdef MYPXLCOMP
+#include QUOTE(MYPXLCOMP)
+#else
+#include "Validator/AnalysisComposer.hh"
 #endif
-#ifndef validation
-#include "specialAna/specialAna.hh"
-#endif
+
 #include "Main/Systematics.hh"
 
 namespace fs = boost::filesystem;
@@ -57,6 +59,7 @@ int main( int argc, char* argv[] ) {
 
    TDirectory::AddDirectory( kFALSE ); // Force ROOT to give directories in our hand - Yes, we can
    TH1::AddDirectory( kFALSE );        // Force ROOT to give histograms in our hand - Yes, we can
+   AnalysisComposer thisAnalysis;
 
    // Variables for argstream.
    // The values they are initialized with serve as default values.
@@ -146,22 +149,6 @@ int main( int argc, char* argv[] ) {
    else cout << "INFO: Using plot-config file: " << PlotConfigFile << endl;
 
    const Tools::MConfig config( FinalCutsFile );
-   const Tools::MConfig XSections( XSectionsFile );
-   const Tools::MConfig PlotConfig( PlotConfigFile );
-
-   // All other arguments must be .pxlio files.
-   //
-   vector< string > input_files( ++arguments.begin(), arguments.end() );
-
-   const bool NoSpecialAna   = not runSpecialAna;
-   if(runSpecialAna){
-      NoCcEventClass=true;
-      NoCcControl=true;
-   }
-
-   const bool runCcEventClass = not NoCcEventClass;
-   const bool runCcControl    = not NoCcControl;
-
 
    // Get the run config file from config file.
    //
@@ -170,6 +157,8 @@ int main( int argc, char* argv[] ) {
    bool const muoCocktailUse = config.GetItem< bool >( "Muon.UseCocktail" );
    bool const jetResCorrUse = config.GetItem< bool >( "Jet.Resolutions.Corr.use" );
    bool const bJetUse = config.GetItem< bool >( "Jet.BJets.use" );
+   bool const usePDF = config.GetItem< bool >( "General.usePDF" );
+   bool const useJES = config.GetItem< bool >( "General.useJES" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
@@ -192,11 +181,7 @@ int main( int argc, char* argv[] ) {
    system( ( "mkdir -p " + outputDirectory ).c_str() );
    system( ( "cd " + outputDirectory ).c_str() );
    chdir( outputDirectory.c_str() );
-
    system( ( "cp " + FinalCutsFile  + " . " ).c_str() );
-   system( ( "cp " + XSectionsFile  + " . " ).c_str() );
-   system( ( "cp " + PlotConfigFile + " . " ).c_str() );
-
    if( !RunConfigFile.empty() ) system( ( "cp " + RunConfigFile + " . " ).c_str() );
 
    if( runOnData ) system( "mkdir -p Event-lists" );
@@ -209,15 +194,8 @@ int main( int argc, char* argv[] ) {
    pxl::Core::initialize();
    pxl::Hep::initialize();
 
-   // Configure fork:
-   pxl::AnalysisFork fork;
-   fork.setName("MISFork");
-
-
    // Initialize JetTypeWriter
    JetTypeWriter TypeWriter( config );
-
-
 
    //initialize the EventSelector
    EventSelector Selector( config );
@@ -234,64 +212,22 @@ int main( int argc, char* argv[] ) {
    // When running on data, we do not want to initialize the PDFSets as this
    // takes lots of resources.
    pdf::PDFTool *pdfTool = 0;
-   if( not runOnData && NoSpecialAna ){
+   if( not runOnData && usePDF ){
        pdfTool = new pdf::PDFTool( config, debug );
    }
    // When running on data, there is no PDF information. Thus, we cannot use
    // PDFTool to get the PDFInfo, so initialize it empty.
    // (This way, we can keep the same structure for data and MC in filling etc.)
-   pdf::PDFInfo const pdfInfo = (runOnData || !NoSpecialAna) ? pdf::PDFInfo() : pdfTool->getPDFInfo();
+   pdf::PDFInfo const pdfInfo = (runOnData or not usePDF) ? pdf::PDFInfo() : pdfTool->getPDFInfo();
 
-
-   // configure processes:
-   if( runCcControl ){
-      cp2::RecControl *plots = new cp2::RecControl( config, PlotConfig, &Selector );
-      fork.insertObject( plots, "RecControl" );
-
-      if( not runOnData ) {
-         cp2::GenControl *gen_plots = new cp2::GenControl();
-         fork.insertObject( gen_plots, "GenControl" );
-
-         CcControl *old_plots = new CcControl( config );
-         fork.insertObject( old_plots, "CcControl" );
-      }
-   }
-   if (runCcEventClass){
-      CcEventClass *cc_event = new CcEventClass( config,
-                                                 XSections,
-                                                 0,
-                                                 pdfInfo,
-                                                 &Selector,
-                                                 DumpECHistos
-                                                 );
-      fork.insertObject( cc_event, "CcEventClass" );
-
-      if( not runOnData ){
-         CcEventClass *cc_event_up = new CcEventClass( config,
-                                                       XSections,
-                                                       +1,
-                                                       pdfInfo,
-                                                       &Selector,
-                                                       DumpECHistos
-                                                       );
-         fork.insertObject( cc_event_up, "CcEventClass_JES_UP" );
-
-         CcEventClass *cc_event_down = new CcEventClass( config,
-                                                         XSections,
-                                                         -1,
+   // Get fork from AnalysisComposer
+   pxl::AnalysisFork fork = thisAnalysis.addForkObjects( config,
+                                                         outputDirectory,
                                                          pdfInfo,
-                                                         &Selector,
-                                                         DumpECHistos
-                                                         );
-         fork.insertObject( cc_event_down, "CcEventClass_JES_DOWN" );
-      }
-   }
+                                                         Selector,
+                                                         debug);
 
-   specialAna *ana=0;
-   if ( runSpecialAna ){
-      ana = new specialAna( config );
-      fork.insertObject( ana , "specialAna" );
-   }
+
    // begin analysis
    fork.beginJob();
    fork.beginRun();
@@ -430,7 +366,7 @@ int main( int argc, char* argv[] ) {
             Selector.performSelection(RecEvtView, TrigEvtView, 0);
          } else {
             // Don't do this on data, haha! And also not for special Ana hoho
-            if (NoSpecialAna){
+            if (usePDF){
                 pdfTool->setPDFWeights( event );
             }
             reweighter.ReWeightEvent( event );
@@ -460,15 +396,6 @@ int main( int argc, char* argv[] ) {
                // Don't do this on data!
                Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
             }
-            // create Copys of the original Event View and modify the JES
-            pxl::EventView *GenEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
-            event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
-            pxl::EventView *RecEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
-            event.setIndex( "Rec_JES_UP", RecEvtView_JES_UP );
-            pxl::EventView *GenEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
-            event.setIndex( "Gen_JES_DOWN", GenEvtView_JES_DOWN );
-            pxl::EventView *RecEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
-            event.setIndex( "Rec_JES_DOWN", RecEvtView_JES_DOWN );
 
             // Sometimes a particle is unsorted in an event, where it should be
             // sorted by pt. This seems to be a PXL problem.
@@ -508,7 +435,18 @@ int main( int argc, char* argv[] ) {
             //synchronize some user records
             Selector.synchronizeGenRec( GenEvtView, RecEvtView );
 
-            if( runCcEventClass ) {
+            if( useJES ) {
+
+               // create Copys of the original Event View and modify the JES
+               pxl::EventView *GenEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
+               event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
+               pxl::EventView *RecEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
+               event.setIndex( "Rec_JES_UP", RecEvtView_JES_UP );
+               pxl::EventView *GenEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
+               event.setIndex( "Gen_JES_DOWN", GenEvtView_JES_DOWN );
+               pxl::EventView *RecEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
+               event.setIndex( "Rec_JES_DOWN", RecEvtView_JES_DOWN );
+
                // SAME for JES_UP: modify Jets apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
                Selector.performSelection(GenEvtView_JES_UP, TrigEvtView, +1);
                Selector.performSelection(RecEvtView_JES_UP, TrigEvtView, +1);
@@ -549,35 +487,24 @@ int main( int argc, char* argv[] ) {
    pdfTool = 0;
 
    double dTime2 = pxl::getCpuTime();
-   cout << "Analyzed " << e << " Events, skipped " << skipped << ", elapsed CPU time: " << dTime2-dTime1 << " ("<< double(e)/(dTime2-dTime1) <<" evts per sec)" << endl;
+   std::cout << "Analyzed " << e << " Events, skipped " << skipped << ", elapsed CPU time: " << dTime2-dTime1 << " ("<< double(e)/(dTime2-dTime1) <<" evts per sec)" << std::endl;
    if( lost_files >= 0.5*( lost_files + analyzed_files ) ) {
-      cout << "Error: Too many files lost!" << endl;
+      std::cout << "Error: Too many files lost!" << std::endl;
       throw std::runtime_error( "Too many files lost." );
    } else if( lost_files > 0 ) {
-      cout << "Warning: " << lost_files << " of " << ( lost_files + analyzed_files ) << " files lost due to timeouts or read errors." << endl;
+      std::cout << "Warning: " << lost_files << " of " << ( lost_files + analyzed_files ) << " files lost due to timeouts or read errors." << std::endl;
    }
    if( (e+skipped) == 0 ) {
-      cout << "Error: No event analayzed!" << endl;
+      std::cout << "Error: No event analayzed!" << std::endl;
       throw std::runtime_error( "No event analayzed!" );
    }
-   cout << "\n\n\n" << endl;
+   std::cout << "\n\n\n" << std::endl;
 
 
    fork.endRun();
    fork.endJob();
 
-   if( ECMerger > 0 and runCcEventClass and not runOnData ) {
-      if( ECMerger == 1 ) {
-         cout << "Calling ECMerger..." << endl;
-         chdir( ".." );
-         system( ( Tools::musicAbsPath( "bin/ECMerger" ) + " " + outputDirectory + "/EC_*.root -o " + outputDirectory +  "/EC_Final.root" ).c_str() );
-      } else if( ECMerger == 2 ) {
-         cout << "Calling ECMerger2 ..." << endl;
-         chdir( ".." );
-         system( ( Tools::musicAbsPath( "bin/ECMerger.py" ) + " --jes " + outputDirectory + "/EC_*.root -o " + outputDirectory + "/EC_Final.root" ).c_str() );
-      }
-      cout << "Done." << endl;
-   }
+   thisAnalysis.endAnalysis();
 
    PrintProcessInfo( info );
    return 0;
