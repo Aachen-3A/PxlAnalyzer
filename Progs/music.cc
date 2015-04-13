@@ -6,7 +6,6 @@
 #include <csignal>
 #include <iomanip>
 
-#include "Tools/argstream.h"
 #include "Tools/Tools.hh"
 
 #pragma GCC diagnostic push
@@ -14,6 +13,7 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #include <boost/filesystem/path.hpp>
 #pragma GCC diagnostic pop
+#include "boost/program_options.hpp"
 
 #include "Main/EventAdaptor.hh"
 #include "Main/JetTypeWriter.hh"
@@ -39,8 +39,17 @@
 #include "Main/Systematics.hh"
 
 namespace fs = boost::filesystem;
+namespace po = boost::program_options;
+//~ using namespace std;
 
-using namespace std;
+namespace
+{
+ // Define error messages for program_options
+  const size_t ERROR_IN_COMMAND_LINE = 1;
+  const size_t SUCCESS = 0;
+  const size_t ERROR_UNHANDLED_EXCEPTION = 2;
+
+} // namespace
 
 //----------------------------------------------------------------------
 
@@ -69,8 +78,8 @@ int main( int argc, char* argv[] ) {
    //
    string outputDirectory = "./MusicOutDir";
    int numberOfEvents = -1;
-   string XSectionsFile( "$MUSIC_BASE/ConfigFiles/XSections.txt" );
-   string PlotConfigFile( "$MUSIC_BASE/ConfigFiles/ControlPlots2.cfg" );
+   std::string FinalCutsFile;
+   std::vector<std::string> input_files;
 
    // Debug levels are:
    //    - 0: Display only ERRORS/EXCEPTIONS
@@ -90,54 +99,57 @@ int main( int argc, char* argv[] ) {
    // e.g.:
    // "[DEBUG] (ParticleMatcher): Something's fishy!"
    // Please keep to that.
+
    int debug = 1;
+   std::vector< string > arguments;
 
-   // When running on the local T2, the output of a classification job can
-   // become too large for the output SandBox. When switching off the JES
-   // merging, the output is effectively reduced by almost a factor of 2.
-   unsigned int ECMerger = 2;
-   bool NoCcControl    = false;
-   bool runSpecialAna   = false;
-   bool NoCcEventClass = false;
-   bool DumpECHistos   = false;
-   vector< string > arguments;
 
-   argstream as( argc, argv );
 
-   as >> help()
-      >> parameter( 'o', "Output", outputDirectory, "Define the output directory.", false )
-      >> parameter( 'N', "Num", numberOfEvents, "Number of events to analyze.", false )
-      >> parameter( 'x', "XSections", XSectionsFile, "Path to cross-sections file.", false )
-      >> parameter( 'p', "PlotConfig", PlotConfigFile, "Path to the plot-config file.", false )
-      >> parameter(      "debug", debug, "Set the debug level. 0 = ERRORS, 1 = WARNINGS, 2 = INFO, 3 = DEBUG, 4 = EVEN MORE DEBUG", false )
-      >> parameter( 'M', "ECMerger", ECMerger, "Which ECMerger to use: 0 = Don't merge JES files, 1 = use ECMerger, 2 = use ECMerger2.", false )
-      >> option(         "NoCcEventClass", NoCcEventClass, "Do NOT create EventClass file. (Not allowed if --NoCcControl specified!)" )
-      >> option(         "NoCcControl",  NoCcControl, "Do NOT make ControlPlots. (Not allowed if --NoCcEventClass specified!)" )
-      >> option(         "SpecialAna",  runSpecialAna, "Do perform dedicated analysis. Sets NoCcEventClass and NoCcControl" )
-      >> option(         "DumpECHistos", DumpECHistos, "Write out all histograms into a separate file (slow!)." )
-      >> values< string >( back_inserter( arguments ), "CONFIG_FILE and PXLIO_FILE(S)." );
+   po::options_description genericOptions("Generic options");
+      genericOptions.add_options()
+      ( "help", "produce help message")
+      ( "Output,o", po::value<std::string>(&outputDirectory) ,"Output directory")
+      ( "CONFIG", po::value<std::string>(&FinalCutsFile)->required() ,
+                  "The main config file")
+      ( "PXLIO_FILE(S)", po::value< std::vector<std::string> >( &input_files )
+                        ->required() ,
+                        "A list of pxlio files to run on")
+      ( "Num,N", po::value<int>(&numberOfEvents),
+                     "Number of events to analyze.")
+      ("debug", po::value<int>(&debug), "Set the debug level.\n"
+                                          "0 = ERRORS,"
+                                          "1 = WARNINGS,"
+                                          "2 = INFO, 3 = DEBUG,"
+                                          "4 = EVEN MORE DEBUG");
 
-   as.defaultErrorHandling();
+   // add positional arguments
+   po::positional_options_description pos;
+   pos.add("CONFIG", 1);
+   pos.add("PXLIO_FILE(S)", -1);
 
-   //if( NoCcEventClass and NoCcControl ) {
-      //cerr << "ERROR: Options: --NoCcControl and --NoCcEventClass not allowed simultaneously!" << endl;
-      //cout << as.usage() << endl;
-      //exit( 1 );
-   //}
+   // get user defined command line arguments
+   po::options_description analysisOptions = thisAnalysis.getCmdArguments( );
 
-   if( arguments.size() < 2 ) {
-      cerr << "ERROR: At least CONFIG_FILE and one PXLIO_FILE needed as arguments!" << endl << endl;
-      cout << as.usage() << endl;
-      exit( 1 );
-   }
+   // Add all option groups
+   po::options_description allOptions('Available options');
+   allOptions.add( genericOptions ).add( analysisOptions );
 
-   // First argument is the config file.
-   //
-   string FinalCutsFile( arguments.at( 0 ) );
-
-   FinalCutsFile  = Tools::AbsolutePath( FinalCutsFile );
-   XSectionsFile  = Tools::AbsolutePath( XSectionsFile );
-   PlotConfigFile = Tools::AbsolutePath( PlotConfigFile );
+   // parse command line options
+   po::variables_map vm;
+   try{
+      po::store(po::command_line_parser(argc, argv).
+             options(allOptions).positional(pos).run(), vm);
+      if( vm.count("help") ){
+         std::cout << allOptions << std::endl;
+         return 0;
+      }
+      po::notify(vm);
+   }catch(po::error& e)
+    {
+      std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
+      std::cerr << allOptions << std::endl;
+      return ERROR_IN_COMMAND_LINE;
+    }
 
    if( not fs::exists( FinalCutsFile ) ) throw Tools::file_not_found( FinalCutsFile, "Config file" );
    else cout << "INFO: Using Config file: " << FinalCutsFile << endl;
