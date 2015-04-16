@@ -26,15 +26,11 @@
 
 // Include user defined Analysis or use Validator as default
 // Implement your own analysis composer and use export to define the
-// header file as environment variable MYPXLCOMP.
+// header file as environment variable MYPXLANA.
 #define Q(x) #x
 #define QUOTE(x) Q(x)
 
-#ifdef MYPXLCOMP
-#include QUOTE(MYPXLCOMP)
-#else
-#include "Validator/AnalysisComposer.hh"
-#endif
+#include QUOTE(MYPXLANA)
 
 #include "Main/Systematics.hh"
 
