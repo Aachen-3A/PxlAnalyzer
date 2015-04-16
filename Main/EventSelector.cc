@@ -3,7 +3,6 @@
 #include <stdexcept>
 #include <algorithm>
 #include "Tools/Tools.hh"
-#include "EventClassFactory/CcEventClass.hh"
 #include "Tools/PXL/Sort.hh"
 
 using namespace pxl;
