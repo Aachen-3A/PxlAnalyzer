@@ -14,7 +14,7 @@
 #include "boost/program_options.hpp"
 namespace po = boost::program_options;
 using std::string;
-class MUSiCComposer : public AnalysisComposer{
+class AnalysisComposer {
 
 public:
     AnalysisComposer();

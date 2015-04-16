@@ -1,4 +1,4 @@
-#include "Main/AnalysisComposer.hh"
+#include "Validator/AnalysisComposer.hh"
 
 // some standard libraries
 #include <exception>
