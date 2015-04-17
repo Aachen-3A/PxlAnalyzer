@@ -7,6 +7,7 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export MUSIC_BASE=$DIR
+export PXLANA=$DIR
 export PATH=$PATH:$MUSIC_BASE/bin;
 export PYTHONPATH=$MUSIC_BASE/python:$MUSIC_BASE/MISv2/MISMaster:$PYTHONPATH
 
