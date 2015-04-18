@@ -1,0 +1,19 @@
+FilterSet.Name = AllFilters
+FilterSet.GenList =
+FilterSet.RecList =
+#scrapingFilter,cschalofilter,hcallasereventfilter,ecaldeadcellfilter,trackingfailurefilter,eebadscfilter,muonpfcandidatefilter,ecallasercorrfilter,coherentnoiserelativefilter,coherentnoiseabsolutefilter
+
+PV.N.min = 1
+PV.Z.max = 24
+PV.Rho.max = 2
+PV.NDOF.min = 5
+
+# HCAL noise:
+HCAL.Noise.ID.use = 0
+HCAL.Noise.ID.name = "HCALNoisy"
+
+Pileup.UsePileupReWeighting = 0
+Pileup.DataHistFile = "$MUSIC_BASE/ConfigFiles/Data_PileUp_pxlCorr_22Jan2013.root"
+Pileup.DataHistName = "pileup"
+Pileup.GenHistFile = "$MUSIC_BASE/ConfigFiles/MC_PileUp_SU12_S10.root"
+Pileup.GenHistName = "pileup"

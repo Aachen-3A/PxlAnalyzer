@@ -1,0 +1,13 @@
+# MET cuts:
+MET.use = 1
+MET.IdTag = 1
+# MET Type to be used in Gen (especially important for matching).
+MET.Type.Gen = slimmedMETs_gen
+# Pile-Up (Type-0 PC), JEC (Type-I) and xy-shift corrected MET.
+MET.Type.Rec = slimmedMETs
+
+MET.pt.min = 50
+MET.dPhi.Ele.min = 0.1
+MET.dPhi.Ele.min = 0.1
+
+MET.Error.Fakes = 0.0

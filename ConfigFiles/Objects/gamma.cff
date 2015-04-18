@@ -1,0 +1,122 @@
+# Photon cuts and isolation.
+Gamma.use = 1
+Gamma.IdTag = 1
+Gamma.Type.Gen = "Gamma"
+Gamma.Type.Rec = "Gamma"
+Gamma.pt.min = 25
+Gamma.Eta.Barrel.max = 1.442
+Gamma.Eta.Endcap.min = 1.56
+Gamma.Eta.Endcap.max = 2.5
+Gamma.DeltaR.max = 0.4
+Gamma.UseEndcap = 0
+Gamma.UseConverted = 1
+Gamma.UseSeedVeto = 1
+Gamma.RejectOutOfTime = 1
+# Set CorrFactor.max = -1 to deactivate
+Gamma.CorrFactor.max = 3
+Gamma.Barrel.SigmaIetaIeta.min = 0.001    # Spike cleaning.
+Gamma.Barrel.SigmaIetaIeta.max = 0.011
+Gamma.Endcap.SigmaIetaIeta.max = 0.031
+#
+
+#
+# CutBasedPhotonID2012 from flag
+# See also:
+# https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012
+#
+# Use the following set of cuts?
+Gamma.CutBasedPhotonID2012Flag.use = 1
+Gamma.IDFlag = PhotonCutBasedIDTight
+
+# end CutBasedPhotonID2012Flag
+
+
+# CutBasedPhotonID2012
+# See also:
+# https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012
+#
+# Use the following set of cuts?
+Gamma.CutBasedPhotonID2012.use = 0
+
+Gamma.Rho.Label = "rho44"
+# Barrel values:
+Gamma.Barrel.ElectronVeto.Require = 1
+Gamma.Barrel.HoEm2012.max = 0.05
+Gamma.Barrel.PFIsoChargedHadron.max = 0.7
+Gamma.Barrel.PFIsoNeutralHadron.Offset = 0.4
+Gamma.Barrel.PFIsoNeutralHadron.Slope = 0.04
+Gamma.Barrel.PFIsoPhoton.Offset = 0.5
+Gamma.Barrel.PFIsoPhoton.Slope = 0.005
+# Endcap values:
+Gamma.Endcap.ElectronVeto.Require = 1
+Gamma.Endcap.HoEm2012.max = 0.05
+Gamma.Endcap.PFIsoChargedHadron.max = 0.5
+Gamma.Endcap.PFIsoNeutralHadron.Offset = 1.5
+Gamma.Endcap.PFIsoNeutralHadron.Slope = 0.04
+Gamma.Endcap.PFIsoPhoton.Offset = 1.0
+Gamma.Endcap.PFIsoPhoton.Slope = 0.005
+# end CutBasedPhotonID2012
+#
+# Vgamma2011PhotonID
+# See also:
+# https://twiki.cern.ch/twiki/bin/view/CMS/Vgamma2011PhotonID
+#
+# Use to following set of cuts?
+Gamma.Vgamma2011PhotonID.use = 0
+Gamma.HoEm.max = 0.05
+# Barrel values:
+Gamma.Barrel.TrackIso.Offset = 2.0
+Gamma.Barrel.TrackIso.Slope = 0.001
+Gamma.Barrel.TrackIso.RhoSlope = 0.0167
+Gamma.Barrel.ECALIso.Offset = 4.2
+Gamma.Barrel.ECALIso.Slope = 0.006
+Gamma.Barrel.ECALIso.RhoSlope = 0.183
+Gamma.Barrel.HCALIso.Offset = 2.2
+Gamma.Barrel.HCALIso.Slope = 0.0025
+Gamma.Barrel.HCALIso.RhoSlope = 0.062
+# Endcap values:
+Gamma.Endcap.TrackIso.Offset = 2.0
+Gamma.Endcap.TrackIso.Slope = 0.001
+Gamma.Endcap.TrackIso.RhoSlope = 0.032
+Gamma.Endcap.ECALIso.Offset = 4.2
+Gamma.Endcap.ECALIso.Slope = 0.006
+Gamma.Endcap.ECALIso.RhoSlope = 0.09
+Gamma.Endcap.HCALIso.Offset = 2.2
+Gamma.Endcap.HCALIso.Slope = 0.0025
+Gamma.Endcap.HCALIso.RhoSlope = 0.180
+# end of Vgamma2011PhotonID
+# ID:
+Gamma.ID.use = 0
+Gamma.ID.name = PhotonCutBasedIDTight
+#  R19, R29 are ignored if AdditionalSpikeCleaning = True.
+Gamma.AdditionalSpikeCleaning = 0
+Gamma.R19.max = 1000000
+Gamma.R29.max = 0.9
+# Errors:
+# No direct comparison between data and MC.
+# Use the uncertainties provided in CMS-EXO-11-034, Fig. 3, Eq. 1.
+Gamma.Error.Fakes = 0.4
+
+############################################################
+## Effective area based Iso correction aka rho correction ##
+############################################################
+# See the documentation of BinnedMapping to understand the following config options.
+#
+# All values from:
+# https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonID2012#Effective_Areas_for_rho_correcti
+# (r20: 2013-01-10)
+
+#Gamma.EffectiveArea.File = "$MUSIC_BASE/ConfigFiles/PhotonEffectiveArea.txt"
+
+# If true, the given eta values are considered abolute.
+# No negative values allowed!
+Gamma.EffArea.abs_eta = 1
+
+Gamma.EffArea.eta_edges = 0.0, 1.0, 1.479, 2.0, 2.2, 2.3, 2.4
+
+Gamma.EffArea.EA_charged_hadrons = 0.012, 0.010, 0.014, 0.012, 0.016, 0.020, 0.012
+
+Gamma.EffArea.EA_neutral_hadrons = 0.030, 0.057, 0.039, 0.015, 0.024, 0.039, 0.072
+
+Gamma.EffArea.EA_photons = 0.148, 0.130, 0.112, 0.216, 0.262, 0.260, 0.266
+

@@ -1,0 +1,98 @@
+############################
+##   Cuts and Isolation   ##
+############################
+# See also:
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID
+Jet.use = 1
+Jet.Type.Gen = "AK5"
+Jet.Type.Rec = "AK5"
+Jet.pt.min = 50
+Jet.eta.max = 2.4
+Jet.DeltaR.max = 0.5
+Jet.isPF = 1
+Jet.IdTag = 1
+Jet.ID.use = 1
+Jet.ID.name = "LOOSE"
+# See also:
+# https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources?rev=29#2012_JEC
+Jet.Error.JESType = "Total"
+Jet.Error.JESFile = "$MUSIC_BASE/ConfigFiles/Summer13_V5_DATA_UncertaintySources_AK5PFchs.txt"
+Jet.Error.Fakes = 0.0
+# If Jet.ID.use = False, use the following selection:
+# PFJetID (LOOSE):
+Jet.NeutralHadronEnergyFraction.max = 0.99  # must be < 0.99!
+Jet.NeutralEMEnergyFraction.max = 0.99      # must be < 0.99!
+Jet.NumConstituents.min = 2
+# Only if |eta| > 2.4:
+Jet.ChargedHadronEnergyFraction.min = 0.0  # must be > 0.0
+Jet.ChargedEMEnergyFraction.max = 0.99     # must be < 0.99!
+Jet.chargedMultiplicity.min = 1
+# end of PFJetID
+
+############################
+##         Gen            ##
+############################
+Jet.Gen.HadOverEm.min = 0.0
+Jet.Gen.HadEFrac.min = 0.05
+# BJets?
+Jet.BJets.use = 0
+# Possible B-Jet algorithms:
+# - combinedSecondaryVertexBJetTags
+# - jetBProbabilityBJetTags
+# - jetProbabilityBJetTags
+# - simpleSecondaryVertexBJetTags
+# - softElectronByIP3dBJetTags
+# - softElectronByPtBJetTags
+# - softMuonBJetTags
+# - softMuonByIP3dBJetTags
+# - softMuonByPtBJetTags
+# - trackCountingHighEffBJetTags
+# - trackCountingHighPurBJetTags
+
+############################
+##       B Jets           ##
+############################
+Jet.BJets.Algo = "combinedInclusiveSecondaryVertexV2BJetTags"
+Jet.BJets.Discr.min = -9999
+# Choose Algorithm for Flavour Identification of (B)Jets:
+# - algoFlavour
+# - physicsFlavour
+Jet.BJets.genFlavourAlgo = "algoFlavour"
+Jet.BJets.Gen.Label = "genBJet"
+
+############################
+## Resolution Corrections ##
+############################
+
+# Measurements show that the jet energy resolution (JER) in data is worse than in the simulation.
+# See the documentation of BinnedMapping to understand the following config options.
+#
+# All values from:
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetResolution?rev=32
+
+# Switch for Jet Resolution correction
+Jet.Resolutions.Corr.use = 1
+
+#use 8tev numbers at the moment
+#Jet.Resolutions.Unmatched.File
+Jet.Resolution.UnmatchedFile = "$MUSIC_BASE/ConfigFiles/InputFiles/JetResolutionInputAK5PFCHS.txt"
+
+# If true, the given eta values are considered abolute.
+# No negative values allowed!
+Jet.Resolution.abs_eta
+
+# Width of distribution (recPt - genPt), privately studied on MC (feat. M. Weber).
+Jet.Resolution.sigma_MC = 7.2
+
+Jet.Resolution.eta_edges = 0.0, 0.5, 1.1, 1.7, 2.3, 5.0
+
+Jet.Resolution.data_MC_ratio = 1.052, 1.057, 1.096, 1.134, 1.288
+
+#################
+## Sytematics  ##
+#################
+
+# The uncertainties for resolution corrections are not used at the moment, only here for completeness.
+#Jet.Syst.Resolution.data_MC_stat = 0.012, 0.012, 0.017, 0.035, 0.127
+#Jet.Syst.Resolution.data_MC_sys_up = 0.062, 0.056, 0.063, 0.087, 0.155
+#Jet.Syst.Resolution.data_MC_sys_down = 0.061, 0.055, 0.062, 0.085, 0.153

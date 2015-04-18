@@ -1,0 +1,11 @@
+
+Generator.BinningValue.max = 0
+Generator.Mass.max = 0
+Generator.Mass.min = 0
+Generator.Mass.IDs =
+Generator.Mass.mothers =
+
+Generator.pt.max = 0
+Generator.pt.min = 0
+Generator.pt.IDs =
+Generator.pt.mothers =

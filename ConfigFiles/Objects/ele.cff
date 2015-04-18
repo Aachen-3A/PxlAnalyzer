@@ -1,0 +1,100 @@
+Ele.use = 1
+Ele.Type.Gen = "Ele"
+Ele.Type.Rec = "Ele"
+Ele.pt.min = 25
+Ele.eta.Barrel.max = 1.442
+Ele.eta.Endcap.min = 1.56
+Ele.eta.Endcap.max = 2.5
+Ele.DeltaR.max = 0.4
+Ele.InvertIsolation = 0
+Ele.Rho.Label = "fixedGridRhoFastjetAll"
+
+# ID method to use. Supported:
+# - "CB"
+# - "HEEP"
+Ele.ID.Type = "HEEP"
+Ele.IdTag = 1
+
+# CutBasedID (Tight) (With special 2011 cuts!):
+# See also:
+# https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30
+# CBID = Cut Based IDentification
+##next option new in miniAOD
+Ele.CBID.usebool = 1
+Ele.CBID.boolname = cutBasedElectronID-PHYS14-PU20bx25-V0-miniAOD-standalone-loose
+Ele.CBID.fBrem.min = 0.15           # Only for 2011!
+# lowEta: |eta|<1.0                 # Only for 2011!
+Ele.CBID.lowEta.fBrem.min = 0.0     # Only for 2011!
+Ele.CBID.lowEta.EoverPin.min = 0.95 # Only for 2011!
+# Barrel vaules:
+Ele.CBID.Barrel.DEtaIn.max = 0.004
+Ele.CBID.Barrel.DPhiIn.max = 0.03
+Ele.CBID.Barrel.sigmaIetaIeta.max = 0.01
+Ele.CBID.Barrel.HoE.max = 0.12
+Ele.CBID.Barrel.Dxy.max = 0.02
+Ele.CBID.Barrel.Dz.max = 0.1
+Ele.CBID.Barrel.RelInvEpDiff.max = 0.05
+Ele.CBID.Barrel.PFIsoRel.max = 0.1
+Ele.CBID.Barrel.NInnerLayerLostHits.max = 0
+Ele.CBID.Barrel.Conversion.reject = 1
+# Endcap values:
+Ele.CBID.Endcap.DEtaIn.max = 0.005
+Ele.CBID.Endcap.DPhiIn.max = 0.02
+Ele.CBID.Endcap.sigmaIetaIeta.max = 0.03
+Ele.CBID.Endcap.HoE.max = 0.1
+Ele.CBID.Endcap.Dxy.max = 0.02
+Ele.CBID.Endcap.Dz.max = 0.1
+Ele.CBID.Endcap.RelInvEpDiff.max = 0.05
+Ele.CBID.Endcap.PFIsoRel.max = 0.1
+Ele.CBID.Endcap.NInnerLayerLostHits.max = 0
+Ele.CBID.Endcap.Conversion.reject = 1
+# end CutBasedID
+#
+# HEEP v4.1:
+# See also:
+# https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
+Ele.HEEPID.usebool = 1
+Ele.HEEPID.boolname = heepElectronID-HEEPV50-prePHYS14-25ns-miniAOD
+# HEEPID = High Energy Electron Pairs IDentification
+Ele.HEEPID.RequireEcalDriven = 1
+Ele.HEEPID.RejectOutOfTime = 1
+Ele.HEEPID.EoP.max = 10
+# Barrel values:
+Ele.HEEPID.Barrel.DEta.max = 0.005
+Ele.HEEPID.Barrel.DPhi.max = 0.06
+Ele.HEEPID.Barrel.HoEM.max = 0.05
+Ele.HEEPID.Barrel.TrkIso.max = 5
+Ele.HEEPID.Barrel.HcalD1.Offset = 2
+Ele.HEEPID.Barrel.HcalD1.Slope = 0.03
+Ele.HEEPID.Barrel.HcalD1.RhoSlope = 0.28
+Ele.HEEPID.Barrel.NInnerLayerLostHits.max = 1
+Ele.HEEPID.Barrel.dxy.max = 0.02
+Ele.HEEPID.Barrel.R29.max = 0.9
+Ele.HEEPID.Barrel.E1x5.min = 0.83
+Ele.HEEPID.Barrel.E2x5.min = 0.94
+# Endcap values:
+Ele.HEEPID.Endcap.DEta.max = 0.007
+Ele.HEEPID.Endcap.DPhi.max = 0.06
+Ele.HEEPID.Endcap.HoEM.max = 0.05
+Ele.HEEPID.Endcap.TrkIso.max = 5
+Ele.HEEPID.Endcap.HcalD1.Offset = 2.5
+Ele.HEEPID.Endcap.HcalD1.Slope = 0.03
+Ele.HEEPID.Endcap.HcalD1.RhoSlope = 0.28
+Ele.HEEPID.Endcap.NInnerLayerLostHits.max = 1
+Ele.HEEPID.Endcap.dxy.max = 0.05
+Ele.HEEPID.Endcap.SigmaIetaIeta.max = 0.03
+# end HEEP v4.1
+
+# Errors:
+# Electron fake rate difference between MC and data: AN2012/415, Fig.21.
+Ele.Error.Fakes = 0.5
+# Same-sign studies in AN2011/256, Sec. 6.2, Fig. 9 show a scale factor for data
+# to MC 1.2 with 20 % uncertainty.
+Ele.Error.Charge = 0.3
+
+#################
+## Sytematics  ##
+#################
+# configuration for systematic uncertainties
+Ele.Syst.Scale.Barrel = 0.004
+Ele.Syst.Scale.Endcap = 0.008

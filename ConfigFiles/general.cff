@@ -1,0 +1,49 @@
+# this is the general ConfigFile for the PxlAnalyzer
+# You should import it at the beginning of your custom configs in
+# your custom Analysis
+
+# Center of mass energy in GeV.
+General.CME = 13000
+General.FastSim = 0
+General.IgnoreOverlaps = 0
+General.RunOnData = 0
+General.DataPeriod = "13TeV"
+
+General.useJES = 1
+
+# Comma separated list of files with events to be skipped:
+SkipEvents.FileList =
+
+Matching.DeltaR.particles = 0.2
+Matching.DeltaR.met = 0.5
+Matching.DeltaPtOverPt = 1000000.0      # off
+Matching.DeltaCharge = 10.0             # off
+
+# initialize all features deactivated as default
+Generator.use = 0
+General.UseGeneratorWeights = 1
+import "$PXLANA/ConfigFiles/generator.cff"
+
+General.usePDF = 0
+import "$PXLANA/ConfigFiles/pdf.cff"
+
+General.UseTriggers = 1
+import "$PXLANA/ConfigFiles/trigger.cff"
+
+# Configuration files for objects (cuts and systematics)
+
+# non-particle includes (Filter, Primary Vertex, etc.)
+import "$PXLANA/ConfigFiles/Objects/non_particle.cff"
+
+import "$PXLANA/ConfigFiles/Objects/muon.cff"
+
+import "$PXLANA/ConfigFiles/Objects/ele.cff"
+
+import "$PXLANA/ConfigFiles/Objects/gamma.cff"
+
+import "$PXLANA/ConfigFiles/Objects/jet.cff"
+
+import "$PXLANA/ConfigFiles/Objects/met.cff"
+
+import "$PXLANA/ConfigFiles/Objects/tau.cff"
+

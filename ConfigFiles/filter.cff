@@ -1,0 +1,4 @@
+FilterSet.Name = AllFilters
+FilterSet.GenList =
+FilterSet.RecList =
+#scrapingFilter,cschalofilter,hcallasereventfilter,ecaldeadcellfilter,trackingfailurefilter,eebadscfilter,muonpfcandidatefilter,ecallasercorrfilter,coherentnoiserelativefilter,coherentnoiseabsolutefilter
