@@ -7,11 +7,19 @@
 #include "Tools/Tools.hh"
 
 PhotonEffectiveArea::PhotonEffectiveArea( Tools::MConfig const &config ) :
-   m_EA_config( Tools::AbsolutePath( config.GetItem< std::string >( "Gamma.EffectiveArea.File" ) ) ),
 
-   m_eta_EAchargedHadrons_map( m_EA_config, "eta_edges", "EA_charged_hadrons", "abs_eta" ),
-   m_eta_EAneutralHadrons_map( m_EA_config, "eta_edges", "EA_neutral_hadrons", "abs_eta" ),
-   m_eta_EAphotons_map(        m_EA_config, "eta_edges", "EA_photons", "abs_eta" )
+   m_eta_EAchargedHadrons_map( config,
+                               "Gamma.EffArea.eta_edges",
+                               "Gamma.EffArea.EA_charged_hadrons",
+                               "Gamma.EffArea.abs_eta" ),
+   m_eta_EAneutralHadrons_map( config,
+                               "Gamma.EffArea.eta_edges",
+                               "Gamma.EffArea.EA_neutral_hadrons",
+                               "Gamma.EffArea.abs_eta" ),
+   m_eta_EAphotons_map(        config,
+                               "Gamma.EffArea.eta_edges",
+                               "Gamma.EffArea.EA_photons",
+                               "Gamma.EffArea.abs_eta" )
 {
 }
 

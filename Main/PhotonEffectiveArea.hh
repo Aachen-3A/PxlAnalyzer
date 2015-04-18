@@ -19,8 +19,6 @@ class PhotonEffectiveArea {
                      };
 
    private:
-      Tools::MConfig const m_EA_config;
-
       BinnedMapping const m_eta_EAchargedHadrons_map;
       BinnedMapping const m_eta_EAneutralHadrons_map;
       BinnedMapping const m_eta_EAphotons_map;

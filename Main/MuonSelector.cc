@@ -17,7 +17,7 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_iso_useRhoCorr(             cfg.GetItem< bool   >( "Muon.Iso.UseRhoCorr" , false ) ),
     m_muo_id_type(                    cfg.GetItem< string >( "Muon.ID.Type" , "isHighPtMuon.bool" ) ),
     m_muo_HighPtSwitchPt(             cfg.GetItem< double >( "Muon.ID.HighPtSwitchPt" , 200 ) ),
-    m_muo_EA( cfg , "Muon.EffectiveArea.File" ),
+    m_muo_EA( cfg , "Muon" ),
 
 
     //cut variables:

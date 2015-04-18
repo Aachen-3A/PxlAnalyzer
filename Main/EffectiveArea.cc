@@ -6,12 +6,20 @@
 
 #include "Tools/Tools.hh"
 
-EffectiveArea::EffectiveArea( Tools::MConfig const &config , std::string EA_File) :
-   m_EA_config( Tools::AbsolutePath( config.GetItem< std::string >(EA_File) ) ),
+EffectiveArea::EffectiveArea( Tools::MConfig const &config , std::string ObjectName) :
 
-   m_eta_EAchargedHadrons_map( m_EA_config, "eta_edges", "EA_charged_hadrons", "abs_eta" ),
-   m_eta_EAneutralHadrons_map( m_EA_config, "eta_edges", "EA_neutral_hadrons", "abs_eta" ),
-   m_eta_EAphotons_map(        m_EA_config, "eta_edges", "EA_photons", "abs_eta" )
+   m_eta_EAchargedHadrons_map( config,
+                               ObjectName + ".EffArea.eta_edges",
+                               ObjectName + ".EffArea.EA_charged_hadrons",
+                               ObjectName + ".EffArea.abs_eta" ),
+   m_eta_EAneutralHadrons_map( config,
+                               ObjectName + ".EffArea.eta_edges",
+                               ObjectName + ".EffArea.EA_neutral_hadrons",
+                               ObjectName + ".EffArea.abs_eta" ),
+   m_eta_EAphotons_map(        config,
+                               ObjectName + ".EffArea.eta_edges",
+                               ObjectName + ".EffArea.EA_photons",
+                               ObjectName + ".EffArea.abs_eta" )
 {
 }
 

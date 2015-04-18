@@ -83,7 +83,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
 
    // CutBasedPhotonID2012:
    m_gam_CutBasedPhotonID2012_use( cfg.GetItem< bool >( "Gamma.CutBasedPhotonID2012.use" ) ),
-   m_gam_EA( cfg , "Gamma.EffectiveArea.File" ),
+   m_gam_EA( cfg , "Gamma" ),
    m_gam_rho_label( cfg.GetItem< string >( "Gamma.Rho.Label" ) ),
    // Barrel:
    m_gam_barrel_electronVeto_require(      cfg.GetItem< bool   >( "Gamma.Barrel.ElectronVeto.Require" ) ),

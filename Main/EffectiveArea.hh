@@ -6,7 +6,7 @@
 
 class EffectiveArea {
    public:
-      EffectiveArea( Tools::MConfig const &config, std::string EA_File );
+      EffectiveArea( Tools::MConfig const &config, std::string ObjectName );
       ~EffectiveArea() {}
 
       double getEffectiveArea( double const eta,
@@ -19,8 +19,6 @@ class EffectiveArea {
                      };
 
    private:
-      Tools::MConfig const m_EA_config;
-
       BinnedMapping const m_eta_EAchargedHadrons_map;
       BinnedMapping const m_eta_EAneutralHadrons_map;
       BinnedMapping const m_eta_EAphotons_map;
