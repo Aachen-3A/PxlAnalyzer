@@ -8,11 +8,11 @@
 
 Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    // read uncertainties from config
-   m_ratioEleBarrel(cfg.GetItem< double      >( "Syst.Ele.Scale.Barrel" ) ),
-   m_ratioEleEndcap(cfg.GetItem< double      >( "Syst.Ele.Scale.Endcap" ) ),
-   m_scaleMuo(      cfg.GetItem< double      >( "Syst.Muo.Scale" ) ),
-   m_resMuo(        cfg.GetItem< double      >( "Syst.Muo.Res" ) ),
-   m_ratioTau(      cfg.GetItem< double      >( "Syst.Tau.Scale" ) ),
+   m_ratioEleBarrel(cfg.GetItem< double      >( "Ele.Syst.Scale.Barrel" ) ),
+   m_ratioEleEndcap(cfg.GetItem< double      >( "Ele.Syst.Scale.Endcap" ) ),
+   m_scaleMuo(      cfg.GetItem< double      >( "Muon.Syst.Scale" ) ),
+   m_resMuo(        cfg.GetItem< double      >( "Muon.Syst.Res" ) ),
+   m_ratioTau(      cfg.GetItem< double      >( "Tau.Syst.Scale" ) ),
    // read lepton names from config
    m_TauType(       cfg.GetItem< std::string >( "Tau.Type.Rec" ) ),
    m_JetType(       cfg.GetItem< std::string >( "Jet.Type.Rec" ) ),
