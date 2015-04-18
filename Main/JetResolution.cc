@@ -7,15 +7,12 @@
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 
 JetResolution::JetResolution( Tools::MConfig const &config ) :
-    m_jet_res_config( Tools::AbsolutePath( config.GetItem< std::string >( "Jet.Resolutions.Corr.File" ) ) ),
 
-    //m_sigma_MC( m_jet_res_config.GetItem< double >( "sigma_MC" ) ),
-
-    m_eta_corr_map( m_jet_res_config, "eta_edges", "data_MC_ratio", "abs_eta" ),
+    m_eta_corr_map( config, "Jet.Resolution.eta_edges", "Jet.Resolution.data_MC_ratio", "Jet.Resolution.abs_eta" ),
 
     m_rand( 0 ),
 
-    CorParr(Tools::AbsolutePath( config.GetItem< std::string >( "Jet.Resolutions.Unmatched.File" ) ))
+    CorParr(Tools::AbsolutePath( config.GetItem< std::string >( "Jet.Resolution.UnmatchedFile" ) ))
 {
     mFunc = new TFormula("function",((CorParr.definitions()).formula()).c_str());
 }

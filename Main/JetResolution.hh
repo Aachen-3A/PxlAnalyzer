@@ -28,8 +28,6 @@ class JetResolution {
         double getSigmaMC( double const pt, double const eta, double const pu ) const;
 
     private:
-        Tools::MConfig const m_jet_res_config;
-
         BinnedMapping const m_eta_corr_map;
 
         TRandom3 m_rand;
