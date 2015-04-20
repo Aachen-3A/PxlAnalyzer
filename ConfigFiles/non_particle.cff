@@ -1,3 +1,15 @@
+# Cut on number of tracks in event.
+# There are odd events with extremely high track multiplicities (>5000) that
+# result in too many jets. In 2012 (>CMSSW_5_X_Y) this should be fixed with help
+# of a dedicated filter that does not work with CMSSW_4_X_Y. So this is a
+# workaround.
+# 'type' is the variable name as set in the Skimmer (typically the track
+# collection name).
+# 'num.max' must be >= 0.
+Tracks.use = 0
+Tracks.type = "generalTracks"
+Tracks.num.max = 5000
+
 FilterSet.Name = AllFilters
 FilterSet.GenList =
 FilterSet.RecList =
@@ -13,7 +25,7 @@ HCAL.Noise.ID.use = 0
 HCAL.Noise.ID.name = "HCALNoisy"
 
 Pileup.UsePileupReWeighting = 0
-Pileup.DataHistFile = "$MUSIC_BASE/ConfigFiles/Data_PileUp_pxlCorr_22Jan2013.root"
+Pileup.DataHistFile = "$MUSIC_BASE/ConfigFiles/ConfigInputs/Data_PileUp_pxlCorr_22Jan2013.root"
 Pileup.DataHistName = "pileup"
-Pileup.GenHistFile = "$MUSIC_BASE/ConfigFiles/MC_PileUp_SU12_S10.root"
+Pileup.GenHistFile = "$MUSIC_BASE/ConfigFiles/ConfigInputs/MC_PileUp_SU12_S10.root"
 Pileup.GenHistName = "pileup"

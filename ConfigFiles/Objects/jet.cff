@@ -79,7 +79,7 @@ Jet.Resolution.UnmatchedFile = "$MUSIC_BASE/ConfigFiles/InputFiles/JetResolution
 
 # If true, the given eta values are considered abolute.
 # No negative values allowed!
-Jet.Resolution.abs_eta
+Jet.Resolution.abs_eta=
 
 # Width of distribution (recPt - genPt), privately studied on MC (feat. M. Weber).
 Jet.Resolution.sigma_MC = 7.2
