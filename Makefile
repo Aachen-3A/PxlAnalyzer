@@ -123,14 +123,20 @@ EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH) -DPXL_ENABL
 EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LIB)
 
 CC	:= g++
-CFLAGS	:= -O2 -Wall -fPIC -fsignaling-nans -g # -DNDEBUG # -pg for gprof
+CFLAGS	:= -O2 -Wall -fPIC -fsignaling-nans # -DNDEBUG # -pg for gprof
 CFLAGS	+= -DMYPXLANA=$(MYPXLANA)/AnalysisComposer.hh
 CFLAGS	+= -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
 
 LD	:= g++
-LDFLAGS	:= -O2 -fsignaling-nans -g -lz # -pg for gprof
+LDFLAGS	:= -O2 -fsignaling-nans  -lz # -pg for gprof
 LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 
+
+# Debug flags?
+ifdef DEBUG
+   CFLAGS += -g
+   LDFLAGS += -g
+endif
 ########################################
 # define all targets
 
@@ -154,7 +160,7 @@ endif
 #	@shellcommand
 #	command
 
-all: $(TARGETS) 
+all: $(TARGETS)
 
 clean:
 	@rm -f $(PROGRAM) $(OBJECTS) $(DEPENDS)

@@ -57,6 +57,7 @@ bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double cons
 
 
 bool MuonSelector::kinematics(pxl::Particle *muon ) const {
+
     //pt cut
     if( muon->getPt() < m_muo_pt_min ) return false;
     //eta cut
@@ -67,7 +68,7 @@ bool MuonSelector::kinematics(pxl::Particle *muon ) const {
 
 
 bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
-    if(kinematics( muon )) return false;
+    if(!kinematics( muon )) return false;
     //the muon cuts are according to :
     //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49
     //status: 17.9.2014
@@ -160,7 +161,6 @@ bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
     //now check
     if( iso_failed ) return false;
 
-
     //no cut failed
     return true;
 }
@@ -173,8 +173,8 @@ bool MuonSelector::tightMuonIDCut(pxl::Particle *muon) const{
     if( muon->getUserRecord("NormChi2").toInt32() > m_globalChi2_max)               return false;
     if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_nMuonHits_min)            return false;
     if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
-    if( muon->getUserRecord("Dxy").toDouble() < m_xyImpactParameter_max)            return false;
-    if( muon->getUserRecord("DzBT").toDouble() < m_zImpactParameter_max)            return false;
+    if( muon->getUserRecord("DxyBT").toDouble() > m_xyImpactParameter_max)            return false;
+    if( muon->getUserRecord("DzBT").toDouble() > m_zImpactParameter_max)            return false;
     if( muon->getUserRecord("VHitsPixel").toInt32() < m_nPixelHits_min)             return false;
     if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() < m_nTrackerLayersWithMeas_min)
         return false;
@@ -184,11 +184,17 @@ bool MuonSelector::tightMuonIDCut(pxl::Particle *muon) const{
 
 
 bool MuonSelector::HighptMuonIDCut(pxl::Particle *muon) const{
+    if( not muon->getUserRecord("validCocktail").toBool() )                                 return false;
     if( not muon->getUserRecord("isGlobalMuon").toBool() )                                  return false;
-    if( muon->getUserRecord("VHitsMuonSysCocktail").toInt32() < m_nMuonHits_min)            return false;
-    if( muon->getUserRecord("NMatchedStationsCocktail").toInt32() < m_nMatchedStations_min) return false;
-    if( muon->getUserRecord("DxyCocktail").toDouble() < m_xyImpactParameter_max)            return false;
-    if( muon->getUserRecord("DzBTCocktail").toDouble() < m_zImpactParameter_max)            return false;
+    //if( muon->getUserRecord("VHitsMuonSysCocktail").toInt32() < m_nMuonHits_min)            return false;
+    if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_nMuonHits_min)            return false;
+    if (muon->hasUserRecord("NMatchedStationsCocktail")){
+        if( muon->getUserRecord("NMatchedStationsCocktail").toInt32() < m_nMatchedStations_min) return false;
+    }else{
+        if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
+    }
+    if( fabs(muon->getUserRecord("Dxy").toDouble()) > m_xyImpactParameter_max)            return false;
+    if( fabs(muon->getUserRecord("DzBT").toDouble()) > m_zImpactParameter_max)            return false;
     if( muon->getUserRecord("VHitsPixelCocktail").toInt32() < m_nPixelHits_min)             return false;
     if( muon->getUserRecord("TrackerLayersWithMeasCocktail").toInt32() < m_nTrackerLayersWithMeas_min)
         return false;

@@ -45,7 +45,8 @@ Trigger.IgnoreL1 = 0
 Trigger.IgnoreHL = 0
 Trigger.Prefix = "HLT"
 
-Trigger.Groups = Muo,Ele
+Trigger.Groups =
+#Muo,Ele
 #, Tau, Gam, Jet, MET
 
 Trigger.Muo.Name = "SingleMu"

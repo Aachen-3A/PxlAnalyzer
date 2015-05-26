@@ -127,7 +127,7 @@ int main( int argc, char* argv[] ) {
    po::options_description analysisOptions = thisAnalysis.getCmdArguments( );
 
    // Add all option groups
-   po::options_description allOptions('Available options');
+   po::options_description allOptions("Available options");
    allOptions.add( genericOptions ).add( analysisOptions );
 
    // parse command line options
