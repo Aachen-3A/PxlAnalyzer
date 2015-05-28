@@ -1191,7 +1191,7 @@ void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView,
    applyCutsOnTau( taus, isRec );
    applyCutsOnGam( gammas, gamRho, isRec );
    //first vary JES and then check corrected jets to pass cuts
-   varyJES(jets, JES, isRec);
+   //varyJES(jets, JES, isRec);
    applyCutsOnJet( jets, isRec );     //distribution into jets and b-jets
    //consistently check GenView for duplicates, important especially for GenJets and efficiency-normalization
    if( not m_ignoreOverlaps ) m_eventCleaning.cleanEvent( muons,
@@ -1202,7 +1202,7 @@ void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView,
                                                           isRec
                                                           );
    //now vary also MET using ONLY selected and JES-modified jets. Maybe use dedicated jet cuts here?
-   varyJESMET(jets, mets, JES, isRec);
+   //varyJESMET(jets, mets, JES, isRec);
    //after MET varied check also cuts
    applyCutsOnMET( mets, isRec );
 
