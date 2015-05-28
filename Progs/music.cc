@@ -160,7 +160,7 @@ int main( int argc, char* argv[] ) {
    bool const jetResCorrUse = config.GetItem< bool >( "Jet.Resolutions.Corr.use" );
    bool const bJetUse = config.GetItem< bool >( "Jet.BJets.use" );
    bool const usePDF = config.GetItem< bool >( "General.usePDF" );
-   bool const useJES = config.GetItem< bool >( "General.useJES" );
+   bool const useSYST = config.GetItem< bool >( "General.useSYST" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
@@ -405,7 +405,7 @@ int main( int argc, char* argv[] ) {
             // you should investigate!
             try {
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               Selector.performSelection(GenEvtView, TrigEvtView, 0);
+               //Selector.performSelection(GenEvtView, TrigEvtView, 0);
                Selector.performSelection(RecEvtView, TrigEvtView, 0);
             } catch( Tools::unsorted_error &exc ) {
                std::cerr << "[WARNING] (main): ";
@@ -415,52 +415,24 @@ int main( int argc, char* argv[] ) {
                continue;
             }
 
-            // create new event views with systematic shifts
-            // (the event cannot be modified inside specialAna - especially no new event views)
-            // shifts of type 'Scale' are implemented at the moment
-            // shifts of type 'Resolution' are to be implemented
-            syst_shifter.init(&event);
-            syst_shifter.shiftEleAndMET("Scale");
-            //syst_shifter.shiftEleAndMET("Resolution");
-            syst_shifter.shiftMuoAndMET("Scale");
-            syst_shifter.shiftMuoAndMET("Resolution");
-            syst_shifter.shiftTauAndMET("Scale");
-            //syst_shifter.shiftTauAndMET("Resolution");
-            //syst_shifter.shiftJetAndMET("Scale");
-            //syst_shifter.shiftJetAndMET("Resolution");
-            syst_shifter.shiftMETUnclustered("Scale");
-            //syst_shifter.shiftMETUnclustered("Resolution");
-
-            // Redo the matching, because the selection can remove particles.
-            Matcher.matchObjects( GenEvtView, RecEvtView, "priv-gen-rec", true );
-            //synchronize some user records
-            Selector.synchronizeGenRec( GenEvtView, RecEvtView );
-
-            if( useJES ) {
-
-               // create Copys of the original Event View and modify the JES
-               pxl::EventView *GenEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
-               event.setIndex( "Gen_JES_UP", GenEvtView_JES_UP );
-               pxl::EventView *RecEvtView_JES_UP = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
-               event.setIndex( "Rec_JES_UP", RecEvtView_JES_UP );
-               pxl::EventView *GenEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( GenEvtView );
-               event.setIndex( "Gen_JES_DOWN", GenEvtView_JES_DOWN );
-               pxl::EventView *RecEvtView_JES_DOWN = event.getObjectOwner().create< pxl::EventView >( RecEvtView );
-               event.setIndex( "Rec_JES_DOWN", RecEvtView_JES_DOWN );
-
-               // SAME for JES_UP: modify Jets apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               Selector.performSelection(GenEvtView_JES_UP, TrigEvtView, +1);
-               Selector.performSelection(RecEvtView_JES_UP, TrigEvtView, +1);
-               // SAME for JES_DOWN: modify Jets,  apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               Selector.performSelection(GenEvtView_JES_DOWN, TrigEvtView, -1);
-               Selector.performSelection(RecEvtView_JES_DOWN, TrigEvtView, -1);
-               // Redo matching for JES.
-               Matcher.matchObjects( GenEvtView_JES_UP, RecEvtView_JES_UP );
-               Matcher.matchObjects( GenEvtView_JES_DOWN, RecEvtView_JES_DOWN );
-               //synchronize some user records
-               Selector.synchronizeGenRec( GenEvtView_JES_UP, RecEvtView_JES_UP );
-               Selector.synchronizeGenRec( GenEvtView_JES_DOWN, RecEvtView_JES_DOWN );
+            if( useSYST ) {
+                // create new event views with systematic shifts
+                // (the event cannot be modified inside specialAna - especially no new event views)
+                // shifts of type 'Scale' are implemented at the moment
+                // shifts of type 'Resolution' are to be implemented
+                syst_shifter.init(&event);
+                syst_shifter.shiftEleAndMET("Scale");
+                //syst_shifter.shiftEleAndMET("Resolution");
+                syst_shifter.shiftMuoAndMET("Scale");
+                syst_shifter.shiftMuoAndMET("Resolution");
+                syst_shifter.shiftTauAndMET("Scale");
+                //syst_shifter.shiftTauAndMET("Resolution");
+                syst_shifter.shiftJetAndMET("Scale");
+                syst_shifter.shiftJetAndMET("Resolution");
+                syst_shifter.shiftMETUnclustered("Scale");
+                //syst_shifter.shiftMETUnclustered("Resolution");
             }
+
          }
 
          // run the fork ..

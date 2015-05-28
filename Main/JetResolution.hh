@@ -20,15 +20,17 @@ class JetResolution {
         JetResolution( Tools::MConfig const &config );
         ~JetResolution() {}
 
-        double getScalingFactor( double const eta ) const;
         double getJetPtCorrFactor( pxl::Particle const *recJet,
                                             pxl::Particle const *genJet,
-                                            double truthpu
+                                            double truthpu,
+                                            int updown
                                             );
         double getSigmaMC( double const pt, double const eta, double const pu ) const;
 
     private:
         BinnedMapping const m_eta_corr_map;
+        BinnedMapping const m_eta_corr_up_map;
+        BinnedMapping const m_eta_corr_down_map;
 
         TRandom3 m_rand;
 

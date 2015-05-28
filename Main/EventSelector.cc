@@ -376,11 +376,42 @@ void EventSelector::varyJESMET( vector< pxl::Particle* > const &jets,
 void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool &isRec) {
    if(m_muo_idtag){ // muons are tagged, not discarded
       for(vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon) {
-         if(m_muo_selector.passMuon(*muon,isRec)) {
-            (*muon)->setUserRecord("IDpassed",true);
-         } else {
-            (*muon)->setUserRecord("IDpassed",false);
+
+         //if(passKin && passID && passIso) return 0;
+         //else if (passKin && passID && !passIso) return 1;
+         //else if (passKin && !passID && passIso) return 2;
+         //else if (!passKin && passID && passIso) return 3;
+         //return 4;
+         int retrunvalue=m_muo_selector.passMuon(*muon,isRec);
+         (*muon)->setUserRecord("IDpassed",false);
+         (*muon)->setUserRecord("ISOfailed",false);
+         (*muon)->setUserRecord("IDfailed",false);
+         (*muon)->setUserRecord("KINfailed",false);
+         (*muon)->setUserRecord("multipleFails",false);
+         (*muon)->setUserRecord("IDFailValue",retrunvalue);
+         switch(retrunvalue){
+            case 0: {
+               (*muon)->setUserRecord("IDpassed",true);
+               break;
+            }
+            case 1: {
+               (*muon)->setUserRecord("ISOfailed",true);
+               break;
+            }
+            case 2: {
+               (*muon)->setUserRecord("IDfailed",true);
+               break;
+            }
+            case 3: {
+               (*muon)->setUserRecord("KINfailed",true);
+               break;
+            }
+            default: {
+               (*muon)->setUserRecord("multipleFails",true);
+               break;
+            }
          }
+
       }
       return; // method has finished
    }
@@ -392,7 +423,7 @@ void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const
       thisMuon = *muon;
 
 
-      if( m_muo_selector.passMuon(thisMuon,isRec) ) {
+      if( m_muo_selector.passMuon(thisMuon,isRec)==0 ) {
 
             muonsAfterCut.push_back(thisMuon);
       } else {
@@ -412,10 +443,41 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
                                     ) const {
    if(m_ele_idtag){ // electrons are tagged, not discarded
       for( vector< Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ) {
-         if( m_ele_selector.passEle( *ele, eleRho, isRec ) ) {
-            (*ele)->setUserRecord("IDpassed",true);
-         } else {
-            (*ele)->setUserRecord("IDpassed",false);
+
+
+         //if(passKin && passID && passIso) return 0;
+         //else if (passKin && passID && !passIso) return 1;
+         //else if (passKin && !passID && passIso) return 2;
+         //else if (!passKin && passID && passIso) return 3;
+         //return 4;
+         int retrunvalue=m_ele_selector.passEle( *ele, eleRho, isRec );
+         (*ele)->setUserRecord("IDpassed",false);
+         (*ele)->setUserRecord("ISOfailed",false);
+         (*ele)->setUserRecord("IDfailed",false);
+         (*ele)->setUserRecord("KINfailed",false);
+         (*ele)->setUserRecord("multipleFails",false);
+         (*ele)->setUserRecord("IDFailValue",retrunvalue);
+         switch(retrunvalue){
+            case 0: {
+               (*ele)->setUserRecord("IDpassed",true);
+               break;
+            }
+            case 1: {
+               (*ele)->setUserRecord("ISOfailed",true);
+               break;
+            }
+            case 2: {
+               (*ele)->setUserRecord("IDfailed",true);
+               break;
+            }
+            case 3: {
+               (*ele)->setUserRecord("KINfailed",true);
+               break;
+            }
+            default: {
+               (*ele)->setUserRecord("multipleFails",true);
+               break;
+            }
          }
       }
       return; // method has finished
@@ -425,7 +487,7 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
    Particle* thisEle;
    for( vector< Particle* >::const_iterator ele = eles.begin(); ele != eles.end(); ++ele ) {
       thisEle = *ele;
-      if( m_ele_selector.passEle(thisEle, eleRho, isRec) ) {
+      if( m_ele_selector.passEle(thisEle, eleRho, isRec)==0 ) {
          elesAfterCut.push_back(thisEle);
       } else {
          (*ele)->owner()->remove(thisEle);

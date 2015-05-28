@@ -22,24 +22,14 @@ public:
    EleSelector(const Tools::MConfig &config );
    // Destruktor
    ~EleSelector();
-   bool passEle( pxl::Particle *ele, double const eleRho, const bool& isRec) const;
+   int passEle( pxl::Particle *ele, double const eleRho, const bool& isRec) const;
 
 private:
    // methods:
-   bool passCBID( pxl::Particle const *ele,
-                  double const elePt,
-                  double const eleAbsEta,
-                  bool const eleBarrel,
-                  bool const eleEndcap,
-                  double const eleRho
-                  ) const;
-    bool passHEEPID( pxl::Particle const *ele,
-                     double const eleEt,
-                     bool const eleBarrel,
-                     bool const eleEndcap,
-                     double const eleRho
-                     ) const;
-    bool passCBID_Isolation( pxl::Particle const *ele, double const &eleRho , bool const &eleBarrel, bool const &eleEndcap ) const;
+   bool passCBID( pxl::Particle const *ele, double const elePt, double const eleAbsEta, bool const eleBarrel, bool const eleEndcap ) const;
+   bool passHEEPID( pxl::Particle const *ele, double const eleEt, bool const eleBarrel, bool const eleEndcap ) const;
+   bool passHEEP_Isolation( pxl::Particle const *ele, double const eleEt, bool const eleBarrel, bool const eleEndcap, double const eleRho) const;
+   bool passCBID_Isolation( pxl::Particle const *ele, double const &eleRho , bool const &eleBarrel, bool const &eleEndcap ) const;
 
 
    // ID:

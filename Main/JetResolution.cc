@@ -9,17 +9,14 @@
 JetResolution::JetResolution( Tools::MConfig const &config ) :
 
     m_eta_corr_map( config, "Jet.Resolution.eta_edges", "Jet.Resolution.data_MC_ratio", "Jet.Resolution.abs_eta" ),
+    m_eta_corr_up_map( config, "Jet.Resolution.eta_edges", "Jet.Resolution.data_MC_sys_up", "Jet.Resolution.abs_eta" ),
+    m_eta_corr_down_map( config, "Jet.Resolution.eta_edges", "Jet.Resolution.data_MC_sys_down", "Jet.Resolution.abs_eta" ),
 
     m_rand( 0 ),
 
     CorParr(Tools::AbsolutePath( config.GetItem< std::string >( "Jet.Resolution.UnmatchedFile" ) ))
 {
     mFunc = new TFormula("function",((CorParr.definitions()).formula()).c_str());
-}
-
-
-double JetResolution::getScalingFactor( double const eta ) const {
-    return m_eta_corr_map.getValue( eta );
 }
 
 
@@ -62,12 +59,20 @@ double JetResolution::getSigmaMC( double const pt, double const eta, double cons
 
 double JetResolution::getJetPtCorrFactor( pxl::Particle const *recJet,
                                             pxl::Particle const *genJet,
-                                            double truthpu
+                                            double truthpu,
+                                            int updown=0
                                                         ) {
     double const recJetPt  = recJet->getPt();
     double const recJetEta = recJet->getEta();
 
-    double const scaling_factor = getScalingFactor( recJetEta );
+    double scaling_factor = 1.0;
+    if (updown==0){
+        scaling_factor = m_eta_corr_map.getValue( recJetEta );
+    }else if (updown==-1){
+        scaling_factor = m_eta_corr_down_map.getValue( recJetEta );
+    }else if (updown==1){
+        scaling_factor = m_eta_corr_up_map.getValue( recJetEta );
+    }
 
     double jetCorrFactor = 1.0;
 

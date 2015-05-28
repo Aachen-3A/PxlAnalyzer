@@ -21,12 +21,12 @@ public:
     MuonSelector(const Tools::MConfig &config );
     // Destruktor
     ~MuonSelector();
-    bool passMuon( pxl::Particle *muon, const bool& isRec ,double const rho=0. ) const;
+    int passMuon( pxl::Particle *muon, const bool& isRec ,double const rho=0. ) const;
 
 private:
     // Methods;
     bool kinematics(pxl::Particle *muon ) const;
-    bool muonID( pxl::Particle *muon , double rho) const;
+    int muonID( pxl::Particle *muon , double rho) const;
     bool tightMuonIDCut(pxl::Particle *muon) const;
     bool HighptMuonIDCut(pxl::Particle *muon) const;
     //Variables

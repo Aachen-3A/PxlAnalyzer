@@ -37,7 +37,7 @@ MuonSelector::~MuonSelector() {
 }
 
 
-bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const {
+int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const {
     if( isRec ){
         return muonID(muon, rho);
     }
@@ -49,9 +49,9 @@ bool MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double cons
         //turn around for iso-inversion
         if( m_muo_invertIso ) iso_failed = !iso_failed;
         //now check
-        if( iso_failed ) return false;
+        if( iso_failed ) return 1;
     }
-    return true;
+    return 0;
 
 }
 
@@ -67,8 +67,12 @@ bool MuonSelector::kinematics(pxl::Particle *muon ) const {
 }
 
 
-bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
-    if(!kinematics( muon )) return false;
+int MuonSelector::muonID( pxl::Particle *muon , double rho) const {
+    bool passKin=true;
+    bool passID=true;
+    bool passIso=true;
+
+    if(!kinematics( muon )) passKin=false;
     //the muon cuts are according to :
     //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49
     //status: 17.9.2014
@@ -76,27 +80,27 @@ bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
     // isTightMuon or isHighPtMuon
     if(m_muo_id_type=="musicID.bool"){
         if(muon->getPt()<m_muo_HighPtSwitchPt){
-            if( not muon->getUserRecord("isTightMuon")) return false;
+            if( not muon->getUserRecord("isTightMuon")) passID=false;
         }else{
-            if( not muon->getUserRecord("isHighPtMuon")) return false;
+            if( not muon->getUserRecord("isHighPtMuon")) passID=false;
         }
     }else if(m_muo_id_type=="isTightMuon.bool"){
-        if(not muon->getUserRecord("isTightMuon")) return false;
+        if(not muon->getUserRecord("isTightMuon")) passID=false;
     }else if(m_muo_id_type=="isHighPtMuon.bool"){
-        if(not muon->getUserRecord("isHighPtMuon")) return false;
+        if(not muon->getUserRecord("isHighPtMuon")) passID=false;
     }else if(m_muo_id_type=="isTightMuon.Cut"){
         if ( not tightMuonIDCut(muon) ){
-            return false;
+            passID=false;
         }
     }else if(m_muo_id_type=="isHighPtMuon.Cut"){
         if ( not HighptMuonIDCut(muon) ){
-            return false;
+            passID=false;
         }
     }else{
           std::stringstream error;
           error << "'Muon.ID.Type' must be one of these values: 'musicID.bool','isTightMuon.bool','isHighPtMuon.bool','isTightMuon.Cut','isHighPtMuon.Cut' The value is "<<m_muo_id_type;
           throw Tools::config_error( error.str() );
-          return false;
+          passID=false;
 
     }
 
@@ -159,10 +163,14 @@ bool MuonSelector::muonID( pxl::Particle *muon , double rho) const {
     //turn around for iso-inversion
     if( m_muo_invertIso ) iso_failed = !iso_failed;
     //now check
-    if( iso_failed ) return false;
+    if( iso_failed ) passIso=false;
 
     //no cut failed
-    return true;
+    if(passKin && passID && passIso) return 0;
+    else if (passKin && passID && !passIso) return 1;
+    else if (passKin && !passID && passIso) return 2;
+    else if (!passKin && passID && passIso) return 3;
+    return 4;
 }
 
 

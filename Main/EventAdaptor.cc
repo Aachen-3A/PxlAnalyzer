@@ -132,7 +132,7 @@ void EventAdaptor::applyJETMETSmearing( pxl::EventView const *GenEvtView,
       // nice to have a small study here some day.
       pxl::Particle const *matchedJet = dynamic_cast< pxl::Particle* >( rel.getFirst( GenEvtView->getObjectOwner(), linkName ) );
 
-      double const jetPtCorrFactor = m_jet_res.getJetPtCorrFactor( recJet, matchedJet , GenEvtView->getUserRecord("NumVerticesPU").toDouble() );
+      double const jetPtCorrFactor = m_jet_res.getJetPtCorrFactor( recJet, matchedJet , GenEvtView->getUserRecord("NumVerticesPU").toDouble() ,0);
 
       double const E  = recJet->getE();
       double const px = recJet->getPx();

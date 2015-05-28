@@ -6,6 +6,13 @@
 #include "Pxl/Pxl/interface/pxl/core.hh"
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/MConfig.hh"
+#include "JetResolution.hh"
+
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#pragma GCC diagnostic pop
 
 /*
  * written by Michael Margos
@@ -31,6 +38,16 @@ private:
    // variables
    double const m_ratioEleBarrel, m_ratioEleEndcap, m_scaleMuo, m_resMuo, m_ratioTau;
    std::string const m_TauType, m_JetType, m_METType;
+
+   // To access the JEC uncertainties from file.
+   // New recipe:
+   // https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources?rev=19#Code_example
+   std::string const m_jecType;
+   JetCorrectorParameters const m_jecPara;
+   JetCorrectionUncertainty m_jecUnc;
+
+   JetResolution m_jetRes;
+
    unsigned int const m_debug;
 
    pxl::Event*      m_event;
@@ -45,9 +62,9 @@ private:
    std::vector< pxl::Particle* > UnclusteredEnUp;
    std::vector< pxl::Particle* > UnclusteredEnDown;
 
-   pxl::EventView* m_GeneventView;
+   pxl::EventView* m_GenEvtView;
 
-    TRandom3* rand;
+   TRandom3* rand;
 
    // methods
    bool inline checkshift(std::string const shiftType) const;

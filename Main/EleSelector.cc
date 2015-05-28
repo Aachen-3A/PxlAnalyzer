@@ -91,7 +91,11 @@ EleSelector::~EleSelector(){
 
 
 
-bool EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &isRec ) const {
+int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &isRec ) const {
+   bool passKin=true;
+   bool passID=true;
+   bool passIso=true;
+
    double const elePt = ele->getPt();
    // Updated transverse energy in Skimmer for HEEP selection (Supercluster based transverse energy).
    // TODO: Remove try-block once everything is reskimmed.
@@ -105,15 +109,15 @@ bool EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &
    }
 
    // Transverse energy cut.
-   if( elePt < m_ele_pt_min ) return false;
+   if( elePt < m_ele_pt_min ) passKin=false;
 
    // eta
    double const abseta = isRec ? fabs( ele->getUserRecord( "SCeta" ).toDouble() ) : fabs( ele->getEta() );
 
    //out of endcap
-   if( abseta > m_ele_eta_endcap_max ) return false;
+   if( abseta > m_ele_eta_endcap_max ) passKin=false;
    //between endcap and barrel
-   if( abseta < m_ele_eta_endcap_min and abseta > m_ele_eta_barrel_max ) return false;
+   if( abseta < m_ele_eta_endcap_min and abseta > m_ele_eta_barrel_max ) passKin=false;
    //ele in barrel?
    bool const barrel = abseta <= m_ele_eta_barrel_max;
    //ele in endcap?
@@ -132,24 +136,31 @@ bool EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &
       //warning << "Et  = " << eleEt << endl;
       //warning << "Ignoring this particle!" << endl;
       //cerr << warning.str();
-
-      return false;
+      passKin=false;
    }
 
    if( isRec ) {
       if( m_ele_id_type == "CB" ) {
-         bool const pass = passCBID( ele, elePt, abseta, barrel, endcap, eleRho );
-         if( not pass )
-            return false;
+         //check ID
+         if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+            passID=false;
+         }
+         // check for isolation
+         if( not passCBID_Isolation(ele, eleRho , barrel, endcap) ){
+            passIso=false;
+         }
       } else if( m_ele_id_type == "HEEP") {
-         bool const pass = passHEEPID( ele, eleEt, barrel, endcap, eleRho );
-         if( not pass )
-            return false;
+         if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+            passID=false;
+         }
+         if(not passHEEP_Isolation(ele, eleEt, barrel, endcap, eleRho )){
+            passIso=false;
+         }
       } else {
           std::stringstream error;
           error << "'Ele.ID.use' must be either 'CB' or 'HEEP'! The value is "<<m_ele_id_type;
           throw Tools::config_error( error.str() );
-          return false;
+          passID=false;
       }
 
    } else {
@@ -167,7 +178,7 @@ bool EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &
             iso_failed = not iso_failed;
          //now test
          if( iso_failed )
-            return false;
+            passID=false;
       }
 
       //gen ele in endcap
@@ -183,12 +194,18 @@ bool EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &
             iso_failed = not iso_failed;
          //now test
          if( iso_failed )
-            return false;
+            passID=false;
       }
    }
 
    //no cut failed
-   return true;
+   if(passKin && passID && passIso) return 0;
+   //give a hint what failed
+   else if (passKin && passID && !passIso) return 1;
+   else if (passKin && !passID && passIso) return 2;
+   else if (!passKin && passID && passIso) return 3;
+   else if (passKin && !passID && !passIso) return 4;
+   return 5;
 }
 
 
@@ -202,8 +219,7 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
                               double const elePt,
                               double const eleAbsEta,
                               bool const eleBarrel,
-                              bool const eleEndcap,
-                              double const eleRho
+                              bool const eleEndcap
                               ) const {
    // First check if we want to use only id flags from miniaod or
    // reperform cuts
@@ -264,10 +280,6 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
    if( eleEndcap and relInvEpDiff > m_ele_cbid_endcap_RelInvEpDiff_max )
       return false;
 
-   // check for isolation
-   if( not passCBID_Isolation(ele, eleRho , eleBarrel, eleEndcap) )
-      return false;
-
    double const NinnerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
    if( eleBarrel and NinnerLayerLostHits > m_ele_cbid_barrel_NInnerLayerLostHits_max )
       return false;
@@ -308,8 +320,7 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
 bool EleSelector::passHEEPID( pxl::Particle const *ele,
                                 double const eleEt,
                                 bool const eleBarrel,
-                                bool const eleEndcap,
-                                double const eleRho
+                                bool const eleEndcap
                                 ) const {
 
    // First check if we want to use only id flags from miniaod or
@@ -336,10 +347,6 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
    double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
    double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
    double const ele_HoEM        = ele->getUserRecord( "HoEm" );
-   double const ele_TrkIso      = ele->getUserRecord( "TrkIso03" );
-   double const ele_ECALIso     = ele->getUserRecord( "ECALIso03" );
-   double const ele_HCALIso     = ele->getUserRecord( "HCALIso03d1" );
-   double const ele_CaloIso     = ele_ECALIso + ele_HCALIso;
 
 
    // TODO: Remove this construct when FA11 or older samples are not used anymore.
@@ -379,23 +386,6 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
           e2x5/e5x5 < m_ele_heepid_barrel_e2x5_min
           ) return false;
 
-      //Isolation
-      bool iso_ok = true;
-      //HCAL iso depth 1
-      double const maxIso = m_ele_heepid_barrel_HcalD1_offset +
-                            m_ele_heepid_barrel_HcalD1_slope * eleEt +
-                            m_ele_heepid_barrel_HcalD1_rhoSlope * eleRho;
-
-      if( iso_ok and ele_CaloIso > maxIso ) iso_ok = false;
-      //Track iso
-      if( iso_ok and ele_TrkIso > m_ele_heepid_barrel_trackiso_max ) iso_ok = false;
-
-      //turn around for iso-inversion
-      if( m_ele_invertIso ) iso_ok = not iso_ok;
-      //now test
-      if( !iso_ok ) return false;
-
-
       if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
          return false;
 
@@ -421,6 +411,43 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele->getUserRecord( "sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
          return false;
 
+
+      if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
+         return false;
+
+      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
+         return false;
+   }
+   return true;
+}
+
+
+bool EleSelector::passHEEP_Isolation(pxl::Particle const *ele, double const eleEt, bool const eleBarrel, bool const eleEndcap, double const eleRho) const {
+
+   double const ele_TrkIso      = ele->getUserRecord( "TrkIso03" );
+   double const ele_ECALIso     = ele->getUserRecord( "ECALIso03" );
+   double const ele_HCALIso     = ele->getUserRecord( "HCALIso03d1" );
+   double const ele_CaloIso     = ele_ECALIso + ele_HCALIso;
+   //ele in barrel
+   if( eleBarrel ) {
+      //Isolation
+      bool iso_ok = true;
+      //HCAL iso depth 1
+      double const maxIso = m_ele_heepid_barrel_HcalD1_offset +
+                            m_ele_heepid_barrel_HcalD1_slope * eleEt +
+                            m_ele_heepid_barrel_HcalD1_rhoSlope * eleRho;
+
+      if( iso_ok and ele_CaloIso > maxIso ) iso_ok = false;
+      //Track iso
+      if( iso_ok and ele_TrkIso > m_ele_heepid_barrel_trackiso_max ) iso_ok = false;
+
+      //turn around for iso-inversion
+      if( m_ele_invertIso ) iso_ok = not iso_ok;
+      //now test
+      if( !iso_ok ) return false;
+   }
+   //ele in endcap
+   else if( eleEndcap ) {
       //Isolation
       bool iso_ok = true;
       //HCAL iso depth 1
@@ -442,11 +469,8 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( not iso_ok )
          return false;
 
-      if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
-         return false;
-
-      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
-         return false;
+   }else{
+      return false;
    }
    return true;
 }

@@ -8,7 +8,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export MUSIC_BASE=$DIR
 export PXLANA=$DIR
-export PATH=$PATH:$MUSIC_BASE/Progs;
+export PATH=$PATH:$MUSIC_BASE/bin;
 export PYTHONPATH=$MUSIC_BASE/python:$MUSIC_BASE/MISv2/MISMaster:$PYTHONPATH
 
 export LHAPDF=/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/lhapdf6/6.1.4/

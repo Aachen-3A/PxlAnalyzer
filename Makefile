@@ -30,14 +30,15 @@
 #        $<     = anotherdir/source.suf2
 #
 
-PROGRAM:=Progs/music
+PROGRAM:=bin/music
 
 ########################################
 # directories
 
 ifndef MYPXLANA
-MYPXLANA:=Validator
+	MYPXLANA:=Validator
 endif
+
 DIRS	:= $(MYPXLANA)
 
 #define all directories with source code
@@ -123,20 +124,23 @@ EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH) -DPXL_ENABL
 EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LIB)
 
 CC	:= g++
-CFLAGS	:= -O2 -Wall -fPIC -fsignaling-nans # -DNDEBUG # -pg for gprof
-CFLAGS	+= -DMYPXLANA=$(MYPXLANA)/AnalysisComposer.hh
-CFLAGS	+= -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
+#CFLAGS	:= -O2 -Wall -fPIC -fsignaling-nans -march=native # -DNDEBUG # -pg for gprof
+CFLAGS	:= -Ofast -Wall -fPIC -fsignaling-nans -fno-associative-math -march=native # -DNDEBUG # -pg for gprof
 
 LD	:= g++
-LDFLAGS	:= -O2 -fsignaling-nans  -lz # -pg for gprof
-LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
-
+LDFLAGS	:= -Ofast -lz -fsignaling-nans -fno-associative-math -march=native# -pg for gprof
+#LDFLAGS	:= -O2 -fsignaling-nans  -lz -march=native # -pg for gprof
 
 # Debug flags?
 ifdef DEBUG
-   CFLAGS += -g
-   LDFLAGS += -g
+   CFLAGS += -g -pg -fprofile-generate -fsignaling-nans
+   LDFLAGS += -g -pg -fprofile-generate -fsignaling-nans
 endif
+
+CFLAGS	+= -DMYPXLANA=$(MYPXLANA)/AnalysisComposer.hh
+CFLAGS	+= -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
+
+LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
 ########################################
 # define all targets
 

@@ -18,6 +18,13 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    m_JetType(       cfg.GetItem< std::string >( "Jet.Type.Rec" ) ),
    m_METType(       cfg.GetItem< std::string >( "MET.Type.Rec" ) ),
 
+   // To access the JEC uncertainties from file.
+   m_jecType( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESType" ) ) ),
+   m_jecPara( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESFile" ) ), m_jecType ),
+   m_jecUnc( m_jecPara ),
+
+   m_jetRes( cfg ),
+
    m_debug(debug)
 
 
@@ -75,9 +82,9 @@ void Systematics::init(pxl::Event* event){
 
    }
 
-   m_GeneventView = m_event->getObjectOwner().findObject< pxl::EventView >( "Gen" );
+   m_GenEvtView = m_event->getObjectOwner().findObject< pxl::EventView >( "Gen" );
    std::vector< pxl::Particle* > GenParticles;
-   m_GeneventView->getObjectsOfType< pxl::Particle >( GenParticles );
+   m_GenEvtView->getObjectsOfType< pxl::Particle >( GenParticles );
    for( std::vector< pxl::Particle* >::const_iterator part_it = GenParticles.begin(); part_it != GenParticles.end(); ++part_it ) {
       pxl::Particle *part = *part_it;
       std::string Name = part->getName();
@@ -235,7 +242,62 @@ void Systematics::shiftTauAndMET(std::string const shiftType){
 
 
 
-void shiftJetAndMET(std::string const shiftType){/*
+void Systematics::shiftJetAndMET(std::string const shiftType){
+
+   bool do_resolution = false;
+
+   if(shiftType == "Resolution"){
+      do_resolution = true;
+   }
+
+   double ratio =0;
+   double ratio_up =0;
+   double ratio_down =0;
+   double dPx_up=0;
+   double dPy_up=0;
+   double dPx_down=0;
+   double dPy_down=0;
+   std::string prefix = std::string("Jet_syst") + shiftType;
+   pxl::EventView* evup   = 0;
+   pxl::EventView* evdown = 0;
+
+   createEventViews(prefix, &evup, &evdown);
+   fillMETLists(evup, evdown);
+
+   // add shifted particles to these EventViews
+   for(unsigned int i = 0; i < JetList.size(); i++){
+      if(do_resolution){
+         if(JetList.at(i)->getSoftRelations().hasType("priv-gen-rec")){
+            pxl::Particle *genPart =  dynamic_cast< pxl::Particle* >(JetList.at(i)->getSoftRelations().getFirst (m_GenEvtView->getObjectOwner(), "priv-gen-rec"));
+            ratio_up = m_jetRes.getJetPtCorrFactor(JetList.at(i),genPart,m_GenEvtView->getUserRecord( "NumVerticesPUTrue" ).toDouble(),1);
+            ratio_down = m_jetRes.getJetPtCorrFactor(JetList.at(i),genPart,m_GenEvtView->getUserRecord( "NumVerticesPUTrue" ).toDouble(),-1);
+         }else{
+            ratio_up = m_jetRes.getJetPtCorrFactor(JetList.at(i),0,m_GenEvtView->getUserRecord( "NumVerticesPUTrue" ).toDouble(),1);
+            ratio_down = m_jetRes.getJetPtCorrFactor(JetList.at(i),0,m_GenEvtView->getUserRecord( "NumVerticesPUTrue" ).toDouble(),-1);
+         }
+         // fot the resolution there is no up and down
+         shiftParticle(evup,   JetList.at(i), ratio_up, dPx_up,   dPy_up);
+         shiftParticle(evdown, JetList.at(i), ratio_down, dPx_down, dPy_down);
+      }else{
+         //The uncertainty is a function of eta and the (corrected) p_t of a jet.
+         m_jecUnc.setJetEta( JetList.at(i)->getEta() );
+         m_jecUnc.setJetPt( JetList.at(i)->getPt() );
+         ratio = m_jecUnc.getUncertainty( true ) ;
+         shiftParticle(evup,   JetList.at(i), 1. + ratio, dPx_up,   dPy_up);
+         shiftParticle(evdown, JetList.at(i), 1. - ratio, dPx_down, dPy_down);
+      }
+
+   }
+
+   shiftMET(dPx_up, dPx_down, dPy_up, dPy_down);
+   METListUp.clear();
+   METListDown.clear();
+
+   return;
+
+
+
+    /*
    checkshift(shiftType);
    if( not m_jet_res_corr_use ) {
       if( m_debug > 0 ) {
