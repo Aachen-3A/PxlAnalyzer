@@ -124,11 +124,12 @@ EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH) -DPXL_ENABL
 EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LIB)
 
 CC	:= g++
-#CFLAGS	:= -O2 -Wall -fPIC -fsignaling-nans -march=native # -DNDEBUG # -pg for gprof
-CFLAGS	:= -Ofast -Wall -fPIC -fsignaling-nans -fno-associative-math -march=native # -DNDEBUG # -pg for gprof
+#CFLAGS	:= -Ofast -Wall -fPIC -fsignaling-nans -fno-associative-math -march=native # -DNDEBUG # -pg for gprof
+CFLAGS	:= -Ofast -Wall -fPIC -fsignaling-nans -fno-associative-math # -DNDEBUG # -pg for gprof
 
 LD	:= g++
-LDFLAGS	:= -Ofast -lz -fsignaling-nans -fno-associative-math -march=native# -pg for gprof
+#LDFLAGS	:= -Ofast -lz -fsignaling-nans -fno-associative-math -march=native# -pg for gprof
+LDFLAGS	:= -Ofast -lz -fsignaling-nans -fno-associative-math # -pg for gprof
 #LDFLAGS	:= -O2 -fsignaling-nans  -lz -march=native # -pg for gprof
 
 # Debug flags?
