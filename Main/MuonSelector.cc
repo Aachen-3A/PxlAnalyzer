@@ -30,6 +30,7 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_nTrackerLayersWithMeas_min(     cfg.GetItem< int >(     "Muon.NTrackerLayersWithMeas.min") ),
     m_dPtRelTrack_max(                cfg.GetItem< double >(  "Muon.dPtRelTrack.max") )
 {
+    m_useAlternative=false;
 }
 //--------------------Destructor-----------------------------------------------------------------
 
@@ -37,9 +38,22 @@ MuonSelector::~MuonSelector() {
 }
 
 
-int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const {
+int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const{
     if( isRec ){
-        return muonID(muon, rho);
+        try{
+            return muonID(muon, rho);
+        }catch(std::runtime_error &e) {
+            m_useAlternative=true;
+            m_alternativeUserVariables["DxyGTBS"]="DxyBS";
+            m_alternativeUserVariables["DzIT"]="Dz";
+            m_alternativeUserVariables["DzIT"]="DzBS";
+            m_alternativeUserVariables["DxyGT"]="Dxy";
+            m_alternativeUserVariables["Dz"]="DzBT";
+            m_alternativeUserVariables["Dxy"]="DxyBT";
+            m_alternativeUserVariables["isGoodTMOneST"]="TMOneStationTight";
+            m_alternativeUserVariables["isGoodLastST"]="lastStationTight";
+            return muonID(muon, rho);
+        }
     }
     //generator muon cuts
     else{
@@ -181,8 +195,14 @@ bool MuonSelector::tightMuonIDCut(pxl::Particle *muon) const{
     if( muon->getUserRecord("NormChi2").toInt32() > m_globalChi2_max)               return false;
     if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_nMuonHits_min)            return false;
     if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
-    if( muon->getUserRecord("DxyBT").toDouble() > m_xyImpactParameter_max)            return false;
-    if( muon->getUserRecord("DzBT").toDouble() > m_zImpactParameter_max)            return false;
+    if(!m_useAlternative){
+        if( muon->getUserRecord("Dxy").toDouble() > m_xyImpactParameter_max)            return false;
+        if( muon->getUserRecord("Dz").toDouble() > m_zImpactParameter_max)            return false;
+    }else{
+        m_alternativeUserVariables["Dxy"];
+        if( muon->getUserRecord(m_alternativeUserVariables["Dxy"]).toDouble() > m_xyImpactParameter_max)            return false;
+        if( muon->getUserRecord(m_alternativeUserVariables["Dz"]).toDouble() > m_zImpactParameter_max)            return false;
+    }
     if( muon->getUserRecord("VHitsPixel").toInt32() < m_nPixelHits_min)             return false;
     if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() < m_nTrackerLayersWithMeas_min)
         return false;
@@ -201,8 +221,13 @@ bool MuonSelector::HighptMuonIDCut(pxl::Particle *muon) const{
     }else{
         if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
     }
-    if( fabs(muon->getUserRecord("Dxy").toDouble()) > m_xyImpactParameter_max)            return false;
-    if( fabs(muon->getUserRecord("DzBT").toDouble()) > m_zImpactParameter_max)            return false;
+    if(!m_useAlternative){
+        if( muon->getUserRecord("Dxy").toDouble() > m_xyImpactParameter_max)            return false;
+        if( muon->getUserRecord("Dz").toDouble() > m_zImpactParameter_max)            return false;
+    }else{
+        if( muon->getUserRecord(m_alternativeUserVariables["Dxy"]).toDouble() > m_xyImpactParameter_max)            return false;
+        if( muon->getUserRecord(m_alternativeUserVariables["Dz"]).toDouble() > m_zImpactParameter_max)            return false;
+    }
     if( muon->getUserRecord("VHitsPixelCocktail").toInt32() < m_nPixelHits_min)             return false;
     if( muon->getUserRecord("TrackerLayersWithMeasCocktail").toInt32() < m_nTrackerLayersWithMeas_min)
         return false;

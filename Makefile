@@ -124,18 +124,15 @@ EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH) -DPXL_ENABL
 EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LIB)
 
 CC	:= g++
-#CFLAGS	:= -Ofast -Wall -fPIC -fsignaling-nans -fno-associative-math -march=native # -DNDEBUG # -pg for gprof
-CFLAGS	:= -Ofast -Wall -fPIC -fsignaling-nans -fno-associative-math # -DNDEBUG # -pg for gprof
+CFLAGS	:= -O3 -Wall -fPIC -fsignaling-nans -funsafe-math-optimizations -fno-rounding-math -fno-signaling-nans -fcx-limited-range -fno-associative-math # -DNDEBUG # -pg for gprof
 
 LD	:= g++
-#LDFLAGS	:= -Ofast -lz -fsignaling-nans -fno-associative-math -march=native# -pg for gprof
-LDFLAGS	:= -Ofast -lz -fsignaling-nans -fno-associative-math # -pg for gprof
-#LDFLAGS	:= -O2 -fsignaling-nans  -lz -march=native # -pg for gprof
+LDFLAGS	:= -O3fast -lz -fno-associative-math # -pg for gprof
 
 # Debug flags?
 ifdef DEBUG
-   CFLAGS += -g -pg -fprofile-generate -fsignaling-nans
-   LDFLAGS += -g -pg -fprofile-generate -fsignaling-nans
+   CFLAGS = -O0 -Wall -fPIC -g -pg -fprofile-generate
+   LDFLAGS = -O0 -g -pg -lz -fprofile-generate
 endif
 
 CFLAGS	+= -DMYPXLANA=$(MYPXLANA)/AnalysisComposer.hh

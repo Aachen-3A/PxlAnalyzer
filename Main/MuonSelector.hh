@@ -10,6 +10,7 @@ This class contains all the muon selections
 
 
 #include <string>
+#include <map>
 #include "Pxl/Pxl/interface/pxl/core.hh"
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/MConfig.hh"
@@ -49,6 +50,8 @@ private:
     int const           m_nPixelHits_min;
     int const           m_nTrackerLayersWithMeas_min;
     double const        m_dPtRelTrack_max;
+    bool mutable        m_useAlternative;
+    std::map<std::string,std::string> mutable m_alternativeUserVariables;
 
 };
 #endif

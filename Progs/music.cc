@@ -339,7 +339,7 @@ int main( int argc, char* argv[] ) {
             continue;
          }
 
-         if( skipEvents.skip( run, LS, eventNum ) ) {
+         if( runOnData && skipEvents.skip( run, LS, eventNum ) ) {
             ++skipped;
 
             if( debug > 1 ) {
