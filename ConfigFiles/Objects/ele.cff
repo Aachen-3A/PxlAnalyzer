@@ -54,7 +54,7 @@ Ele.CBID.Endcap.Conversion.reject = 1
 # See also:
 # https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
 Ele.HEEPID.usebool = 1
-Ele.HEEPID.boolname = heepElectronID-HEEPV50-prePHYS14-25ns-miniAOD
+Ele.HEEPID.boolname = heepElectronID-HEEPV51
 # HEEPID = High Energy Electron Pairs IDentification
 Ele.HEEPID.RequireEcalDriven = 1
 Ele.HEEPID.RejectOutOfTime = 1

@@ -175,11 +175,11 @@ def opt_parser():
     parser.add_option( '--debug', metavar = 'LEVEL', default = 'INFO',
                        help= 'Set the debug level. Allowed values: ERROR, WARNING, INFO, DEBUG. [default = %default]' )
 
-    parser.add_option( '--executable', metavar = 'EXECUTABLE' , default = 'music',
+    parser.add_option( '--executable', metavar = 'EXECUTABLE' , default = '$MUSIC_BASE/Progs/music',
                             help = 'Name of the executable. [default = %default]')
-    parser.add_option( '--exeoption', metavar = 'EXEOPTION' , default = '--SpecialAna',
+    parser.add_option( '--exeoption', metavar = 'EXEOPTION' , default = '',
                             help = 'Options that should be passed to the executable. [default = %default]' )
-    parser.add_option( '--execonfig', metavar = 'EXECONFIG' , default = '$MUSIC_BASE/ConfigFiles/MC.cfg',
+    parser.add_option( '--execonfig', metavar = 'EXECONFIG' , default = '$MUSIC_BASE/Validator/MC.cfg',
                             help = 'Configuration file that should be passed to the executable. [default = %default]')
     parser.add_option( '--cfgfile', metavar = 'CFGFILE' , default = './config.cfg',
                             help = 'Name of the configuration file for the used files. [default = %default]' )
@@ -1329,14 +1329,15 @@ def make_val_compilation(options):
             log.info(" ")
             log.info(" But first cleaning everything up")
             log.info(" ")
-            log.debug("Calling 'make clean' on the PxlAnalyzer")
+            log.debug("Calling 'make clean' on the PxlButcher")
             p = subprocess.Popen(['make','clean'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             output = p.communicate()[0]
             log.debug(output)
         log.info(" ")
         log.info(" Now we will compile")
         log.info(" ")
-        p = subprocess.Popen(['make','validation','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        os.system('export MYPXLANA=Validator')
+        p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
         os.chdir(pwd_)
@@ -1369,6 +1370,7 @@ def make_compilation(options):
         log.info(" ")
         log.info(" Now we will compile")
         log.info(" ")
+        os.system('unset MYPXLANA')
         p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
