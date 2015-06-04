@@ -47,6 +47,9 @@ ro.gROOT.ProcessLine( "gErrorIgnoreLevel = 3001;")
 ## Dictionary of the different results of the comparison
 compare_results = {}
 
+## Variable to store zour pxlana to recompile it correctly at the end of the validation
+mypxlana = ''
+
 ## Function to print the welcome output at the beginning of the programm
 #
 # Prints the welcome output and the program starting time, with the 
@@ -1336,6 +1339,7 @@ def make_val_compilation(options):
         log.info(" ")
         log.info(" Now we will compile")
         log.info(" ")
+        mypxlana = os.getenv( 'MYPXLANA' )
         os.system('export MYPXLANA=Validator')
         p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
@@ -1370,7 +1374,7 @@ def make_compilation(options):
         log.info(" ")
         log.info(" Now we will compile")
         log.info(" ")
-        os.system('unset MYPXLANA')
+        os.system('export MYPXLANA=%s'%mypxlana)
         p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
