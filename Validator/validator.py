@@ -557,9 +557,18 @@ def comparison_performance(options):
     make_axis(ax,'run time (s)','virtual memory (MB)','new')
     ax,new_vir_usage,new_vir_time = draw_mem_histos(new_vir_histos,new_vir_time,"cornflowerblue",ax)
 
-    diff_rss = (old_rss_usage - new_rss_usage)/ old_rss_usage * 100
-    diff_time = (old_rss_time - new_rss_time)/ old_rss_time * 100
-    diff_vir = (old_vir_usage - new_vir_usage)/ old_vir_usage * 100
+    try:
+        diff_rss = (old_rss_usage - new_rss_usage)/ old_rss_usage * 100
+    except(ZeroDivisionError):
+        diff_rss = 0
+    try:
+        diff_time = (old_rss_time - new_rss_time)/ old_rss_time * 100
+    except(ZeroDivisionError):
+        diff_time = 0
+    try:
+        diff_vir = (old_vir_usage - new_vir_usage)/ old_vir_usage * 100
+    except(ZeroDivisionError):
+        diff_vir = 0
 
     if diff_rss > 0.:
         text = fig.text(0.25 , 0.01, 'memory difference: %+.1f %% \n time difference: %+.1f %%'%(diff_rss,diff_time), color='chartreuse',
@@ -1384,7 +1393,7 @@ def make_compilation(options):
         log.info(" ")
 
 ## Main function to call the different sub functions
-def main():
+def main(argv):
     t0 = time.time()
 
     args,options,cfg_file = opt_parser()
@@ -1415,6 +1424,8 @@ def main():
     if decision == True or all_samples == True:
         make_new_reference(options,sample_list)
 
+        decision = True
+
         authorization = check_authorization()
 
         if authorization == True:
@@ -1428,5 +1439,7 @@ def main():
 
     farewell_output(options,t1,t0)
 
+    return decision
+
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
