@@ -780,7 +780,7 @@ def run_analysis(options,cfg_file,sample_list):
     item_list = []
     for item in cfg_file["samples"]:
         item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
-    pool = multiprocessing.Pool()
+    pool = multiprocessing.Pool(int(multiprocessing.cpu_count())/4)
     pool.map_async(run_analysis_task, item_list)
     while True:
         time.sleep(1)
@@ -788,8 +788,8 @@ def run_analysis(options,cfg_file,sample_list):
     pool.close()
     pool.join()
 
-    #for item in item_list:
-    #    run_analysis_task(item)
+    # for item in item_list:
+        # run_analysis_task(item)
 
     if not os.path.exists(options.Output):
         os.mkdir(options.Output)
@@ -840,11 +840,15 @@ def run_analysis_task(item):
             output = p2.communicate()[0]
             if output != '':
                 if "m" in output.split()[5]:
-                    rssList.append(output.split()[5].split("m")[0]) 
+                    rssList.append(output.split()[5].split("m")[0])
+                elif "g" in output.split()[5]:
+                    rssList.append(float(output.split()[5].split("g")[0])*1000) 
                 else:
                     rssList.append(output.split()[5]) 
                 if "m" in output.split()[4]:
-                    virtual.append(output.split()[4].split("m")[0]) 
+                    virtual.append(output.split()[4].split("m")[0])
+                elif "g" in output.split()[4]:
+                    virtual.append(float(output.split()[4].split("g")[0])*1000)
                 else:
                     virtual.append(output.split()[4])
             time.sleep(1)
@@ -861,7 +865,29 @@ def run_analysis_task(item):
             log.debug(output)
         usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
         cpu_time = usage_end.ru_utime - usage_start.ru_utime
-    
+
+        skipper = []
+        counter = 0
+        for item12 in rssList:
+            try:
+                bla = float(item12)
+            except(ValueError):
+                skipper.append(counter)
+            counter += 1
+        counter = 0
+        for item12 in virtual:
+            try:
+                bla = float(item12)
+            except(ValueError):
+                skipper.append(counter)
+            counter += 1
+
+        skipper = list(set(skipper))
+
+        for item12 in skipper:
+            rssList.pop(item12)
+            virtual.pop(item12)
+
         rssArray = np.array(rssList,"d")
         virtualArray = np.array(virtual,"d")
         xAxis = []
