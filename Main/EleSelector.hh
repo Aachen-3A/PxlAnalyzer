@@ -36,6 +36,7 @@ private:
    //bool const m_ele_ID_use;
    //std::string const m_ele_ID_name;
    std::string const m_ele_id_type;
+   double const  m_ele_id_ptswitch;
 
    // variables and constants:
    // Electrons:

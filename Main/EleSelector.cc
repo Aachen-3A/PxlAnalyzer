@@ -9,6 +9,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
 
    // general:
    m_ele_id_type(         cfg.GetItem< std::string >( "Ele.ID.Type" , "HEEP") ),
+   m_ele_id_ptswitch(     cfg.GetItem< double >( "Ele.ID.switchpt" , 100) ),
    m_ele_pt_min(         cfg.GetItem< double      >( "Ele.pt.min" ) ),
    m_ele_eta_barrel_max( cfg.GetItem< double      >( "Ele.eta.Barrel.max" ) ),
    m_ele_eta_endcap_min( cfg.GetItem< double      >( "Ele.eta.Endcap.min" ) ),
@@ -97,10 +98,17 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
    bool passIso=true;
 
    double const elePt = ele->getPt();
+   //some times nan:
+   if(elePt!=elePt){
+      //the code is fucked up for this case just return with no id value
+      //Waring if the numbering changes this has to be changed as well
+      return 5;
+   }
+
    // Updated transverse energy in Skimmer for HEEP selection (Supercluster based transverse energy).
    // TODO: Remove try-block once everything is reskimmed.
    double eleEt = ele->getEt();
-   if( m_ele_id_type == "HEEP") {
+   if( m_ele_id_type == "HEEP" or  (m_ele_id_type == "switch" and  elePt>m_ele_id_ptswitch) ) {
        try {
           eleEt = ele->getUserRecord( "SCEt" );
        } catch( std::runtime_error ) {
@@ -140,7 +148,7 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
    }
 
    if( isRec ) {
-      if( m_ele_id_type == "CB" ) {
+      if( m_ele_id_type == "CB" or  (m_ele_id_type == "switch" and  elePt<=m_ele_id_ptswitch)) {
          //check ID
          if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
             passID=false;
@@ -149,7 +157,7 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
          if( not passCBID_Isolation(ele, eleRho , barrel, endcap) ){
             passIso=false;
          }
-      } else if( m_ele_id_type == "HEEP") {
+      } else if( m_ele_id_type == "HEEP" or  (m_ele_id_type == "switch" and  elePt>m_ele_id_ptswitch)) {
          if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
             passID=false;
          }
@@ -158,6 +166,7 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
          }
       } else {
           std::stringstream error;
+          std::cout<<m_ele_id_type  <<"  "<<  m_ele_id_type <<"  "<<  ele->getEt()<<std::endl;
           error << "'Ele.ID.use' must be either 'CB' or 'HEEP'! The value is "<<m_ele_id_type;
           throw Tools::config_error( error.str() );
           passID=false;
