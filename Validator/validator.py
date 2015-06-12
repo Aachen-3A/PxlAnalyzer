@@ -780,7 +780,7 @@ def run_analysis(options,cfg_file,sample_list):
     item_list = []
     for item in cfg_file["samples"]:
         item_list.append([music_prog,"-o %s"%(item[item.find("/")+1:-6]),music_opt,music_cfg,music_path+item])
-    pool = multiprocessing.Pool(int(multiprocessing.cpu_count())/4)
+    pool = multiprocessing.Pool()
     pool.map_async(run_analysis_task, item_list)
     while True:
         time.sleep(1)
