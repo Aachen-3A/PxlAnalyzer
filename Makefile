@@ -172,7 +172,8 @@ $(PROGRAM): $(OBJECTS)
 #~ 	$(LD) $(LDFLAGS) $(PXL) $^ -o $@
 	$(LD) $(LDFLAGS) $^ -o $@
 	@echo "$@ done"
-
+	@mkdir -p bin
+	@cp $(PROGRAM) bin/
 
 ########################################
 # additional targets
