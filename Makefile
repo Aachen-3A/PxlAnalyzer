@@ -30,7 +30,8 @@
 #        $<     = anotherdir/source.suf2
 #
 
-PROGRAM:=Progs/music
+#PROGRAM:=Progs/music
+PROGRAM:=bin/music
 
 ########################################
 # directories

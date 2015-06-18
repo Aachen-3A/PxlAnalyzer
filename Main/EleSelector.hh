@@ -12,6 +12,7 @@ This class contains all the muon selections
 #include "Tools/MConfig.hh"
 #include "Pxl/Pxl/interface/pxl/core.hh"
 #include "Pxl/Pxl/interface/pxl/hep.hh"
+#include "Main/EffectiveArea.hh"
 
 
 
@@ -106,5 +107,7 @@ private:
    int const    m_ele_heepid_endcap_NInnerLayerLostHits_max;
    double const m_ele_heepid_endcap_dxy_max;
    double const m_ele_heepid_endcap_sigmaIetaIeta_max;
+
+   EffectiveArea const m_ele_EA;
 };
 #endif

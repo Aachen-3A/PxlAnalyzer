@@ -75,7 +75,8 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_endcap_HcalD1_rhoSlope(         cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.RhoSlope" , 0.28 ) ),
    m_ele_heepid_endcap_NInnerLayerLostHits_max( cfg.GetItem< int    >( "Ele.HEEPID.Endcap.NInnerLayerLostHits.max" , 1 ) ),
    m_ele_heepid_endcap_dxy_max(                 cfg.GetItem< double >( "Ele.HEEPID.Endcap.dxy.max" , 0.05 ) ),
-   m_ele_heepid_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.HEEPID.Endcap.SigmaIetaIeta.max" , 0.03) )
+   m_ele_heepid_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.HEEPID.Endcap.SigmaIetaIeta.max" , 0.03) ),
+   m_ele_EA( cfg , "Ele" )
 {
 }
 
@@ -489,11 +490,29 @@ bool EleSelector::passHEEP_Isolation(pxl::Particle const *ele, double const eleE
 
 
 bool EleSelector::passCBID_Isolation( pxl::Particle const *ele, double const &eleRho, bool const &eleBarrel, bool const &eleEndcap ) const {
-   double const effArea = ele->getUserRecord( "EffectiveArea" );
-   double const pfIsoCH = ele->getUserRecord( "PFIso03ChargedHadron" );
-   double const pfIsoNH = ele->getUserRecord( "PFIso03NeutralHadron" );
-   double const pfIsoPH = ele->getUserRecord( "PFIso03Photon" );
-   double const pfIsoPUCorrected = pfIsoCH + std::max( 0.0, ( pfIsoPH + pfIsoNH ) - effArea * eleRho );
+   double  effArea=0;
+   double  pfIsoCH=0;
+   double  pfIsoNH=0;
+   double  pfIsoPH=0;
+   //double  pfIsoPU=0;
+   //std::cout<<ele->hasUserRecord("EffectiveArea")<<std::endl;
+
+   if (ele->hasUserRecord("EffectiveArea")){
+      effArea = ele->getUserRecord( "EffectiveArea" );
+      pfIsoCH = ele->getUserRecord( "PFIso03ChargedHadron" );
+      pfIsoNH = ele->getUserRecord( "PFIso03NeutralHadron" );
+      pfIsoPH = ele->getUserRecord( "PFIso03Photon" );
+   }else{
+      effArea = m_ele_EA.getEffectiveArea( fabs(ele->getEta()), EffectiveArea::chargedHadron );
+      pfIsoCH = ele->getUserRecord( "chargedHadronIso" );
+      pfIsoNH = ele->getUserRecord( "neutralHadronIso" );
+      pfIsoPH = ele->getUserRecord( "photonIso" );
+      //pfIsoPU = ele->getUserRecord( "puChargedHadronIso" );
+   }
+
+
+
+   double pfIsoPUCorrected = pfIsoCH + std::max( 0.0, ( pfIsoPH + pfIsoNH ) - effArea * eleRho );
 
    bool iso_ok = true;
    if( eleBarrel and pfIsoPUCorrected/ele->getPt() > m_ele_cbid_barrel_PFIsoRel_max )

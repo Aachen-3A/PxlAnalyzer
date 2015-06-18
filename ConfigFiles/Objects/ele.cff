@@ -94,6 +94,19 @@ Ele.Error.Fakes = 0.5
 # to MC 1.2 with 20 % uncertainty.
 Ele.Error.Charge = 0.3
 
+
+#https://indico.cern.ch/event/367861/contribution/2/material/slides/0.pdf
+
+Ele.EffArea.abs_eta = 1
+
+Ele.EffArea.eta_edges = 0.0, 0.8, 1.3, 2.0, 2.2, 5.
+
+Ele.EffArea.EA_charged_hadrons = 0.1013, 0.0988, 0.0572, 0.0842, 0.1530
+
+Ele.EffArea.EA_neutral_hadrons = 0.1013, 0.0988, 0.0572, 0.0842, 0.1530
+
+Ele.EffArea.EA_photons = 0.1013, 0.0988, 0.0572, 0.0842, 0.1530
+
 #################
 ## Sytematics  ##
 #################

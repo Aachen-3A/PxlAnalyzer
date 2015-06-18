@@ -43,6 +43,8 @@ int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const
         try{
             return muonID(muon, rho);
         }catch(std::runtime_error &e) {
+            std::cout << e.what() << '\n';
+            std::cout << e.what() << '\n';
             m_useAlternative=true;
             m_alternativeUserVariables["DxyGTBS"]="DxyBS";
             m_alternativeUserVariables["DzIT"]="Dz";
