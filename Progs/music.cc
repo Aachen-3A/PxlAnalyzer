@@ -1,4 +1,5 @@
 #include <time.h>
+#include <string>
 
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Pxl/Pxl/interface/pxl/core.hh"
@@ -97,7 +98,7 @@ int main( int argc, char* argv[] ) {
    // Please keep to that.
 
    int debug = 1;
-   std::vector< string > arguments;
+   std::vector< std::string > arguments;
 
 
 
@@ -163,7 +164,7 @@ int main( int argc, char* argv[] ) {
    bool const useSYST = config.GetItem< bool >( "General.useSYST" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
-      RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
+     RunConfigFile = Tools::AbsolutePath( config.GetItem< std::string >( "General.RunConfig" ) );
       if( not fs::exists( RunConfigFile ) ) {
          std::stringstream error;
          error << "RunConfigFile '" << RunConfigFile << "' ";
@@ -173,7 +174,7 @@ int main( int argc, char* argv[] ) {
    }
    if( !RunConfigFile.empty() ) std::cout << "INFO: Using Run config file: " << RunConfigFile << std::endl;
 
-   const string startDir = getcwd( NULL, 0 );
+   const std::string startDir = getcwd( NULL, 0 );
 
    signal(SIGINT,KeyboardInterrupt_endJob);
 
@@ -245,7 +246,7 @@ int main( int argc, char* argv[] ) {
    unsigned int lost_files = 0;
 
    // loop over all files
-   std::vector<string>::const_iterator file_iter = input_files.begin();
+   std::vector<std::string>::const_iterator file_iter = input_files.begin();
 
    // initialize process info object
    ProcInfo_t info;
