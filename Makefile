@@ -23,7 +23,7 @@
 #        for target thedir/target.suf from source anotherdir/source.suf2
 #        ${*D}  = thedir
 #        ${*F}  = target
-#	 $^	= name of all prerequisites
+#        $^     = name of all prerequisites
 #        $+     = like $^ with duplicated prerequisites if mentioned more than once
 #        $*     = thedir/target
 #        $@     = thedir/target.suf
@@ -31,18 +31,18 @@
 #
 
 PROGRAM:=Progs/music
-#PROGRAM:=bin/music
 
 ########################################
 # directories
+# by default, the validator is compiled.
+# usually one will change this to their personal analysis.
 
 ifndef MYPXLANA
 	MYPXLANA:=Validator
 endif
 
-DIRS	:= $(MYPXLANA)
-
 #define all directories with source code
+DIRS	:= $(MYPXLANA)
 DIRS	+= Main
 DIRS	+= Tools
 DIRS	+= Progs
@@ -53,13 +53,6 @@ DIRS	+=$(PXLDIR)/interface
 # define source files
 SOURCES	:= $(wildcard *.cc)
 SOURCES	+= $(foreach dir,$(DIRS),$(wildcard $(dir)/*.cc))
-
-# pxl lib:
-#PXLTARGET	:=Tools/pxl.o
-#SRCS 		:= $(wildcard $(PXLDIR)/src/*cc)
-#HEADERS = $(wildcard $(PXLDIR)/interface/pxl*.hh)
-#SOURCES += $(patsubst %.cc,%.o,$(SRCS))
-#TARGETS += $(PXLTARGET)
 
 # define header, object and dependency files based on source files
 HEADERS	:= $(SOURCES:.cc=.h)
@@ -112,9 +105,6 @@ CMSSW_INC_PATHS += -isystem$(CMSSW_BOOST_BASE)/include
 CMSSW_INC_PATHS += -isystem$(CMSSW_GSL_BASE)/include
 CMSSW_INC_PATHS += -isystem$(LIBS3A)/include
 
-#LHAPDF_LIB_PATH := -L$(MUSIC_BASE)/local/lib
-#LHAPDF_INC_PATH := -I$(MUSIC_BASE)/local/include
-#LHAPDF_LIB := -lLHAPDF
 #no nice way to get this automated
 LHAPDF_BASE := /cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/lhapdf6/6.1.4/
 LHAPDF_LIB_PATH := -L$(LHAPDF_BASE)/lib
@@ -140,6 +130,18 @@ CFLAGS	+= -DMYPXLANA=$(MYPXLANA)/AnalysisComposer.hh
 CFLAGS	+= -I. $(ROOT_CFLAGS) $(EXTRA_CFLAGS)
 
 LDFLAGS  += $(ROOT_LDFLAGS) $(ROOT_GLIBS) $(SYSLIBS) -L. $(EXTRA_LDFLAGS)
+
+
+########################################
+# define colors for better overview
+
+RED=$(shell tput setaf 1)
+YELLOW=$(shell tput setaf 2)
+GREEN=$(shell tput setaf 3)
+BOLD=$(shell tput bold)
+NORMAL=$(shell tput sgr0)
+
+
 ########################################
 # define all targets
 
@@ -148,11 +150,11 @@ TARGETS	:= $(PROGRAM)
 
 ########################################
 # additional includes
-
-ifneq (,$(wildcard $(MYPXLANA)/make.includes))
--include $(MYPXLANA)/make.includes
-else
-$(info "No make.includes included")
+# if you have additional includes, you can put them in the includes.mk file in
+# your analysis directory
+ifneq (,$(wildcard $(MYPXLANA)/includes.mk))
+$(info Makefile fragment $(GREEN)include.mk$(NORMAL) found. Including ...)
+-include $(MYPXLANA)/includes.mk
 endif
 
 
@@ -170,19 +172,18 @@ clean:
 
 $(PROGRAM): $(OBJECTS)
 	@echo "Building $@ ..."
-#~ 	$(LD) $(LDFLAGS) $(PXL) $^ -o $@
 	$(LD) $(LDFLAGS) $^ -o $@
 	@echo "$@ done"
-	@mkdir -p bin
-	@cp $(PROGRAM) bin/
+
 
 ########################################
 # additional targets
+# if you have additional targets, you can put them in the includes.mk file in
+# your analysis directory
 
-ifneq (,$(wildcard $(MYPXLANA)/make.targets))
--include $(MYPXLANA)/make.targets
-else
-$(info "No make.targets included")
+ifneq (,$(wildcard $(MYPXLANA)/targets.mk))
+$(info Makefile fragment $(GREEN)targets.mk$(NORMAL) found. Including ...)
+-include $(MYPXLANA)/targets.mk
 endif
 
 
@@ -190,7 +191,6 @@ endif
 # rules
 
 %.o : %.cc
-#~ 	$(CC) -MD -MP $(CFLAGS) $(PXL) -c -o $@ $<
 	$(CC) -MD -MP $(CFLAGS) -c -o $@ $<
 
 -include $(DEPENDS)
