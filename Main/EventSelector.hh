@@ -14,6 +14,7 @@ Decision.
 #include "TriggerSelector.hh"
 #include "MuonSelector.hh"
 #include "EleSelector.hh"
+#include "TauSelector.hh"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #pragma GCC diagnostic push
@@ -92,7 +93,6 @@ private:
     //                      ) const;
 
     void applyCutsOnTau( std::vector< pxl::Particle* > &taus, const bool& isRec );
-    bool passTau( pxl::Particle *tau, const bool& isRec );
 
     void applyCutsOnGam( std::vector< pxl::Particle* > &gammas,
                                 double const gamRho,
@@ -220,14 +220,10 @@ private:
     std::string const m_ele_rho_label;
     EleSelector const m_ele_selector;
 
-
-
     // Taus:
     bool const    m_tau_use;
-    double const m_tau_pt_min;
-    double const m_tau_eta_max;
-    // Discriminators:
-    std::vector< std::string > const m_tau_discriminators;
+    TauSelector const m_tau_selector;
+
 
     // Photons:
     bool const    m_gam_use;

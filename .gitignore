@@ -3,6 +3,7 @@
 *.pyc
 *~
 *.d
+*.gcda
 \#*\#
 *.tar.gz
 *Dict.cc
