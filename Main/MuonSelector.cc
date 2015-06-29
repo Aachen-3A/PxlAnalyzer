@@ -1,12 +1,13 @@
 #include "MuonSelector.hh"
 
-
 using namespace std;
 
 //--------------------Constructor-----------------------------------------------------------------
 
 MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
 
+    // General:
+    m_muo_id_type( cfg.GetItem< std::string >( "Muon.ID.Type" , "TightID")),
     // Muons:
     m_muo_pt_min(                     cfg.GetItem< double >( "Muon.pt.min" ) ),
     m_muo_eta_max(                    cfg.GetItem< double >( "Muon.eta.max" ) ),
@@ -28,9 +29,21 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_xyImpactParameter_max(          cfg.GetItem< double >(  "Muon.XYImpactParameter.max") ),
     m_nPixelHits_min(                 cfg.GetItem< int >(     "Muon.NPixelHits.min") ),
     m_nTrackerLayersWithMeas_min(     cfg.GetItem< int >(     "Muon.NTrackerLayersWithMeas.min") ),
-    m_dPtRelTrack_max(                cfg.GetItem< double >(  "Muon.dPtRelTrack.max") )
+    m_dPtRelTrack_max(                cfg.GetItem< double >(  "Muon.dPtRelTrack.max") ),
+
+    // High Pt ID
+    m_muo_highptid_useBool(             cfg.GetItem< bool >("Muon.HighPtID.useBool")),
+    m_muo_highptid_boolName(            cfg.GetItem< string >("Muon.HighPtID.boolName")),
+    m_muo_highptid_isGlobalMuon(        cfg.GetItem< bool >("Muon.HighPtID.isGlobalMuon")),
+    m_muo_highptid_PtRelativeError_max( cfg.GetItem< double >("Muon.HighPtID.PtRelativeError.max")),
+    m_muo_highptid_NMatchedStations_min(cfg.GetItem< int >("Muon.HighPtID.NMatchedStations.min")),
+    m_muo_highptid_VHitsMuonSys_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsMuonSys.min")),
+    m_muo_highptid_VHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
+    m_muo_highptid_VHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
+    m_muo_highptid_Dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
+    m_muo_highptid_Dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
 {
-    m_useAlternative=false;
+    // nothing to do here
 }
 //--------------------Destructor-----------------------------------------------------------------
 
@@ -40,25 +53,9 @@ MuonSelector::~MuonSelector() {
 
 int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const{
     if( isRec ){
-        try{
-            return muonID(muon, rho);
-        }catch(std::runtime_error &e) {
-            std::cout << e.what() << '\n';
-            std::cout << e.what() << '\n';
-            m_useAlternative=true;
-            m_alternativeUserVariables["DxyGTBS"]="DxyBS";
-            m_alternativeUserVariables["DzIT"]="Dz";
-            m_alternativeUserVariables["DzIT"]="DzBS";
-            m_alternativeUserVariables["DxyGT"]="Dxy";
-            m_alternativeUserVariables["Dz"]="DzBT";
-            m_alternativeUserVariables["Dxy"]="DxyBT";
-            m_alternativeUserVariables["isGoodTMOneST"]="TMOneStationTight";
-            m_alternativeUserVariables["isGoodLastST"]="lastStationTight";
-            return muonID(muon, rho);
-        }
-    }
-    //generator muon cuts
-    else{
+        return muonID(muon, rho);
+    } else {
+        //generator muon cuts
         double const muon_rel_iso = muon->getUserRecord( "GenIso" ).toDouble() / muon->getPt();
         // Gen iso cut.
         bool iso_failed = muon_rel_iso > m_muo_iso_max;
@@ -68,7 +65,6 @@ int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const
         if( iso_failed ) return 1;
     }
     return 0;
-
 }
 
 
@@ -84,114 +80,62 @@ bool MuonSelector::kinematics(pxl::Particle *muon ) const {
 
 
 int MuonSelector::muonID( pxl::Particle *muon , double rho) const {
-    bool passKin=true;
-    bool passID=true;
-    bool passIso=true;
+    bool passKin = false;
+    bool passID = false;
+    bool passIso = false;
 
     if(!kinematics( muon )) passKin=false;
     //the muon cuts are according to :
     //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49
     //status: 17.9.2014
 
-    // isTightMuon or isHighPtMuon
-    if(m_muo_id_type=="musicID.bool"){
-        if(muon->getPt()<m_muo_HighPtSwitchPt){
-            if( not muon->getUserRecord("isTightMuon")) passID=false;
-        }else{
-            if( not muon->getUserRecord("isHighPtMuon")) passID=false;
-        }
-    }else if(m_muo_id_type=="isTightMuon.bool"){
-        if(not muon->getUserRecord("isTightMuon")) passID=false;
-    }else if(m_muo_id_type=="isHighPtMuon.bool"){
-        if(not muon->getUserRecord("isHighPtMuon")) passID=false;
-    }else if(m_muo_id_type=="isTightMuon.Cut"){
-        if ( not tightMuonIDCut(muon) ){
-            passID=false;
-        }
-    }else if(m_muo_id_type=="isHighPtMuon.Cut"){
-        if ( not HighptMuonIDCut(muon) ){
-            passID=false;
-        }
-    }else{
-          std::stringstream error;
-          error << "'Muon.ID.Type' must be one of these values: 'musicID.bool','isTightMuon.bool','isHighPtMuon.bool','isTightMuon.Cut','isHighPtMuon.Cut' The value is "<<m_muo_id_type;
-          throw Tools::config_error( error.str() );
-          passID=false;
-
-    }
-
-
-    // Muon isolation.
-    double muon_iso;
-    if( m_muo_iso_type == "Tracker" ) {
-      muon_iso = muon->getUserRecord( "TrkIso" );
-    } else if( m_muo_iso_type == "PF" ) {
-      //[sumChargedHadronPt+ max(0.,sumNeutralHadronPt+sumPhotonPt-0.5sumPUPt]/pt
-        if( m_muo_iso_useDeltaBetaCorr && !m_muo_iso_useRhoCorr) {
-            muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
-                + max( 0.,
-                    muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
-                    + muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
-                    - 0.5 * muon->getUserRecord( "PFIsoR04PU" ).toDouble()
-                );
-        } else if (m_muo_iso_useDeltaBetaCorr && !m_muo_iso_useRhoCorr){
-            //PFIsoCorr = PF(ChHad PFNoPU) + Max ((PF(Nh+Ph) - ρ’EACombined),0.0)) where ρ’=max(ρ,0.0) and with a 0.5 GeV threshold on neutrals
-
-            double const photonEA = m_muo_EA.getEffectiveArea(          fabs(muon->getEta()), EffectiveArea::photon );
-            double const neutralHadronEA = m_muo_EA.getEffectiveArea(   fabs(muon->getEta()), EffectiveArea::neutralHadron );
-
-            muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
-                + max( 0.,
-                    muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
-                    + muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
-                    -  rho* (photonEA+neutralHadronEA)
-                );
-
+    // decide which ID should be performed
+    if (m_muo_id_type == "CombinedID") {
+        if (muon->getPt() < m_muo_ptswitch) {
+            passID = passTightID(muon);
         } else {
-            muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
-                + muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
-                + muon->getUserRecord( "PFIsoR04Photons" ).toDouble();
+            passID = passHighPtID(muon);
         }
-    } else if( m_muo_iso_type == "PFCombined03" ) { //not supported anymore
-        if( m_muo_iso_useDeltaBetaCorr ) {
-            muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" ).toDouble()
-                + max( 0.,
-                    muon->getUserRecord( "PFIsoR03NeutralHadrons" ).toDouble()
-                    + muon->getUserRecord( "PFIsoR03Photons" ).toDouble()
-                    - 0.5 * muon->getUserRecord( "PFIsoR03PU" ).toDouble()
-                );
-        } else {
-            muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" ).toDouble()
-                + muon->getUserRecord( "PFIsoR03NeutralHadrons" ).toDouble()
-                + muon->getUserRecord( "PFIsoR03Photons" ).toDouble();
-        }
-    } else if( m_muo_iso_type == "Combined" ) { // not supported anymore
-        muon_iso = muon->getUserRecord( "TrkIso" ).toDouble()
-            + muon->getUserRecord( "ECALIso" ).toDouble()
-            + muon->getUserRecord( "HCALIso" ).toDouble();
+    } else if (m_muo_id_type == "HighPtID") {
+        passID = passHighPtID(muon);
+    } else if (m_muo_id_type == "TightID") {
+        passID = passTightID(muon);
+    } else if (m_muo_id_type == "MediumID") {
+        passID = passMediumID(muon);
+    } else if (m_muo_id_type == "SoftID") {
+        passID = passSoftID(muon);
     } else {
-      throw Tools::config_error( "In passMuon(...): Invalid isolation type: '" + m_muo_iso_type + "'" );
+        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'SoftID'. The value is '" + m_muo_id_type + "'");
+        passID = false;
     }
 
-    double const muon_rel_iso = muon_iso / muon->getPt();
 
-    bool iso_failed = muon_rel_iso > m_muo_iso_max;
-    //turn around for iso-inversion
-    if( m_muo_invertIso ) iso_failed = !iso_failed;
-    //now check
-    if( iso_failed ) passIso=false;
+    // decide which isolation to perform
+    if (m_muo_iso_type == "PF") {
+        passIso = passPFIso(muon);
+    } else if (m_muo_iso_type == "Tracker") {
+        passIso = passTrackerIso(muon);
+    } else if (m_muo_iso_type == "Mini") {
+        passIso = passMiniIso(muon);
+    } else {
+        throw Tools::config_error("'Muon.Iso.Type' must be one of these values: 'PF', 'Tracker', 'Mini', 'SoftID'. The value is '" + m_muo_iso_type + "'");
+        passIso = false;
+    }
 
-    //no cut failed
-    if(passKin && passID && passIso) return 0;
-    else if (passKin && passID && !passIso) return 1;
-    else if (passKin && !passID && passIso) return 2;
-    else if (!passKin && passID && passIso) return 3;
+    // perform iso inversion if requested
+    if (m_muo_invertIso) passIso = !passIso;
+
+    // return code depending on passing variables
+    if      (passKin  && passID  && passIso)  return 0;
+    else if (passKin  && passID  && !passIso) return 1;
+    else if (passKin  && !passID && passIso)  return 2;
+    else if (!passKin && passID  && passIso)  return 3;
     return 4;
 }
 
 
-bool MuonSelector::tightMuonIDCut(pxl::Particle *muon) const{
-
+bool MuonSelector::passTightID(pxl::Particle *muon) const{
+    // TODO(millet) legacy code, check for 13TeV changes
     if( not muon->getUserRecord("isGlobalMuon").toBool() )                          return false;
     if( not muon->getUserRecord("isPFMuon").toBool() )                              return false;
     if( muon->getUserRecord("NormChi2").toInt32() > m_globalChi2_max)               return false;
@@ -212,31 +156,92 @@ bool MuonSelector::tightMuonIDCut(pxl::Particle *muon) const{
 }
 
 
-
-bool MuonSelector::HighptMuonIDCut(pxl::Particle *muon) const{
-    if( not muon->getUserRecord("validCocktail").toBool() )                                 return false;
-    if( not muon->getUserRecord("isGlobalMuon").toBool() )                                  return false;
-    //if( muon->getUserRecord("VHitsMuonSysCocktail").toInt32() < m_nMuonHits_min)            return false;
-    if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_nMuonHits_min)            return false;
-    if (muon->hasUserRecord("NMatchedStationsCocktail")){
-        if( muon->getUserRecord("NMatchedStationsCocktail").toInt32() < m_nMatchedStations_min) return false;
-    }else{
-        if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
-    }
-    if(!m_useAlternative){
-        if( muon->getUserRecord("Dxy").toDouble() > m_xyImpactParameter_max)            return false;
-        if( muon->getUserRecord("Dz").toDouble() > m_zImpactParameter_max)            return false;
-    }else{
-        if( muon->getUserRecord(m_alternativeUserVariables["Dxy"]).toDouble() > m_xyImpactParameter_max)            return false;
-        if( muon->getUserRecord(m_alternativeUserVariables["Dz"]).toDouble() > m_zImpactParameter_max)            return false;
-    }
-    if( muon->getUserRecord("VHitsPixelCocktail").toInt32() < m_nPixelHits_min)             return false;
-    if( muon->getUserRecord("TrackerLayersWithMeasCocktail").toInt32() < m_nTrackerLayersWithMeas_min)
-        return false;
-    if( muon->getUserRecord("ptErrorCocktail").toDouble()/muon->getUserRecord("ptCocktail").toDouble() > m_dPtRelTrack_max )
-        return false;
+bool MuonSelector::passMediumID(pxl::Particle *muon) const {
+    // TODO(millet) implement medium ID
     return true;
 }
 
 
+bool MuonSelector::passSoftID(pxl::Particle *muon) const {
+    // TODO(millet) implement soft ID
+    return true;
+}
 
+
+bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
+    // check if a cocktail muon exists
+    if (not muon->getUserRecord("validCocktail").toBool())
+        return false;
+    // return built-in bool if requested
+    if (m_muo_highptid_useBool)
+        return muon->getUserRecord(m_muo_highptid_boolName).();
+
+    // do the cut based ID if we are not using the bool
+    if (not m_muo_highptid_isGlobalMuon == muon->getUserRecord("isGlobalMuon"))
+        return false;
+    if (not m_muo_highptid_PtRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
+        muon->getUserRecord("ptCocktail").toDouble())
+        return false;
+
+    if (not m_muo_highptid_NMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32())
+        return false;
+    if (not m_muo_highptid_VHitsMuonSys_min < muon->getUserRecord("VHitsMuonSysCocktail").toInt32())
+        return false;
+    if (not m_muo_highptid_VHitsPixel_min < muon->getUserRecord("VHitsPixelCocktail").toInt32())
+        return false;
+    if (not m_muo_highptid_VHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32())
+        return false;
+
+    if (not m_muo_highptid_Dxy_max > muon->getUserRecord("DxyCocktail").toDouble())
+        return false;
+    if (not m_muo_highptid_Dz_max > muon->getUserRecord("DzCocktail").toDouble())
+        return false;
+
+    // return true if everything passed
+    return true;
+}
+
+
+bool MuonSelector::passMiniIso(Pxl::Particle *muon) {
+    // TODO(millet) implement mini iso
+    return true;
+}
+
+bool MuonSelector::passTrackerIso(Pxl::Particle *muon) {
+    // TODO(millet) implement mini iso
+    muon_iso = muon->getUserRecord( "TrkIso" );
+    return (muon_iso / muon->getPt() < m_muo_iso_max);
+}
+
+bool MuonSelector::passPFIso(Pxl::Particle *muon) {
+    // TODO(millet) legacy code, check for 13TeV changes
+    double muon_iso;
+    // [sumChargedHadronPt+ max(0.,sumNeutralHadronPt+sumPhotonPt-0.5sumPUPt]/pt
+    if( m_muo_iso_useDeltaBetaCorr && !m_muo_iso_useRhoCorr) {
+        muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
+                + max( 0.,
+                       muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
+                       + muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
+                       - 0.5 * muon->getUserRecord( "PFIsoR04PU" ).toDouble()
+                       );
+    } else if (m_muo_iso_useDeltaBetaCorr && !m_muo_iso_useRhoCorr){
+        //PFIsoCorr = PF(ChHad PFNoPU) + Max ((PF(Nh+Ph) - ρ’EACombined),0.0)) where ρ’=max(ρ,0.0) and with a 0.5 GeV threshold on neutrals
+
+        double const photonEA = m_muo_EA.getEffectiveArea(          fabs(muon->getEta()), EffectiveArea::photon );
+        double const neutralHadronEA = m_muo_EA.getEffectiveArea(   fabs(muon->getEta()), EffectiveArea::neutralHadron );
+
+        muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
+                + max( 0.,
+                       muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
+                       + muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
+                       -  rho* (photonEA+neutralHadronEA)
+                       );
+
+    } else {
+        muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
+                + muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
+                + muon->getUserRecord( "PFIsoR04Photons" ).toDouble();
+    }
+
+    return (muon_iso / muon->getPt() < m_muo_iso_max);
+}

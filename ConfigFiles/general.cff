@@ -35,7 +35,7 @@ import "$PXLANA/ConfigFiles/trigger.cff"
 # non-particle includes (Filter, Primary Vertex, etc.)
 import "$PXLANA/ConfigFiles/non_particle.cff"
 
-import "$PXLANA/ConfigFiles/Objects/muon.cff"
+import "$PXLANA/ConfigFiles/Objects/Muons/muon.cff"
 
 import "$PXLANA/ConfigFiles/Objects/ele.cff"
 

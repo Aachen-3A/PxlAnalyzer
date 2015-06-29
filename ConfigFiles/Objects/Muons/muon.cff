@@ -1,0 +1,31 @@
+# General file for muon ID and isolation requirements
+# https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
+
+Muon.use = 1
+Muon.IDTag = 1
+Muon.Type.Gen = "Muon"
+Muon.Type.Rec = "Muon"
+
+Muon.pt.min = 25
+Muon.eta.max = 2.1
+Muon.DeltaR.max = 0.4
+Muon.InvertIsolation = 0
+
+
+# Supported ID types: 
+#   "CombinedID", "HighPtID", "TightID", "MediumID", "SoftID"
+# The "CombinedID" uses the "TightID" until the specified PtSwitch is
+# reached, then it switches to the "HighPtID"
+Muon.ID.Type = "CombinedID"
+Muon.ID.PtSwitch = 200
+
+
+# Imports for the different requirements and isolations
+import "$PXLANA/ConfigFiles/Muons/highpt.cff"
+# import "$PXLANA/ConfigFiles/Muons/tight.cff"
+# import "$PXLANA/ConfigFiles/Muons/medium.cff"
+# import "$PXLANA/ConfigFiles/Muons/soft.cff"
+
+import "$PXLANA/ConfigFiles/Muons/isolation.cff"
+import "$PXLANA/ConfigFiles/Muons/effectivearea.cff"
+import "$PXLANA/ConfigFiles/Muons/systematics.cff"

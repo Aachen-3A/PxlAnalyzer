@@ -1,0 +1,22 @@
+############################################################
+## Effective area based Iso correction aka rho correction ##
+############################################################
+
+# See the documentation of BinnedMapping to understand the following config options.
+#
+# All values from:
+# https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=188494
+# (2014-09-17)
+
+# If true, the given eta values are considered abolute.
+# No negative values allowed!
+Muon.EffArea.abs_eta = 1
+
+Muon.EffArea.eta_edges = 0.0, 1.0, 1.479, 2.0, 2.2, 2.3
+
+#this makes no sence dummy values:
+Muon.EffArea.EA_charged_hadrons = 0.,       0.,       0.,     , 0.      , 0.
+
+Muon.EffArea.EA_neutral_hadrons = 0.16580, 0.25904, 0.24695, 0.22021, 0.34045, 0.21592
+
+Muon.EffArea.EA_photons         = 0.50419, 0.30582, 0.19765, 0.28723, 0.52529, 0.48818

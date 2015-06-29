@@ -1,0 +1,15 @@
+# High Pt ID (2015)
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonId2015
+# 
+Muon.HighPtID.useBool = 0
+Muon.HighPtID.boolName = isHighPtMuon
+Muon.HighPtID.isGlobalMuon = 1
+Muon.HighPtID.VHitsMuonSys.min = 0
+Muon.HighPtID.NMatchedStations.min = 1
+Muon.HighPtID.PtRelativeError.max = 0.3
+Muon.HighPtID.Dxy.max = 0.2
+Muon.HighPtID.Dz.max = 0.5
+Muon.HighPtID.VHitsPixel.min = 0
+Muon.HighPtID.VHitsTracker.min = 5
+#
+# End High Pt ID

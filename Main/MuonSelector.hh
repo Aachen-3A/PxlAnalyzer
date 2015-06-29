@@ -50,8 +50,20 @@ private:
     int const           m_nPixelHits_min;
     int const           m_nTrackerLayersWithMeas_min;
     double const        m_dPtRelTrack_max;
+
+    // High Pt ID variables
+    // const bool        m_muo_highptid_useBool;
+    // const std::string m_muo_highptid_boolName
+    // const bool        m_muo_highptid_isGlobalMuon;
+    // const double      m_muo_highptid_PtRelativeError_max;
+    // const int         m_muo_highptid_NMatchedStations_min;
+    // const int         m_muo_highptid_VHitsMuonSys_min;
+    // const int         m_muo_highptid_VHitsPixel_min;
+    // const int         m_muo_highptid_VHitsTracker_min;
+    // const double      m_muo_highptid_Dxy_max;
+    // const double      m_muo_highptid_Dz_max;
+
     bool mutable        m_useAlternative;
     std::map<std::string,std::string> mutable m_alternativeUserVariables;
-
 };
 #endif
