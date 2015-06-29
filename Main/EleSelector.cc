@@ -57,6 +57,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_barrel_deltaEta_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.DEta.max" , 0.05 ) ),
    m_ele_heepid_barrel_deltaPhi_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.DPhi.max" , 0.06) ),
    m_ele_heepid_barrel_HoEM_max(                cfg.GetItem< double >( "Ele.HEEPID.Barrel.HoEM.max" , 0.05) ),
+   m_ele_heepid_barrel_HoEM_slope(              cfg.GetItem< double >( "Ele.HEEPID.Barrel.HoEM.Slope" , 1) ),
    m_ele_heepid_barrel_trackiso_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.TrkIso.max" , 5 ) ),
    m_ele_heepid_barrel_HcalD1_offset(           cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.Offset" , 2 ) ),
    m_ele_heepid_barrel_HcalD1_slope(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.Slope" , 0.03) ),
@@ -69,6 +70,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_endcap_deltaEta_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.DEta.max" , 0.007 ) ),
    m_ele_heepid_endcap_deltaPhi_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.DPhi.max" , 0.06 ) ),
    m_ele_heepid_endcap_HoEM_max(                cfg.GetItem< double >( "Ele.HEEPID.Endcap.HoEM.max" , 0.05) ),
+   m_ele_heepid_endcap_HoEM_slope(              cfg.GetItem< double >( "Ele.HEEPID.Endcap.HoEM.Slope" , 5) ),
    m_ele_heepid_endcap_trackiso_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.TrkIso.max" , 5 ) ),
    m_ele_heepid_endcap_HcalD1_offset(           cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.Offset" , 2.5 ) ),
    m_ele_heepid_endcap_HcalD1_slope(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.Slope" , 0.03 ) ),
@@ -357,6 +359,7 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
    double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
    double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
    double const ele_HoEM        = ele->getUserRecord( "HoEm" );
+   double const ele_E           = ele->getUserRecord( "E" );
 
 
    // TODO: Remove this construct when FA11 or older samples are not used anymore.
@@ -385,7 +388,7 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
          return false;
 
       //hadronic over EM
-      if( ele_HoEM > m_ele_heepid_barrel_HoEM_max )
+      if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
          return false;
       //shower shape
       double const e5x5 = ele->getUserRecord( "e5x5" );
@@ -413,8 +416,8 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_absDeltaPhi > m_ele_heepid_endcap_deltaPhi_max )
          return false;
 
-      //hadronic over EM
-      if( ele_HoEM > m_ele_heepid_endcap_HoEM_max )
+      //hadronic over EM      
+      if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
          return false;
 
       //sigma iEta-iEta
