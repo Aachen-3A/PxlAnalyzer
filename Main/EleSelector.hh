@@ -111,5 +111,7 @@ private:
    double const m_ele_heepid_endcap_sigmaIetaIeta_max;
 
    EffectiveArea const m_ele_EA;
+   bool mutable        m_useAlternative;
+   std::map<std::string,std::string> mutable m_alternativeUserVariables;
 };
 #endif

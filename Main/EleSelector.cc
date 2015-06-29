@@ -21,8 +21,8 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    // lowEta: |eta| < 1.0
    m_ele_cbid_usebool(       cfg.GetItem< bool   >( "Ele.CBID.usebool" , 1 ) ),
    m_ele_cbid_boolname(         cfg.GetItem< std::string >( "Ele.CBID.boolname" , "DefaultBoolname") ),
-   m_ele_cbid_lowEta_EoP_min( cfg.GetItem< double >( "Ele.CBID.lowEta.EoverPin.min" , 0.95 ) ), // Only for 2011!
-   m_ele_cbid_fBrem_min(      cfg.GetItem< double >( "Ele.CBID.fBrem.min" , 0.15 ) ), // Only for 2011!
+   m_ele_cbid_lowEta_EoP_min( cfg.GetItem< double >( "Ele.CBID.lowEta.EoverPin.min" , 0. ) ), // Only for 2011!
+   m_ele_cbid_fBrem_min(      cfg.GetItem< double >( "Ele.CBID.fBrem.min" , 0. ) ), // Only for 2011!
    // Barrel values:
    m_ele_cbid_barrel_DEtaIn_max(              cfg.GetItem< double >( "Ele.CBID.Barrel.DEtaIn.max" , 0.004) ),
    m_ele_cbid_barrel_DPhiIn_max(              cfg.GetItem< double >( "Ele.CBID.Barrel.DPhiIn.max" , 0.03) ),
@@ -80,6 +80,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.HEEPID.Endcap.SigmaIetaIeta.max" , 0.03) ),
    m_ele_EA( cfg , "Ele" )
 {
+   m_useAlternative=false;
 }
 
 
@@ -153,9 +154,22 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
    if( isRec ) {
       if( m_ele_id_type == "CB" or  (m_ele_id_type == "switch" and  elePt<=m_ele_id_ptswitch)) {
          //check ID
-         if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
-            passID=false;
+         try{
+            if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+               passID=false;
+            }
+         }catch(std::runtime_error &e) {
+            std::cout << e.what() << '\n';
+            m_useAlternative=true;
+            m_alternativeUserVariables["full5x5_sigmaIetaIeta"]="sigmaIetaIeta";
+            //for the first spring mc this does not work!!
+            //m_alternativeUserVariables["passConversionVeto"]="hasMatchedConversion";
+            m_alternativeUserVariables["passConversionVeto"]="passConversionVeto";
+            if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+               passID=false;
+            }
          }
+
          // check for isolation
          if( not passCBID_Isolation(ele, eleRho , barrel, endcap) ){
             passIso=false;
@@ -257,12 +271,17 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
       return false;
    if( eleEndcap and DPhiIn > m_ele_cbid_endcap_DPhiIn_max )
       return false;
-
-   double const sigmaIetaIeta = ele->getUserRecord( "sigmaIetaIeta" );
+   double sigmaIetaIeta=0;
+   if(!m_useAlternative){
+      sigmaIetaIeta = ele->getUserRecord( "full5x5_sigmaIetaIeta" );
+   }else{
+      sigmaIetaIeta = ele->getUserRecord( m_alternativeUserVariables["full5x5_sigmaIetaIeta"] );
+   }
    if( eleBarrel and sigmaIetaIeta > m_ele_cbid_barrel_sigmaIetaIeta_max )
       return false;
    if( eleEndcap and sigmaIetaIeta > m_ele_cbid_endcap_sigmaIetaIeta_max )
       return false;
+
 
    double const HoE = ele->getUserRecord( "HoEm" );
    if( eleBarrel and HoE > m_ele_cbid_barrel_HoE_max )
@@ -298,9 +317,13 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
    if( eleEndcap and NinnerLayerLostHits > m_ele_cbid_endcap_NInnerLayerLostHits_max )
       return false;
 
-   //double const PFIso03PUCorrected = ele->getUserRecord( "PFIso03PUCorrected" );
 
-   double const hasConversion = ele->getUserRecord( "hasMatchedConversion" );
+   double hasConversion=0;
+   if(!m_useAlternative){
+      hasConversion = ele->getUserRecord( "passConversionVeto" );
+   }else{
+      hasConversion = ele->getUserRecord(  m_alternativeUserVariables["passConversionVeto"] );
+   }
    if( eleBarrel and m_ele_cbid_barrel_Conversion_reject and hasConversion )
       return true;
    if( eleEndcap and m_ele_cbid_endcap_Conversion_reject and hasConversion )
