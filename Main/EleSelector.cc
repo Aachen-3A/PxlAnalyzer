@@ -150,7 +150,6 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
       //cerr << warning.str();
       passKin=false;
    }
-
    if( isRec ) {
       if( m_ele_id_type == "CB" or  (m_ele_id_type == "switch" and  elePt<=m_ele_id_ptswitch)) {
          //check ID
@@ -159,12 +158,14 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
                passID=false;
             }
          }catch(std::runtime_error &e) {
-            std::cout << e.what() << '\n';
+            std::cout <<"CB ele "<< e.what() << '\n';
             m_useAlternative=true;
             m_alternativeUserVariables["full5x5_sigmaIetaIeta"]="sigmaIetaIeta";
-            //for the first spring mc this does not work!!
-            //m_alternativeUserVariables["passConversionVeto"]="hasMatchedConversion";
-            m_alternativeUserVariables["passConversionVeto"]="passConversionVeto";
+            if (ele->hasUserRecord("hasMatchedConversion")){
+               m_alternativeUserVariables["passConversionVeto"]="hasMatchedConversion";
+            }else{
+               m_alternativeUserVariables["passConversionVeto"]="passConversionVeto";
+            }
             if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
                passID=false;
             }
@@ -175,9 +176,30 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
             passIso=false;
          }
       } else if( m_ele_id_type == "HEEP" or  (m_ele_id_type == "switch" and  elePt>m_ele_id_ptswitch)) {
-         if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
-            passID=false;
+
+         try{
+            if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+
+               passID=false;
+            }
+         }catch(std::runtime_error &e) {
+            std::cout <<"HEEP ele "<< e.what() << '\n';
+            m_useAlternative=true;
+            m_alternativeUserVariables["full5x5_sigmaIetaIeta"]="sigmaIetaIeta";
+            m_alternativeUserVariables["full5x5_e5x5"]="e5x5";
+            m_alternativeUserVariables["full5x5_e2x5Max"]="e2x5";
+            m_alternativeUserVariables["full5x5_e1x5"]="e1x5";
+            if (ele->hasUserRecord("E")){
+               m_alternativeUserVariables["SCE"]="E";
+            }else{
+               m_alternativeUserVariables["SCE"]="SCE";
+            }
+            if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+               passID=false;
+            }
          }
+
+
          if(not passHEEP_Isolation(ele, eleEt, barrel, endcap, eleRho )){
             passIso=false;
          }
@@ -382,7 +404,14 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
    double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
    double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
    double const ele_HoEM        = ele->getUserRecord( "HoEm" );
-   double const ele_E           = ele->getUserRecord( "E" );
+
+   double ele_E=0;
+   if(!m_useAlternative){
+         ele_E = ele->getUserRecord( "SCE" );
+   }else{
+      ele_E= ele->getUserRecord( m_alternativeUserVariables["SCE"] );
+   }
+
 
 
    // TODO: Remove this construct when FA11 or older samples are not used anymore.
@@ -414,9 +443,19 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
          return false;
       //shower shape
-      double const e5x5 = ele->getUserRecord( "e5x5" );
-      double const e1x5 = ele->getUserRecord( "e1x5" );
-      double const e2x5 = ele->getUserRecord( "e2x5" );
+      double e5x5=0;
+      double e1x5=0;
+      double e2x5=0;
+      if(!m_useAlternative){
+         e5x5 = ele->getUserRecord( "full5x5_e5x5" );
+         e1x5 = ele->getUserRecord( "full5x5_e1x5" );
+         e2x5 = ele->getUserRecord( "full5x5_e2x5Max" );
+      }else{
+         e5x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e5x5"] );
+         e1x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e1x5"] );
+         e2x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e2x5Max"] );
+      }
+
 
       if( e1x5/e5x5 < m_ele_heepid_barrel_e1x5_min and
           e2x5/e5x5 < m_ele_heepid_barrel_e2x5_min
@@ -439,13 +478,18 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_absDeltaPhi > m_ele_heepid_endcap_deltaPhi_max )
          return false;
 
-      //hadronic over EM      
+      //hadronic over EM
       if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
          return false;
 
       //sigma iEta-iEta
-      if( ele->getUserRecord( "sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
-         return false;
+      if(!m_useAlternative){
+         if( ele->getUserRecord( "full5x5_sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
+            return false;
+      }else{
+         if( ele->getUserRecord( m_alternativeUserVariables["full5x5_sigmaIetaIeta"] ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
+            return false;
+      }
 
 
       if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )

@@ -18,42 +18,8 @@ Ele.IdTag = 1
 Ele.ID.switchpt=100
 
 import "$PXLANA/ConfigFiles/Objects/EleID/Ele_CBID_veto_r20.cff"
+import "$PXLANA/ConfigFiles/Objects/EleID/Ele_HEEP_v60.cff"
 
-#
-# HEEP v4.1:
-# See also:
-# https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
-Ele.HEEPID.usebool = 1
-Ele.HEEPID.boolname = heepElectronID-HEEPV51
-# HEEPID = High Energy Electron Pairs IDentification
-Ele.HEEPID.RequireEcalDriven = 1
-Ele.HEEPID.RejectOutOfTime = 1
-Ele.HEEPID.EoP.max = 10
-# Barrel values:
-Ele.HEEPID.Barrel.DEta.max = 0.005
-Ele.HEEPID.Barrel.DPhi.max = 0.06
-Ele.HEEPID.Barrel.HoEM.max = 0.05
-Ele.HEEPID.Barrel.TrkIso.max = 5
-Ele.HEEPID.Barrel.HcalD1.Offset = 2
-Ele.HEEPID.Barrel.HcalD1.Slope = 0.03
-Ele.HEEPID.Barrel.HcalD1.RhoSlope = 0.28
-Ele.HEEPID.Barrel.NInnerLayerLostHits.max = 1
-Ele.HEEPID.Barrel.dxy.max = 0.02
-Ele.HEEPID.Barrel.R29.max = 0.9
-Ele.HEEPID.Barrel.E1x5.min = 0.83
-Ele.HEEPID.Barrel.E2x5.min = 0.94
-# Endcap values:
-Ele.HEEPID.Endcap.DEta.max = 0.007
-Ele.HEEPID.Endcap.DPhi.max = 0.06
-Ele.HEEPID.Endcap.HoEM.max = 0.05
-Ele.HEEPID.Endcap.TrkIso.max = 5
-Ele.HEEPID.Endcap.HcalD1.Offset = 2.5
-Ele.HEEPID.Endcap.HcalD1.Slope = 0.03
-Ele.HEEPID.Endcap.HcalD1.RhoSlope = 0.28
-Ele.HEEPID.Endcap.NInnerLayerLostHits.max = 1
-Ele.HEEPID.Endcap.dxy.max = 0.05
-Ele.HEEPID.Endcap.SigmaIetaIeta.max = 0.03
-# end HEEP v4.1
 
 # Errors:
 # Electron fake rate difference between MC and data: AN2012/415, Fig.21.
