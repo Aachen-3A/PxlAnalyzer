@@ -17,46 +17,14 @@ Ele.IdTag = 1
 
 Ele.ID.switchpt=100
 
-# CutBasedID (Tight) (With special 2011 cuts!):
-# See also:
-# https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30
-# CBID = Cut Based IDentification
-##next option new in miniAOD
-Ele.CBID.usebool = 1
-Ele.CBID.boolname = cutBasedElectronID-PHYS14-PU20bx25-V0-miniAOD-standalone-loose
-Ele.CBID.fBrem.min = 0.15           # Only for 2011!
-# lowEta: |eta|<1.0                 # Only for 2011!
-Ele.CBID.lowEta.fBrem.min = 0.0     # Only for 2011!
-Ele.CBID.lowEta.EoverPin.min = 0.95 # Only for 2011!
-# Barrel vaules:
-Ele.CBID.Barrel.DEtaIn.max = 0.004
-Ele.CBID.Barrel.DPhiIn.max = 0.03
-Ele.CBID.Barrel.sigmaIetaIeta.max = 0.01
-Ele.CBID.Barrel.HoE.max = 0.12
-Ele.CBID.Barrel.Dxy.max = 0.02
-Ele.CBID.Barrel.Dz.max = 0.1
-Ele.CBID.Barrel.RelInvEpDiff.max = 0.05
-Ele.CBID.Barrel.PFIsoRel.max = 0.1
-Ele.CBID.Barrel.NInnerLayerLostHits.max = 0
-Ele.CBID.Barrel.Conversion.reject = 1
-# Endcap values:
-Ele.CBID.Endcap.DEtaIn.max = 0.005
-Ele.CBID.Endcap.DPhiIn.max = 0.02
-Ele.CBID.Endcap.sigmaIetaIeta.max = 0.03
-Ele.CBID.Endcap.HoE.max = 0.1
-Ele.CBID.Endcap.Dxy.max = 0.02
-Ele.CBID.Endcap.Dz.max = 0.1
-Ele.CBID.Endcap.RelInvEpDiff.max = 0.05
-Ele.CBID.Endcap.PFIsoRel.max = 0.1
-Ele.CBID.Endcap.NInnerLayerLostHits.max = 0
-Ele.CBID.Endcap.Conversion.reject = 1
-# end CutBasedID
+import "$PXLANA/ConfigFiles/Objects/EleID/Ele_CBID_veto_r20.cff"
+
 #
 # HEEP v4.1:
 # See also:
 # https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
 Ele.HEEPID.usebool = 1
-Ele.HEEPID.boolname = heepElectronID-HEEPV50-prePHYS14-25ns-miniAOD
+Ele.HEEPID.boolname = heepElectronID-HEEPV51
 # HEEPID = High Energy Electron Pairs IDentification
 Ele.HEEPID.RequireEcalDriven = 1
 Ele.HEEPID.RejectOutOfTime = 1
