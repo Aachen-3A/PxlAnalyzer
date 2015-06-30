@@ -439,6 +439,10 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_absDeltaPhi > m_ele_heepid_barrel_deltaPhi_max )
          return false;
 
+      //avoid division by zero in hadronic over EM
+      if( ele_E == 0 )
+         return false;
+
       //hadronic over EM
       if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
          return false;
@@ -476,6 +480,10 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
 
       //delta phi between SC and track
       if( ele_absDeltaPhi > m_ele_heepid_endcap_deltaPhi_max )
+         return false;
+
+      //avoid division by zero in hadronic over EM
+      if( ele_E == 0 )
          return false;
 
       //hadronic over EM
