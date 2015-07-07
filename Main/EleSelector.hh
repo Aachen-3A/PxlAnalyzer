@@ -88,6 +88,7 @@ private:
    double const m_ele_heepid_barrel_deltaEta_max;
    double const m_ele_heepid_barrel_deltaPhi_max;
    double const m_ele_heepid_barrel_HoEM_max;
+   double const m_ele_heepid_barrel_HoEM_slope;
    double const m_ele_heepid_barrel_trackiso_max;
    double const m_ele_heepid_barrel_HcalD1_offset;
    double const m_ele_heepid_barrel_HcalD1_slope;
@@ -100,6 +101,7 @@ private:
    double const m_ele_heepid_endcap_deltaEta_max;
    double const m_ele_heepid_endcap_deltaPhi_max;
    double const m_ele_heepid_endcap_HoEM_max;
+   double const m_ele_heepid_endcap_HoEM_slope;
    double const m_ele_heepid_endcap_trackiso_max;
    double const m_ele_heepid_endcap_HcalD1_offset;
    double const m_ele_heepid_endcap_HcalD1_slope;
@@ -109,5 +111,7 @@ private:
    double const m_ele_heepid_endcap_sigmaIetaIeta_max;
 
    EffectiveArea const m_ele_EA;
+   bool mutable        m_useAlternative;
+   std::map<std::string,std::string> mutable m_alternativeUserVariables;
 };
 #endif

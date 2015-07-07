@@ -52,12 +52,9 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_ele_rho_label(  cfg.GetItem< string >( "Ele.Rho.Label" ) ),
    m_ele_selector(cfg),
 
-   // Taus:
+   //Taus
    m_tau_use(     cfg.GetItem< bool   >( "Tau.use" ) ),
-   m_tau_pt_min(  cfg.GetItem< double >( "Tau.pt.min" ) ),
-   m_tau_eta_max( cfg.GetItem< double >( "Tau.Eta.max" ) ),
-   //Get Tau-Discriminators and save them
-   m_tau_discriminators( Tools::splitString< string >( cfg.GetItem< string >( "Tau.Discriminators" ), true ) ),
+   m_tau_selector(cfg),
 
    // Photons:
    m_gam_use(                      cfg.GetItem< bool   >( "Gamma.use" ) ),
@@ -508,7 +505,7 @@ void EventSelector::applyCutsOnTau( std::vector< pxl::Particle* > &taus, const b
 
    for( vector< Particle* >::const_iterator tau = taus.begin(); tau != taus.end(); ++tau ) {
       Particle* thisTau = *tau;
-      if( passTau( thisTau, isRec ) ) {
+      if( m_tau_selector.passTau( thisTau, isRec ) ) {
          ++numTau;
          tausAfterCut.push_back( thisTau );
       } else {
@@ -520,27 +517,7 @@ void EventSelector::applyCutsOnTau( std::vector< pxl::Particle* > &taus, const b
 }
 
 
-bool EventSelector::passTau( pxl::Particle *tau, const bool &isRec ) {
-   //pt cut
-   if( tau->getPt() < m_tau_pt_min ) return false;
 
-   //eta cut
-   if( fabs( tau->getEta() ) > m_tau_eta_max )
-      return false;
-   if( isRec ) {
-      for( std::vector< std::string >::const_iterator discr = m_tau_discriminators.begin(); discr != m_tau_discriminators.end(); ++discr ) {
-         // In theory all tau discriminators have a value between 0 and 1.
-         // Thus, they are saved as a float and the cut value is 0.5.
-         // In practice most (or all) discriminators are boolean.
-         // See also:
-         // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID#Discriminators
-         if( tau->getUserRecord( *discr ).toDouble() < 0.5 ) {
-            return false;
-         }
-      }
-   }
-   return true;
-}
 
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------

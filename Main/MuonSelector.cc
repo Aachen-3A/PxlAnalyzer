@@ -145,7 +145,6 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const{
         if( muon->getUserRecord("Dxy").toDouble() > m_xyImpactParameter_max)            return false;
         if( muon->getUserRecord("Dz").toDouble() > m_zImpactParameter_max)            return false;
     }else{
-        m_alternativeUserVariables["Dxy"];
         if( muon->getUserRecord(m_alternativeUserVariables["Dxy"]).toDouble() > m_xyImpactParameter_max)            return false;
         if( muon->getUserRecord(m_alternativeUserVariables["Dz"]).toDouble() > m_zImpactParameter_max)            return false;
     }

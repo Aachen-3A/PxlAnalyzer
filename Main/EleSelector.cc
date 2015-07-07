@@ -21,8 +21,8 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    // lowEta: |eta| < 1.0
    m_ele_cbid_usebool(       cfg.GetItem< bool   >( "Ele.CBID.usebool" , 1 ) ),
    m_ele_cbid_boolname(         cfg.GetItem< std::string >( "Ele.CBID.boolname" , "DefaultBoolname") ),
-   m_ele_cbid_lowEta_EoP_min( cfg.GetItem< double >( "Ele.CBID.lowEta.EoverPin.min" , 0.95 ) ), // Only for 2011!
-   m_ele_cbid_fBrem_min(      cfg.GetItem< double >( "Ele.CBID.fBrem.min" , 0.15 ) ), // Only for 2011!
+   m_ele_cbid_lowEta_EoP_min( cfg.GetItem< double >( "Ele.CBID.lowEta.EoverPin.min" , 0. ) ), // Only for 2011!
+   m_ele_cbid_fBrem_min(      cfg.GetItem< double >( "Ele.CBID.fBrem.min" , 0. ) ), // Only for 2011!
    // Barrel values:
    m_ele_cbid_barrel_DEtaIn_max(              cfg.GetItem< double >( "Ele.CBID.Barrel.DEtaIn.max" , 0.004) ),
    m_ele_cbid_barrel_DPhiIn_max(              cfg.GetItem< double >( "Ele.CBID.Barrel.DPhiIn.max" , 0.03) ),
@@ -57,6 +57,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_barrel_deltaEta_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.DEta.max" , 0.05 ) ),
    m_ele_heepid_barrel_deltaPhi_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.DPhi.max" , 0.06) ),
    m_ele_heepid_barrel_HoEM_max(                cfg.GetItem< double >( "Ele.HEEPID.Barrel.HoEM.max" , 0.05) ),
+   m_ele_heepid_barrel_HoEM_slope(              cfg.GetItem< double >( "Ele.HEEPID.Barrel.HoEM.Slope" , 1) ),
    m_ele_heepid_barrel_trackiso_max(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.TrkIso.max" , 5 ) ),
    m_ele_heepid_barrel_HcalD1_offset(           cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.Offset" , 2 ) ),
    m_ele_heepid_barrel_HcalD1_slope(            cfg.GetItem< double >( "Ele.HEEPID.Barrel.HcalD1.Slope" , 0.03) ),
@@ -69,6 +70,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_endcap_deltaEta_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.DEta.max" , 0.007 ) ),
    m_ele_heepid_endcap_deltaPhi_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.DPhi.max" , 0.06 ) ),
    m_ele_heepid_endcap_HoEM_max(                cfg.GetItem< double >( "Ele.HEEPID.Endcap.HoEM.max" , 0.05) ),
+   m_ele_heepid_endcap_HoEM_slope(              cfg.GetItem< double >( "Ele.HEEPID.Endcap.HoEM.Slope" , 5) ),
    m_ele_heepid_endcap_trackiso_max(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.TrkIso.max" , 5 ) ),
    m_ele_heepid_endcap_HcalD1_offset(           cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.Offset" , 2.5 ) ),
    m_ele_heepid_endcap_HcalD1_slope(            cfg.GetItem< double >( "Ele.HEEPID.Endcap.HcalD1.Slope" , 0.03 ) ),
@@ -78,6 +80,7 @@ EleSelector::EleSelector( const Tools::MConfig &cfg ):
    m_ele_heepid_endcap_sigmaIetaIeta_max(       cfg.GetItem< double >( "Ele.HEEPID.Endcap.SigmaIetaIeta.max" , 0.03) ),
    m_ele_EA( cfg , "Ele" )
 {
+   m_useAlternative=false;
 }
 
 
@@ -147,21 +150,56 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
       //cerr << warning.str();
       passKin=false;
    }
-
    if( isRec ) {
       if( m_ele_id_type == "CB" or  (m_ele_id_type == "switch" and  elePt<=m_ele_id_ptswitch)) {
          //check ID
-         if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
-            passID=false;
+         try{
+            if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+               passID=false;
+            }
+         }catch(std::runtime_error &e) {
+            std::cout <<"CB ele "<< e.what() << '\n';
+            m_useAlternative=true;
+            m_alternativeUserVariables["full5x5_sigmaIetaIeta"]="sigmaIetaIeta";
+            if (ele->hasUserRecord("hasMatchedConversion")){
+               m_alternativeUserVariables["passConversionVeto"]="hasMatchedConversion";
+            }else{
+               m_alternativeUserVariables["passConversionVeto"]="passConversionVeto";
+            }
+            if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+               passID=false;
+            }
          }
+
          // check for isolation
          if( not passCBID_Isolation(ele, eleRho , barrel, endcap) ){
             passIso=false;
          }
       } else if( m_ele_id_type == "HEEP" or  (m_ele_id_type == "switch" and  elePt>m_ele_id_ptswitch)) {
-         if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
-            passID=false;
+
+         try{
+            if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+
+               passID=false;
+            }
+         }catch(std::runtime_error &e) {
+            std::cout <<"HEEP ele "<< e.what() << '\n';
+            m_useAlternative=true;
+            m_alternativeUserVariables["full5x5_sigmaIetaIeta"]="sigmaIetaIeta";
+            m_alternativeUserVariables["full5x5_e5x5"]="e5x5";
+            m_alternativeUserVariables["full5x5_e2x5Max"]="e2x5";
+            m_alternativeUserVariables["full5x5_e1x5"]="e1x5";
+            if (ele->hasUserRecord("E")){
+               m_alternativeUserVariables["SCE"]="E";
+            }else{
+               m_alternativeUserVariables["SCE"]="SCE";
+            }
+            if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+               passID=false;
+            }
          }
+
+
          if(not passHEEP_Isolation(ele, eleEt, barrel, endcap, eleRho )){
             passIso=false;
          }
@@ -255,12 +293,17 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
       return false;
    if( eleEndcap and DPhiIn > m_ele_cbid_endcap_DPhiIn_max )
       return false;
-
-   double const sigmaIetaIeta = ele->getUserRecord( "sigmaIetaIeta" );
+   double sigmaIetaIeta=0;
+   if(!m_useAlternative){
+      sigmaIetaIeta = ele->getUserRecord( "full5x5_sigmaIetaIeta" );
+   }else{
+      sigmaIetaIeta = ele->getUserRecord( m_alternativeUserVariables["full5x5_sigmaIetaIeta"] );
+   }
    if( eleBarrel and sigmaIetaIeta > m_ele_cbid_barrel_sigmaIetaIeta_max )
       return false;
    if( eleEndcap and sigmaIetaIeta > m_ele_cbid_endcap_sigmaIetaIeta_max )
       return false;
+
 
    double const HoE = ele->getUserRecord( "HoEm" );
    if( eleBarrel and HoE > m_ele_cbid_barrel_HoE_max )
@@ -296,9 +339,13 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
    if( eleEndcap and NinnerLayerLostHits > m_ele_cbid_endcap_NInnerLayerLostHits_max )
       return false;
 
-   //double const PFIso03PUCorrected = ele->getUserRecord( "PFIso03PUCorrected" );
 
-   double const hasConversion = ele->getUserRecord( "hasMatchedConversion" );
+   double hasConversion=0;
+   if(!m_useAlternative){
+      hasConversion = ele->getUserRecord( "passConversionVeto" );
+   }else{
+      hasConversion = ele->getUserRecord(  m_alternativeUserVariables["passConversionVeto"] );
+   }
    if( eleBarrel and m_ele_cbid_barrel_Conversion_reject and hasConversion )
       return true;
    if( eleEndcap and m_ele_cbid_endcap_Conversion_reject and hasConversion )
@@ -358,6 +405,14 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
    double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
    double const ele_HoEM        = ele->getUserRecord( "HoEm" );
 
+   double ele_E=0;
+   if(!m_useAlternative){
+         ele_E = ele->getUserRecord( "SCE" );
+   }else{
+      ele_E= ele->getUserRecord( m_alternativeUserVariables["SCE"] );
+   }
+
+
 
    // TODO: Remove this construct when FA11 or older samples are not used anymore.
    // (Typo in skimmer already fixed. UserRecord: NinnerLayerLostHits.)
@@ -384,13 +439,27 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_absDeltaPhi > m_ele_heepid_barrel_deltaPhi_max )
          return false;
 
+      //avoid division by zero in hadronic over EM
+      if( ele_E == 0 )
+         return false;
+
       //hadronic over EM
-      if( ele_HoEM > m_ele_heepid_barrel_HoEM_max )
+      if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
          return false;
       //shower shape
-      double const e5x5 = ele->getUserRecord( "e5x5" );
-      double const e1x5 = ele->getUserRecord( "e1x5" );
-      double const e2x5 = ele->getUserRecord( "e2x5" );
+      double e5x5=0;
+      double e1x5=0;
+      double e2x5=0;
+      if(!m_useAlternative){
+         e5x5 = ele->getUserRecord( "full5x5_e5x5" );
+         e1x5 = ele->getUserRecord( "full5x5_e1x5" );
+         e2x5 = ele->getUserRecord( "full5x5_e2x5Max" );
+      }else{
+         e5x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e5x5"] );
+         e1x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e1x5"] );
+         e2x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e2x5Max"] );
+      }
+
 
       if( e1x5/e5x5 < m_ele_heepid_barrel_e1x5_min and
           e2x5/e5x5 < m_ele_heepid_barrel_e2x5_min
@@ -413,13 +482,22 @@ bool EleSelector::passHEEPID( pxl::Particle const *ele,
       if( ele_absDeltaPhi > m_ele_heepid_endcap_deltaPhi_max )
          return false;
 
+      //avoid division by zero in hadronic over EM
+      if( ele_E == 0 )
+         return false;
+
       //hadronic over EM
-      if( ele_HoEM > m_ele_heepid_endcap_HoEM_max )
+      if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
          return false;
 
       //sigma iEta-iEta
-      if( ele->getUserRecord( "sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
-         return false;
+      if(!m_useAlternative){
+         if( ele->getUserRecord( "full5x5_sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
+            return false;
+      }else{
+         if( ele->getUserRecord( m_alternativeUserVariables["full5x5_sigmaIetaIeta"] ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
+            return false;
+      }
 
 
       if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
