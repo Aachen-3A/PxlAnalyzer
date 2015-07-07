@@ -42,8 +42,8 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_tracks_num_max( cfg.GetItem< unsigned int >( "Tracks.num.max" ) ),
 
    //Muons
-   m_muo_use(    cfg.GetItem< bool   >( "Muon.use" ) ),
-   m_muo_idtag( cfg.GetItem< bool   >( "Muon.IdTag" , false) ),
+   m_muo_use(    cfg.GetItem< bool   >( "Muon.Use" ) ),
+   m_muo_idtag( cfg.GetItem< bool   >( "Muon.IDTag" , false) ),
    m_muo_selector(cfg),
 
    // Electrons:

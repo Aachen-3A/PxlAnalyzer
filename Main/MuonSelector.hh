@@ -25,23 +25,34 @@ public:
     int passMuon( pxl::Particle *muon, const bool& isRec ,double const rho=0. ) const;
 
 private:
-    // Methods;
-    bool kinematics(pxl::Particle *muon ) const;
-    int muonID( pxl::Particle *muon , double rho) const;
-    bool tightMuonIDCut(pxl::Particle *muon) const;
-    bool HighptMuonIDCut(pxl::Particle *muon) const;
-    //Variables
+    // Methods
+    int muonID( pxl::Particle *muon, double rho) const;
+    bool passKinematics(pxl::Particle *muon ) const;
+    bool passHighPtID(pxl::Particle *muon) const;
+    bool passTightID(pxl::Particle *muon) const;
+    bool passMediumID(pxl::Particle *muon) const;
+    bool passSoftID(pxl::Particle *muon) const;
+    bool passPFIso(pxl::Particle *muon, double rho) const;
+    bool passMiniIso(pxl::Particle *muon) const;
+    bool passTrackerIso(pxl::Particle *muon) const;
+
+    // Variables
+    std::string const   m_muo_id_type;
+    double const        m_muo_ptSwitch;
     double const        m_muo_pt_min;
     double const        m_muo_eta_max;
     bool const          m_muo_invertIso;
+
+    // Isolation
     std::string const   m_muo_iso_type;
     double const        m_muo_iso_max;
     bool const          m_muo_iso_useDeltaBetaCorr;
     bool const          m_muo_iso_useRhoCorr;
-    std::string const   m_muo_id_type;
-    double const        m_muo_HighPtSwitchPt;
+
+    // Effective area
     EffectiveArea const m_muo_EA;
-    //cut variables
+
+    // Low Pt Id
     int const           m_globalChi2_max;
     int const           m_nMuonHits_min;
     int const           m_nMatchedStations_min;
@@ -52,16 +63,16 @@ private:
     double const        m_dPtRelTrack_max;
 
     // High Pt ID variables
-    // const bool        m_muo_highptid_useBool;
-    // const std::string m_muo_highptid_boolName
-    // const bool        m_muo_highptid_isGlobalMuon;
-    // const double      m_muo_highptid_PtRelativeError_max;
-    // const int         m_muo_highptid_NMatchedStations_min;
-    // const int         m_muo_highptid_VHitsMuonSys_min;
-    // const int         m_muo_highptid_VHitsPixel_min;
-    // const int         m_muo_highptid_VHitsTracker_min;
-    // const double      m_muo_highptid_Dxy_max;
-    // const double      m_muo_highptid_Dz_max;
+    const bool        m_muo_highptid_useBool;
+    const std::string m_muo_highptid_boolName;
+    const bool        m_muo_highptid_isGlobalMuon;
+    const double      m_muo_highptid_ptRelativeError_max;
+    const int         m_muo_highptid_nMatchedStations_min;
+    const int         m_muo_highptid_vHitsMuonSys_min;
+    const int         m_muo_highptid_vHitsPixel_min;
+    const int         m_muo_highptid_vHitsTracker_min;
+    const double      m_muo_highptid_dxy_max;
+    const double      m_muo_highptid_dz_max;
 
     bool mutable        m_useAlternative;
     std::map<std::string,std::string> mutable m_alternativeUserVariables;
