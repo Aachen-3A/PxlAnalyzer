@@ -5,23 +5,23 @@ using namespace std;
 //--------------------Constructor-----------------------------------------------------------------
 
 MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
-
-    // General:
-    m_muo_id_type( cfg.GetItem< std::string >( "Muon.ID.Type" , "TightID")),
-    // Muons:
-    m_muo_pt_min(                     cfg.GetItem< double >( "Muon.pt.min" ) ),
-    m_muo_eta_max(                    cfg.GetItem< double >( "Muon.eta.max" ) ),
+    // General
+    m_muo_id_type(                    cfg.GetItem< std::string >( "Muon.ID.Type" , "TightID")),
+    m_muo_ptSwitch(                   cfg.GetItem< double >( "Muon.ID.PtSwitch" , 200 ) ),
+    m_muo_pt_min(                     cfg.GetItem< double >( "Muon.Pt.min" ) ),
+    m_muo_eta_max(                    cfg.GetItem< double >( "Muon.Eta.max" ) ),
     m_muo_invertIso(                  cfg.GetItem< bool   >( "Muon.InvertIsolation" ) ),
+
+    // Isolation
     m_muo_iso_type(                   cfg.GetItem< string >( "Muon.Iso.Type" ) ),
     m_muo_iso_max(                    cfg.GetItem< double >( "Muon.Iso.max" ) ),
     m_muo_iso_useDeltaBetaCorr(       cfg.GetItem< bool   >( "Muon.Iso.UseDeltaBetaCorr" , false ) ),
     m_muo_iso_useRhoCorr(             cfg.GetItem< bool   >( "Muon.Iso.UseRhoCorr" , false ) ),
-    m_muo_id_type(                    cfg.GetItem< string >( "Muon.ID.Type" , "isHighPtMuon.bool" ) ),
-    m_muo_HighPtSwitchPt(             cfg.GetItem< double >( "Muon.ID.HighPtSwitchPt" , 200 ) ),
+
+    // Effective area
     m_muo_EA( cfg , "Muon" ),
 
-
-    //cut variables:
+    // Low Pt ID
     m_globalChi2_max(                 cfg.GetItem< int >(     "Muon.GlobalChi2.max") ),
     m_nMuonHits_min(                  cfg.GetItem< int >(     "Muon.NMuonHits.min") ),
     m_nMatchedStations_min(           cfg.GetItem< int >(     "Muon.NMatchedStations.min") ),
@@ -32,16 +32,16 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_dPtRelTrack_max(                cfg.GetItem< double >(  "Muon.dPtRelTrack.max") ),
 
     // High Pt ID
-    m_muo_highptid_useBool(             cfg.GetItem< bool >("Muon.HighPtID.useBool")),
-    m_muo_highptid_boolName(            cfg.GetItem< string >("Muon.HighPtID.boolName")),
-    m_muo_highptid_isGlobalMuon(        cfg.GetItem< bool >("Muon.HighPtID.isGlobalMuon")),
-    m_muo_highptid_PtRelativeError_max( cfg.GetItem< double >("Muon.HighPtID.PtRelativeError.max")),
-    m_muo_highptid_NMatchedStations_min(cfg.GetItem< int >("Muon.HighPtID.NMatchedStations.min")),
-    m_muo_highptid_VHitsMuonSys_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsMuonSys.min")),
-    m_muo_highptid_VHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
-    m_muo_highptid_VHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
-    m_muo_highptid_Dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
-    m_muo_highptid_Dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
+    m_muo_highptid_useBool(             cfg.GetItem< bool >("Muon.HighPtID.UseBool")),
+    m_muo_highptid_boolName(            cfg.GetItem< string >("Muon.HighPtID.BoolName")),
+    m_muo_highptid_isGlobalMuon(        cfg.GetItem< bool >("Muon.HighPtID.IsGlobalMuon")),
+    m_muo_highptid_ptRelativeError_max( cfg.GetItem< double >("Muon.HighPtID.PtRelativeError.max")),
+    m_muo_highptid_nMatchedStations_min(cfg.GetItem< int >("Muon.HighPtID.NMatchedStations.min")),
+    m_muo_highptid_vHitsMuonSys_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsMuonSys.min")),
+    m_muo_highptid_vHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
+    m_muo_highptid_vHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
+    m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
+    m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
 {
     // nothing to do here
 }
@@ -68,30 +68,33 @@ int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const
 }
 
 
-bool MuonSelector::kinematics(pxl::Particle *muon ) const {
-
+bool MuonSelector::passKinematics(pxl::Particle *muon) const {
     //pt cut
-    if( muon->getPt() < m_muo_pt_min ) return false;
+    if (muon->getPt() < m_muo_pt_min)
+      return false;
     //eta cut
-    if( fabs( muon->getEta() ) > m_muo_eta_max ) return false;
+    if (fabs(muon->getEta()) > m_muo_eta_max)
+      return false;
 
     return true;
 }
 
 
-int MuonSelector::muonID( pxl::Particle *muon , double rho) const {
+int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
     bool passKin = false;
     bool passID = false;
     bool passIso = false;
 
-    if(!kinematics( muon )) passKin=false;
+    // kinematics check
+    passKin = passKinematics(muon);
+
     //the muon cuts are according to :
     //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=49
     //status: 17.9.2014
 
     // decide which ID should be performed
     if (m_muo_id_type == "CombinedID") {
-        if (muon->getPt() < m_muo_ptswitch) {
+        if (muon->getPt() < m_muo_ptSwitch) {
             passID = passTightID(muon);
         } else {
             passID = passHighPtID(muon);
@@ -112,7 +115,7 @@ int MuonSelector::muonID( pxl::Particle *muon , double rho) const {
 
     // decide which isolation to perform
     if (m_muo_iso_type == "PF") {
-        passIso = passPFIso(muon);
+        passIso = passPFIso(muon, rho);
     } else if (m_muo_iso_type == "Tracker") {
         passIso = passTrackerIso(muon);
     } else if (m_muo_iso_type == "Mini") {
@@ -134,7 +137,7 @@ int MuonSelector::muonID( pxl::Particle *muon , double rho) const {
 }
 
 
-bool MuonSelector::passTightID(pxl::Particle *muon) const{
+bool MuonSelector::passTightID(pxl::Particle *muon) const {
     // TODO(millet) legacy code, check for 13TeV changes
     if( not muon->getUserRecord("isGlobalMuon").toBool() )                          return false;
     if( not muon->getUserRecord("isPFMuon").toBool() )                              return false;
@@ -174,27 +177,27 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
         return false;
     // return built-in bool if requested
     if (m_muo_highptid_useBool)
-        return muon->getUserRecord(m_muo_highptid_boolName).();
+        return muon->getUserRecord(m_muo_highptid_boolName).toBool();
 
     // do the cut based ID if we are not using the bool
-    if (not m_muo_highptid_isGlobalMuon == muon->getUserRecord("isGlobalMuon"))
+    if (not m_muo_highptid_isGlobalMuon == muon->getUserRecord("isGlobalMuon").toBool())
         return false;
-    if (not m_muo_highptid_PtRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
+    if (not m_muo_highptid_ptRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
         muon->getUserRecord("ptCocktail").toDouble())
         return false;
 
-    if (not m_muo_highptid_NMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32())
+    if (not m_muo_highptid_nMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32())
         return false;
-    if (not m_muo_highptid_VHitsMuonSys_min < muon->getUserRecord("VHitsMuonSysCocktail").toInt32())
+    if (not m_muo_highptid_vHitsMuonSys_min < muon->getUserRecord("VHitsMuonSysCocktail").toInt32())
         return false;
-    if (not m_muo_highptid_VHitsPixel_min < muon->getUserRecord("VHitsPixelCocktail").toInt32())
+    if (not m_muo_highptid_vHitsPixel_min < muon->getUserRecord("VHitsPixelCocktail").toInt32())
         return false;
-    if (not m_muo_highptid_VHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32())
+    if (not m_muo_highptid_vHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32())
         return false;
 
-    if (not m_muo_highptid_Dxy_max > muon->getUserRecord("DxyCocktail").toDouble())
+    if (not m_muo_highptid_dxy_max > muon->getUserRecord("DxyCocktail").toDouble())
         return false;
-    if (not m_muo_highptid_Dz_max > muon->getUserRecord("DzCocktail").toDouble())
+    if (not m_muo_highptid_dz_max > muon->getUserRecord("DzCocktail").toDouble())
         return false;
 
     // return true if everything passed
@@ -202,18 +205,18 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
 }
 
 
-bool MuonSelector::passMiniIso(Pxl::Particle *muon) {
+bool MuonSelector::passMiniIso(pxl::Particle *muon) const {
     // TODO(millet) implement mini iso
     return true;
 }
 
-bool MuonSelector::passTrackerIso(Pxl::Particle *muon) {
+bool MuonSelector::passTrackerIso(pxl::Particle *muon) const {
     // TODO(millet) implement mini iso
-    muon_iso = muon->getUserRecord( "TrkIso" );
+    double muon_iso = muon->getUserRecord( "TrkIso" );
     return (muon_iso / muon->getPt() < m_muo_iso_max);
 }
 
-bool MuonSelector::passPFIso(Pxl::Particle *muon) {
+bool MuonSelector::passPFIso(pxl::Particle *muon, double rho) const {
     // TODO(millet) legacy code, check for 13TeV changes
     double muon_iso;
     // [sumChargedHadronPt+ max(0.,sumNeutralHadronPt+sumPhotonPt-0.5sumPUPt]/pt
@@ -234,7 +237,7 @@ bool MuonSelector::passPFIso(Pxl::Particle *muon) {
                 + max( 0.,
                        muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
                        + muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
-                       -  rho* (photonEA+neutralHadronEA)
+                       -  rho * (photonEA+neutralHadronEA)
                        );
 
     } else {
