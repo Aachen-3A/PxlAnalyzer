@@ -42,6 +42,19 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_highptid_vHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
     m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
     m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
+
+    // Tight ID
+    m_muo_tightid_useBool(					cfg.GetItem< bool >("Muon.TightID.useBool")),
+    m_muo_tightid_boolName(					cfg.GetItem< string >("Muon.TightID.boolName")),
+    m_muo_tightid_isGlobalMuon(				cfg.GetItem< bool >("Muon.TightID.isGlobalMuon")),
+    m_muo_tightid_isPFMuon(					cfg.GetItem< bool >("Muon.TightID.isPFMuon")),
+    m_muo_tightid_normalizedChi2_max(		cfg.getItem< double >("Muon.TightID.normalizedChi2.max")),
+    m_muo_tightid_VHitsMuonSys_min(			cfg.getItem< int >("Muon.TightID.VHitsMuonSys.min")),
+    m_muo_tightid_NMatchedStations_min(		cfg.getItem< int >("Muon.TightID.NMatchedStations.min")),
+    m_muo_tightid_Dxy_max(					cfg.getItem< double >("Muon.TightID.Dxy.max")),
+    m_muo_tightid_dz_max(					cfg.getItem< double >("Muon.TightID.Dz.max")),
+    m_muo_tightid_VHitsPixel_min(			cfg.GetItem< int >("Muon.TightID.VHitsPixel.min")),
+    m_muo_tightid_TrackerLayersWithMeas_min(cfg.getItem< int >("Muon.TightID.TrackerLayersWithMeas.min"))
 {
     // nothing to do here
 }
@@ -141,7 +154,7 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const {
     // TODO(millet) legacy code, check for 13TeV changes
     if( not muon->getUserRecord("isGlobalMuon").toBool() )                          return false;
     if( not muon->getUserRecord("isPFMuon").toBool() )                              return false;
-    if( muon->getUserRecord("NormChi2").toInt32() > m_globalChi2_max)               return false;
+    if( muon->getUserRecord("normalizedChi2").toInt32() > m_globalChi2_max)         return false;
     if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_nMuonHits_min)            return false;
     if( muon->getUserRecord("NMatchedStations").toInt32() < m_nMatchedStations_min) return false;
     if(!m_useAlternative){

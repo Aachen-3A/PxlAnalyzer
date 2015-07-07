@@ -74,6 +74,19 @@ private:
     const double      m_muo_highptid_dxy_max;
     const double      m_muo_highptid_dz_max;
 
+	//Tight ID variables
+	const bool		  m_muo_tightid_useBool;
+	const std::string m_muo_tightid_boolName;
+	const bool		  m_muo_tightid_isGlobalMuon;
+	const bool		  m_muo_tightid_isPFMuon;
+	const double	  m_muo_tightid_normalizedChi2_max;
+	const int		  m_muo_tightid_VHitsMuonSys_min;
+	const int		  m_muo_tightid_NMatchedStations_min;
+	const double	  m_muo_tightid_Dxy_max;
+	const double	  m_muo_tightid_dz_max;
+	const int		  m_muo_tightid_VHitsPixel_min;
+	const int		  m_muo_tightid_TrackerLayersWithMeas_min;
+
     bool mutable        m_useAlternative;
     std::map<std::string,std::string> mutable m_alternativeUserVariables;
 };

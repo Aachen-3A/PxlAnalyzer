@@ -1,5 +1,5 @@
 # General file for muon ID and isolation requirements
-# https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
 
 Muon.Use = 1
 Muon.IDTag = 1
@@ -22,7 +22,7 @@ Muon.ID.PtSwitch = 200
 
 # Imports for the different requirements and isolations
 import "$PXLANA/ConfigFiles/Muons/highpt.cff"
-# import "$PXLANA/ConfigFiles/Muons/tight.cff"
+import "$PXLANA/ConfigFiles/Muons/tight.cff"
 # import "$PXLANA/ConfigFiles/Muons/medium.cff"
 # import "$PXLANA/ConfigFiles/Muons/soft.cff"
 
