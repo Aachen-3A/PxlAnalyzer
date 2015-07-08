@@ -26,7 +26,7 @@ Gamma.Endcap.SigmaIetaIeta.max = 0.031
 #
 # Use the following set of cuts?
 Gamma.CutBasedPhotonID2012Flag.use = 1
-Gamma.IDFlag = PhotonCutBasedIDTight
+Gamma.IDFlag = cutBasedPhotonID-PHYS14-PU20bx25-V2-standalone-tight
 
 # end CutBasedPhotonID2012Flag
 
