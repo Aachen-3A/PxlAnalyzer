@@ -9,7 +9,7 @@
 
 
 EventCleaning::EventCleaning( Tools::MConfig const &cfg ) :
-   m_muo_cleanDuplicates( cfg.GetItem< bool >( "Muon.cleanDuplicates" ) ),
+   m_muo_cleanDuplicates( cfg.GetItem< bool >( "Muon.CleanDuplicates" ) ),
 
    m_muo_DeltaR_max( cfg.GetItem< double >( "Muon.DeltaR.max" ) ),
    m_ele_DeltaR_max( cfg.GetItem< double >( "Ele.DeltaR.max" ) ),

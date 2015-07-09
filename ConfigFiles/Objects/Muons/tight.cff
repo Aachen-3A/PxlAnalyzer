@@ -1,11 +1,11 @@
 # Tight ID (2015)
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
 # 
-Muon.TightID.useBool = 0
-Muon.TightID.boolName = isTightMuon
-Muon.TightID.isGlobalMuon = 1
-Muon.TightID.isPFMuon = 1
-Muon.TightID.normalizedChi2.max = 10
+Muon.TightID.UseBool = 0
+Muon.TightID.BoolName = isTightMuon
+Muon.TightID.IsGlobalMuon = 1
+Muon.TightID.IsPFMuon = 1
+Muon.TightID.NormalizedChi2.max = 10
 Muon.TightID.VHitsMuonSys.min = 0
 Muon.TightID.NMatchedStations.min = 1
 Muon.TightID.Dxy.max = 0.2
