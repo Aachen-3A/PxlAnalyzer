@@ -21,6 +21,18 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     // Effective area
     m_muo_EA( cfg , "Muon" ),
 
+    // Medium ID
+    m_muo_mediumid_useBool(					    cfg.GetItem< bool >("Muon.MediumID.UseBool")),
+    m_muo_mediumid_boolName(				    cfg.GetItem< string >("Muon.MediumID.BoolName")),
+    m_muo_mediumid_isLooseMuon( 			    cfg.GetItem< bool >("Muon.MediumID.IsLooseMuon")),
+    m_muo_mediumid_validFraction_min(		    cfg.GetItem< double >("Muon.MediumID.ValidFraction.min")),
+    m_muo_mediumid_isGlobalMuon(			    cfg.GetItem< bool >("Muon.MediumID.IsGlobalMuon")),
+    m_muo_mediumid_normalizedChi2_max(		    cfg.GetItem< double >("Muon.MediumID.NormalizedChi2.max")),
+    m_muo_mediumid_chi2LocalPosition_max(	    cfg.GetItem< double >("Muon.MediumID.Chi2LocalPosition.max")),
+    m_muo_mediumid_trkKink_max(		            cfg.GetItem< double >("Muon.MediumID.TrkKink.max")),
+    m_muo_mediumid_segCompGlobal_min(		    cfg.GetItem< double >("Muon.MediumID.SegCompGlobal.min")),
+    m_muo_mediumid_segCompTight_min(		    cfg.GetItem< double >("Muon.MediumID.SegCompTight.min")),
+
     // Tight ID
     m_muo_tightid_useBool(					cfg.GetItem< bool >("Muon.TightID.UseBool")),
     m_muo_tightid_boolName(					cfg.GetItem< string >("Muon.TightID.BoolName")),
@@ -138,13 +150,38 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
     return 4;
 }
 
-bool MuonSelector::passMediumID(pxl::Particle *muon) const {
+bool MuonSelector::passSoftID(pxl::Particle *muon) const {
     // TODO(millet) implement medium ID
     return true;
 }
 
-bool MuonSelector::passSoftID(pxl::Particle *muon) const {
-    // TODO(millet) implement soft ID
+bool MuonSelector::passMediumID(pxl::Particle *muon) const {
+    // return built-in bool if requested
+    if (m_muo_mediumid_useBool)
+        return muon->getUserRecord(m_muo_mediumid_boolName).toBool();
+    // do the cut based ID if we are not using the bool
+    if( not muon->getUserRecord("isLooseMuon").toBool() )
+        return false;
+    if( muon->getUserRecord("validFraction").toDouble() <= m_muo_mediumid_validFraction_min)
+        return false;
+    // there are two different set of cuts for the medium ID - at least one of them must be true
+    // first set:
+    // need to start with this set and return true since there is no isValidGlobalTrack variable and thus
+    // muon->getUserRecord("normalizedChi2").toDouble() will fail if there is no global track
+    // (therefore one has to return from the function if isGlobalMuon is false)
+    if( not ( muon->getUserRecord("SegComp").toDouble() <= m_muo_mediumid_segCompTight_min ) )
+        return true;
+    // second set:
+    if( not muon->getUserRecord("isGlobalMuon").toBool() )
+        return false;
+    if( muon->getUserRecord("normalizedChi2").toDouble() >= m_muo_mediumid_normalizedChi2_max )
+        return false;
+    if( muon->getUserRecord("chi2LocalPosition").toDouble() >= m_muo_mediumid_chi2LocalPosition_max )
+        return false;
+    if( muon->getUserRecord("trkKink").toDouble() >= m_muo_mediumid_trkKink_max )
+        return false;
+    if( muon->getUserRecord("SegComp").toDouble() <= m_muo_mediumid_segCompGlobal_min )
+        return false;
     return true;
 }
 

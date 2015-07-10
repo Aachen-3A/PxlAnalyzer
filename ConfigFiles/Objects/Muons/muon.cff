@@ -26,7 +26,7 @@ Muon.ID.PtSwitch = 200
 # Imports for the different requirements and isolations
 import "$PXLANA/ConfigFiles/Objects/Muons/highpt.cff"
 import "$PXLANA/ConfigFiles/Objects/Muons/tight.cff"
-# import "$PXLANA/ConfigFiles/Objects/Muons/medium.cff"
+import "$PXLANA/ConfigFiles/Objects/Muons/medium.cff"
 # import "$PXLANA/ConfigFiles/Objects/Muons/soft.cff"
 
 import "$PXLANA/ConfigFiles/Objects/Muons/isolation.cff"

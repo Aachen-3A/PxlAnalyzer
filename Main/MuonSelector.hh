@@ -52,6 +52,18 @@ private:
     // Effective area
     EffectiveArea const m_muo_EA;
 
+	//Medium ID variables
+    const bool          m_muo_mediumid_useBool;
+    const std::string   m_muo_mediumid_boolName;
+    const bool          m_muo_mediumid_isLooseMuon;
+    const double        m_muo_mediumid_validFraction_min;
+    const bool          m_muo_mediumid_isGlobalMuon;
+    const double        m_muo_mediumid_normalizedChi2_max;
+    const double        m_muo_mediumid_chi2LocalPosition_max;
+    const double        m_muo_mediumid_trkKink_max;
+    const double        m_muo_mediumid_segCompGlobal_min;
+    const double        m_muo_mediumid_segCompTight_min;
+
 	//Tight ID variables
 	const bool		  m_muo_tightid_useBool;
 	const std::string m_muo_tightid_boolName;
