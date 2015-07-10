@@ -186,6 +186,10 @@ bool MuonSelector::passMediumID(pxl::Particle *muon) const {
 }
 
 bool MuonSelector::passTightID(pxl::Particle *muon) const {
+    // return built-in bool if requested
+    if (m_muo_tightid_useBool)
+        return muon->getUserRecord(m_muo_tightid_boolName).toBool();
+    // do the cut based ID if we are not using the bool
     if( not muon->getUserRecord("isGlobalMuon").toBool() )
         return false;
     if( not muon->getUserRecord("isPFMuon").toBool() )
