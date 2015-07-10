@@ -21,28 +21,6 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     // Effective area
     m_muo_EA( cfg , "Muon" ),
 
-    // Low Pt ID
-    //~ m_globalChi2_max(                 cfg.GetItem< int >(     "Muon.GlobalChi2.max") ),
-    //~ m_nMuonHits_min(                  cfg.GetItem< int >(     "Muon.NMuonHits.min") ),
-    //~ m_nMatchedStations_min(           cfg.GetItem< int >(     "Muon.NMatchedStations.min") ),
-    //~ m_zImpactParameter_max(           cfg.GetItem< double >(  "Muon.ZImpactParameter.max") ),
-    //~ m_xyImpactParameter_max(          cfg.GetItem< double >(  "Muon.XYImpactParameter.max") ),
-    //~ m_nPixelHits_min(                 cfg.GetItem< int >(     "Muon.NPixelHits.min") ),
-    //~ m_nTrackerLayersWithMeas_min(     cfg.GetItem< int >(     "Muon.NTrackerLayersWithMeas.min") ),
-    //~ m_dPtRelTrack_max(                cfg.GetItem< double >(  "Muon.dPtRelTrack.max") ),
-
-    // High Pt ID
-    m_muo_highptid_useBool(             cfg.GetItem< bool >("Muon.HighPtID.UseBool")),
-    m_muo_highptid_boolName(            cfg.GetItem< string >("Muon.HighPtID.BoolName")),
-    m_muo_highptid_isGlobalMuon(        cfg.GetItem< bool >("Muon.HighPtID.IsGlobalMuon")),
-    m_muo_highptid_ptRelativeError_max( cfg.GetItem< double >("Muon.HighPtID.PtRelativeError.max")),
-    m_muo_highptid_nMatchedStations_min(cfg.GetItem< int >("Muon.HighPtID.NMatchedStations.min")),
-    m_muo_highptid_vHitsMuonSys_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsMuonSys.min")),
-    m_muo_highptid_vHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
-    m_muo_highptid_vHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
-    m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
-    m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max")),
-
     // Tight ID
     m_muo_tightid_useBool(					cfg.GetItem< bool >("Muon.TightID.UseBool")),
     m_muo_tightid_boolName(					cfg.GetItem< string >("Muon.TightID.BoolName")),
@@ -54,7 +32,19 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_tightid_dxy_max(					cfg.GetItem< double >("Muon.TightID.Dxy.max")),
     m_muo_tightid_dz_max(					cfg.GetItem< double >("Muon.TightID.Dz.max")),
     m_muo_tightid_vHitsPixel_min(			cfg.GetItem< int >("Muon.TightID.VHitsPixel.min")),
-    m_muo_tightid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.TightID.TrackerLayersWithMeas.min"))
+    m_muo_tightid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.TightID.TrackerLayersWithMeas.min")),
+
+    // High Pt ID
+    m_muo_highptid_useBool(             cfg.GetItem< bool >("Muon.HighPtID.UseBool")),
+    m_muo_highptid_boolName(            cfg.GetItem< string >("Muon.HighPtID.BoolName")),
+    m_muo_highptid_isGlobalMuon(        cfg.GetItem< bool >("Muon.HighPtID.IsGlobalMuon")),
+    m_muo_highptid_ptRelativeError_max( cfg.GetItem< double >("Muon.HighPtID.PtRelativeError.max")),
+    m_muo_highptid_nMatchedStations_min(cfg.GetItem< int >("Muon.HighPtID.NMatchedStations.min")),
+    m_muo_highptid_vHitsMuonSys_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsMuonSys.min")),
+    m_muo_highptid_vHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
+    m_muo_highptid_vHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
+    m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
+    m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
 {
     // nothing to do here
 }
@@ -125,7 +115,6 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
         passID = false;
     }
 
-
     // decide which isolation to perform
     if (m_muo_iso_type == "PF") {
         passIso = passPFIso(muon, rho);
@@ -149,42 +138,37 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
     return 4;
 }
 
-
-bool MuonSelector::passTightID(pxl::Particle *muon) const {
-	
-    // TODO(millet) legacy code, check for 13TeV changes
-    if( not muon->getUserRecord("isGlobalMuon").toBool() )                          return false;
-    if( not muon->getUserRecord("isPFMuon").toBool() )                              return false;
-    if( muon->getUserRecord("normalizedChi2").toInt32() > m_muo_tightid_normalizedChi2_max)         return false;
-    if( muon->getUserRecord("VHitsMuonSys").toInt32() < m_muo_tightid_vHitsMuonSys_min)            return false;
-    if( muon->getUserRecord("NMatchedStations").toInt32() < m_muo_tightid_nMatchedStations_min) return false;
-    //~ if(!m_useAlternative){
-    if( muon->getUserRecord("Dxy").toDouble() > m_muo_tightid_dxy_max)            return false;
-    if( muon->getUserRecord("Dz").toDouble() > m_muo_tightid_dz_max)            return false;
-        //~ cout<<"Test passTightID"<<endl;
-    //~ }else{
-     //~ if( muon->getUserRecord(m_alternativeUserVariables["Dxy"]).toDouble() > m_muo_tightid_dxy_max)            return false;
-     //~ if( muon->getUserRecord(m_alternativeUserVariables["Dz"]).toDouble() > m_muo_tightid_dz_max)            return false;
-    //~ }
-
-    if( muon->getUserRecord("VHitsPixel").toInt32() < m_muo_tightid_vHitsPixel_min)             return false;
-    if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() < m_muo_tightid_trackerLayersWithMeas_min)
-        return false;
-    return true;
-}
-
-
 bool MuonSelector::passMediumID(pxl::Particle *muon) const {
     // TODO(millet) implement medium ID
     return true;
 }
-
 
 bool MuonSelector::passSoftID(pxl::Particle *muon) const {
     // TODO(millet) implement soft ID
     return true;
 }
 
+bool MuonSelector::passTightID(pxl::Particle *muon) const {
+    if( not muon->getUserRecord("isGlobalMuon").toBool() )
+        return false;
+    if( not muon->getUserRecord("isPFMuon").toBool() )
+        return false;
+    if( muon->getUserRecord("normalizedChi2").toDouble() >= m_muo_tightid_normalizedChi2_max )
+        return false;
+    if( muon->getUserRecord("VHitsMuonSys").toInt32() <= m_muo_tightid_vHitsMuonSys_min )
+        return false;
+    if( muon->getUserRecord("NMatchedStations").toInt32() <= m_muo_tightid_nMatchedStations_min )
+        return false;
+    if( muon->getUserRecord("Dxy").toDouble() >= m_muo_tightid_dxy_max )
+        return false;
+    if( muon->getUserRecord("Dz").toDouble() >= m_muo_tightid_dz_max )
+        return false;
+    if( muon->getUserRecord("VHitsPixel").toInt32() <= m_muo_tightid_vHitsPixel_min )
+        return false;
+    if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() <= m_muo_tightid_trackerLayersWithMeas_min )
+        return false;
+    return true;
+}
 
 bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
     // check if a cocktail muon exists

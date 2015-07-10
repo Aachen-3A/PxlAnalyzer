@@ -52,16 +52,6 @@ private:
     // Effective area
     EffectiveArea const m_muo_EA;
 
-    // Low Pt Id
-    //~ int const           m_globalChi2_max;
-    //~ int const           m_nMuonHits_min;
-    //~ int const           m_nMatchedStations_min;
-    //~ double const        m_zImpactParameter_max;
-    //~ double const        m_xyImpactParameter_max;
-    //~ int const           m_nPixelHits_min;
-    //~ int const           m_nTrackerLayersWithMeas_min;
-    //~ double const        m_dPtRelTrack_max;
-
 	//Tight ID variables
 	const bool		  m_muo_tightid_useBool;
 	const std::string m_muo_tightid_boolName;
@@ -74,7 +64,7 @@ private:
 	const double	  m_muo_tightid_dz_max;
 	const int		  m_muo_tightid_vHitsPixel_min;
 	const int		  m_muo_tightid_trackerLayersWithMeas_min;
-	
+
     // High Pt ID variables
     const bool        m_muo_highptid_useBool;
     const std::string m_muo_highptid_boolName;
@@ -87,7 +77,7 @@ private:
     const double      m_muo_highptid_dxy_max;
     const double      m_muo_highptid_dz_max;
 
-	
+
 
     //~ bool mutable        m_useAlternative;
     std::map<std::string,std::string> mutable m_alternativeUserVariables;

@@ -1,5 +1,5 @@
 # Tight ID (2015)
-# https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
+# https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2?rev=15 (10.07.2015)
 # 
 Muon.TightID.UseBool = 0
 Muon.TightID.BoolName = isTightMuon
