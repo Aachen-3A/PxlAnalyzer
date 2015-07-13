@@ -174,17 +174,17 @@ bool MuonSelector::passSoftID(pxl::Particle *muon) const {
     if (m_muo_softid_useBool)
         return muon->getUserRecord(m_muo_softid_boolName).toBool();
     // do the cut based ID if we are not using the bool
-    if( not muon->getUserRecord("isGoodTMOneST").toBool() )
+    if( !( muon->getUserRecord("isGoodTMOneST").toBool() == m_muo_softid_isGoodMuon ) )
         return false;
-    if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() <= m_muo_softid_trackerLayersWithMeas_min )
+    if( !( muon->getUserRecord("TrackerLayersWithMeas").toInt32() > m_muo_softid_trackerLayersWithMeas_min ) )
         return false;
-    if( muon->getUserRecord("PixelLayersWithMeas").toInt32() <= m_muo_softid_pixelLayersWithMeas_min )
+    if( !( muon->getUserRecord("PixelLayersWithMeas").toInt32() > m_muo_softid_pixelLayersWithMeas_min ) )
         return false;
-    if( not muon->getUserRecord("QualityInnerTrack").toBool() )
+    if( !( muon->getUserRecord("QualityInnerTrack").toBool() == m_muo_softid_QualityInnerTrack ) )
         return false;
-    if( muon->getUserRecord("DxyIT").toDouble() >= m_muo_softid_dxy_max )
+    if( !( fabs( muon->getUserRecord("DxyIT").toDouble() ) < m_muo_softid_dxy_max ) )
         return false;
-    if( muon->getUserRecord("DzIT").toDouble() >= m_muo_softid_dz_max )
+    if( !( fabs( muon->getUserRecord("DzIT").toDouble() ) < m_muo_softid_dz_max ) )
         return false;
     return true;
 }
@@ -206,27 +206,27 @@ bool MuonSelector::passMediumID(pxl::Particle *muon) const {
     if (m_muo_mediumid_useBool)
         return muon->getUserRecord(m_muo_mediumid_boolName).toBool();
     // do the cut based ID if we are not using the bool
-    if( not muon->getUserRecord("isLooseMuon").toBool() )
+    if( !( muon->getUserRecord("isLooseMuon").toBool() == m_muo_mediumid_isGlobalMuon ) )
         return false;
-    if( muon->getUserRecord("validFraction").toDouble() <= m_muo_mediumid_validFraction_min)
+    if( !( muon->getUserRecord("validFraction").toDouble() > m_muo_mediumid_validFraction_min ) )
         return false;
     // there are two different set of cuts for the medium ID - at least one of them must be true
     // first set:
     // need to start with this set and return true since there is no isValidGlobalTrack variable and thus
     // muon->getUserRecord("normalizedChi2").toDouble() will fail if there is no global track
     // (therefore one has to return from the function if isGlobalMuon is false)
-    if( not ( muon->getUserRecord("SegComp").toDouble() <= m_muo_mediumid_segCompTight_min ) )
+    if( muon->getUserRecord("SegComp").toDouble() > m_muo_mediumid_segCompTight_min )
         return true;
     // second set:
-    if( not muon->getUserRecord("isGlobalMuon").toBool() )
+    if( !( muon->getUserRecord("isGlobalMuon").toBool() == m_muo_mediumid_isGlobalMuon ) )
         return false;
-    if( muon->getUserRecord("normalizedChi2").toDouble() >= m_muo_mediumid_normalizedChi2_max )
+    if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
         return false;
-    if( muon->getUserRecord("chi2LocalPosition").toDouble() >= m_muo_mediumid_chi2LocalPosition_max )
+    if( !( muon->getUserRecord("chi2LocalPosition").toDouble() < m_muo_mediumid_chi2LocalPosition_max ) )
         return false;
-    if( muon->getUserRecord("trkKink").toDouble() >= m_muo_mediumid_trkKink_max )
+    if( !( muon->getUserRecord("trkKink").toDouble() < m_muo_mediumid_trkKink_max ) )
         return false;
-    if( muon->getUserRecord("SegComp").toDouble() <= m_muo_mediumid_segCompGlobal_min )
+    if( !( muon->getUserRecord("SegComp").toDouble() > m_muo_mediumid_segCompGlobal_min ) )
         return false;
     return true;
 }
@@ -236,23 +236,23 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const {
     if (m_muo_tightid_useBool)
         return muon->getUserRecord(m_muo_tightid_boolName).toBool();
     // do the cut based ID if we are not using the bool
-    if( not muon->getUserRecord("isGlobalMuon").toBool() )
+    if( !( muon->getUserRecord("isGlobalMuon").toBool() == m_muo_tightid_isGlobalMuon ) )
         return false;
-    if( not muon->getUserRecord("isPFMuon").toBool() )
+    if( !( muon->getUserRecord("isPFMuon").toBool() == m_muo_tightid_isPFMuon ) )
         return false;
-    if( muon->getUserRecord("normalizedChi2").toDouble() >= m_muo_tightid_normalizedChi2_max )
+    if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_tightid_normalizedChi2_max ) )
         return false;
-    if( muon->getUserRecord("VHitsMuonSys").toInt32() <= m_muo_tightid_vHitsMuonSys_min )
+    if( !( muon->getUserRecord("VHitsMuonSys").toInt32() > m_muo_tightid_vHitsMuonSys_min ) )
         return false;
-    if( muon->getUserRecord("NMatchedStations").toInt32() <= m_muo_tightid_nMatchedStations_min )
+    if( !( muon->getUserRecord("NMatchedStations").toInt32() > m_muo_tightid_nMatchedStations_min ) )
         return false;
-    if( muon->getUserRecord("Dxy").toDouble() >= m_muo_tightid_dxy_max )
+    if( !( fabs(muon->getUserRecord("Dxy").toDouble()) < m_muo_tightid_dxy_max ) )
         return false;
-    if( muon->getUserRecord("Dz").toDouble() >= m_muo_tightid_dz_max )
+    if( !( fabs(muon->getUserRecord("Dz").toDouble()) < m_muo_tightid_dz_max ) )
         return false;
-    if( muon->getUserRecord("VHitsPixel").toInt32() <= m_muo_tightid_vHitsPixel_min )
+    if( !( muon->getUserRecord("VHitsPixel").toInt32() > m_muo_tightid_vHitsPixel_min ) )
         return false;
-    if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() <= m_muo_tightid_trackerLayersWithMeas_min )
+    if( !( muon->getUserRecord("TrackerLayersWithMeas").toInt32() > m_muo_tightid_trackerLayersWithMeas_min ) )
         return false;
     return true;
 }
