@@ -52,6 +52,16 @@ private:
     // Effective area
     EffectiveArea const m_muo_EA;
 
+    //Soft ID variables
+    const bool          m_muo_softid_useBool;
+    const std::string   m_muo_softid_boolName;
+    const bool          m_muo_softid_isGoodMuon;
+    const int           m_muo_softid_trackerLayersWithMeas_min;
+    const int           m_muo_softid_pixelLayersWithMeas_min;
+    const bool          m_muo_softid_QualityInnerTrack;
+    const double        m_muo_softid_dxy_max;
+    const double        m_muo_softid_dz_max;
+
 	//Medium ID variables
     const bool          m_muo_mediumid_useBool;
     const std::string   m_muo_mediumid_boolName;
