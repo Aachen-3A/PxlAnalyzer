@@ -31,6 +31,13 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_softid_dxy_max(					cfg.GetItem< double >("Muon.SoftID.Dxy.max")),
     m_muo_softid_dz_max(					cfg.GetItem< double >("Muon.SoftID.Dz.max")),
 
+    // Loose ID
+    m_muo_looseid_useBool(  		cfg.GetItem< bool >("Muon.LooseID.UseBool")),
+    m_muo_looseid_boolName(	        cfg.GetItem< string >("Muon.LooseID.BoolName")),
+    m_muo_looseid_isPFMuon(			cfg.GetItem< bool >("Muon.LooseID.IsPFMuon")),
+    m_muo_looseid_isGlobalMuon(		cfg.GetItem< bool >("Muon.LooseID.IsGlobalMuon")),
+    m_muo_looseid_isTrackerMuon(    cfg.GetItem< bool >("Muon.LooseID.IsTrackerMuon")),
+
     // Medium ID
     m_muo_mediumid_useBool(					    cfg.GetItem< bool >("Muon.MediumID.UseBool")),
     m_muo_mediumid_boolName(				    cfg.GetItem< string >("Muon.MediumID.BoolName")),
@@ -130,10 +137,12 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
         passID = passTightID(muon);
     } else if (m_muo_id_type == "MediumID") {
         passID = passMediumID(muon);
+    } else if (m_muo_id_type == "LooseID") {
+        passID = passLooseID(muon);
     } else if (m_muo_id_type == "SoftID") {
         passID = passSoftID(muon);
     } else {
-        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'SoftID'. The value is '" + m_muo_id_type + "'");
+        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'LooseID', 'SoftID'. The value is '" + m_muo_id_type + "'");
         passID = false;
     }
 
@@ -176,6 +185,18 @@ bool MuonSelector::passSoftID(pxl::Particle *muon) const {
     if( muon->getUserRecord("DxyIT").toDouble() >= m_muo_softid_dxy_max )
         return false;
     if( muon->getUserRecord("DzIT").toDouble() >= m_muo_softid_dz_max )
+        return false;
+    return true;
+}
+
+bool MuonSelector::passLooseID(pxl::Particle *muon) const {
+    // return built-in bool if requested
+    if ( m_muo_looseid_useBool )
+        return muon->getUserRecord(m_muo_looseid_boolName).toBool();
+    // do the cut based ID if we are not using the bool
+    if( !( muon->getUserRecord("isPFMuon").toBool() == m_muo_looseid_isPFMuon ) )
+        return false;
+    if( !( ( muon->getUserRecord("isGlobalMuon").toBool() == m_muo_looseid_isGlobalMuon ) || ( muon->getUserRecord("isTrackerMuon").toBool() == m_muo_looseid_isTrackerMuon ) ) )
         return false;
     return true;
 }

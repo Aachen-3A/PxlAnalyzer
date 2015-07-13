@@ -28,10 +28,11 @@ private:
     // Methods
     int muonID( pxl::Particle *muon, double rho) const;
     bool passKinematics(pxl::Particle *muon ) const;
-    bool passHighPtID(pxl::Particle *muon) const;
-    bool passTightID(pxl::Particle *muon) const;
-    bool passMediumID(pxl::Particle *muon) const;
     bool passSoftID(pxl::Particle *muon) const;
+    bool passLooseID(pxl::Particle *muon) const;
+    bool passMediumID(pxl::Particle *muon) const;
+    bool passTightID(pxl::Particle *muon) const;
+    bool passHighPtID(pxl::Particle *muon) const;
     bool passPFIso(pxl::Particle *muon, double rho) const;
     bool passMiniIso(pxl::Particle *muon) const;
     bool passTrackerIso(pxl::Particle *muon) const;
@@ -61,6 +62,13 @@ private:
     const bool          m_muo_softid_QualityInnerTrack;
     const double        m_muo_softid_dxy_max;
     const double        m_muo_softid_dz_max;
+
+    //Loose ID variables
+    const bool m_muo_looseid_useBool;
+    const std::string m_muo_looseid_boolName;
+    const bool m_muo_looseid_isPFMuon;
+    const bool m_muo_looseid_isGlobalMuon;
+    const bool m_muo_looseid_isTrackerMuon;
 
 	//Medium ID variables
     const bool          m_muo_mediumid_useBool;
