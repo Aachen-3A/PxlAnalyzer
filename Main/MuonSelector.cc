@@ -213,31 +213,31 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const {
 
 bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
     // check if a cocktail muon exists
-    if (not muon->getUserRecord("validCocktail").toBool())
+    if (!muon->getUserRecord("validCocktail").toBool())
         return false;
     // return built-in bool if requested
     if (m_muo_highptid_useBool)
         return muon->getUserRecord(m_muo_highptid_boolName).toBool();
 
     // do the cut based ID if we are not using the bool
-    if (not m_muo_highptid_isGlobalMuon == muon->getUserRecord("isGlobalMuon").toBool())
+    if (!(m_muo_highptid_isGlobalMuon == muon->getUserRecord("isGlobalMuon").toBool()))
         return false;
-    if (not m_muo_highptid_ptRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
-        muon->getUserRecord("ptCocktail").toDouble())
-        return false;
-
-    if (not m_muo_highptid_nMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32())
-        return false;
-    if (not m_muo_highptid_vHitsMuonSys_min < muon->getUserRecord("VHitsMuonSysCocktail").toInt32())
-        return false;
-    if (not m_muo_highptid_vHitsPixel_min < muon->getUserRecord("VHitsPixelCocktail").toInt32())
-        return false;
-    if (not m_muo_highptid_vHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32())
+    if (!(m_muo_highptid_ptRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
+          muon->getUserRecord("ptCocktail").toDouble()))
         return false;
 
-    if (not m_muo_highptid_dxy_max > muon->getUserRecord("DxyCocktail").toDouble())
+    if (!(m_muo_highptid_nMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32()))
         return false;
-    if (not m_muo_highptid_dz_max > muon->getUserRecord("DzCocktail").toDouble())
+    if (!(m_muo_highptid_vHitsMuonSys_min < muon->getUserRecord("VHitsMuonSysCocktail").toInt32()))
+        return false;
+    if (!(m_muo_highptid_vHitsPixel_min < muon->getUserRecord("VHitsPixelCocktail").toInt32()))
+        return false;
+    if (!(m_muo_highptid_vHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32()))
+        return false;
+
+    if (!(m_muo_highptid_dxy_max > muon->getUserRecord("DxyCocktail").toDouble()))
+        return false;
+    if (!(m_muo_highptid_dz_max > muon->getUserRecord("DzCocktail").toDouble()))
         return false;
 
     // return true if everything passed
