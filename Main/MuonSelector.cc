@@ -21,6 +21,16 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     // Effective area
     m_muo_EA( cfg , "Muon" ),
 
+    // Soft ID
+    m_muo_softid_useBool(					cfg.GetItem< bool >("Muon.SoftID.UseBool")),
+    m_muo_softid_boolName(				    cfg.GetItem< string >("Muon.SoftID.BoolName")),
+    m_muo_softid_isGoodMuon( 			    cfg.GetItem< bool >("Muon.SoftID.IsGoodMuon")),
+    m_muo_softid_trackerLayersWithMeas_min( cfg.GetItem< int >("Muon.SoftID.TrackerLayersWithMeas.min")),
+    m_muo_softid_pixelLayersWithMeas_min(   cfg.GetItem< int >("Muon.SoftID.PixelLayersWithMeas.min")),
+    m_muo_softid_QualityInnerTrack( 		cfg.GetItem< bool >("Muon.SoftID.QualityInnerTrack")),
+    m_muo_softid_dxy_max(					cfg.GetItem< double >("Muon.SoftID.Dxy.max")),
+    m_muo_softid_dz_max(					cfg.GetItem< double >("Muon.SoftID.Dz.max")),
+
     // Medium ID
     m_muo_mediumid_useBool(					    cfg.GetItem< bool >("Muon.MediumID.UseBool")),
     m_muo_mediumid_boolName(				    cfg.GetItem< string >("Muon.MediumID.BoolName")),
@@ -151,7 +161,22 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
 }
 
 bool MuonSelector::passSoftID(pxl::Particle *muon) const {
-    // TODO(millet) implement medium ID
+    // return built-in bool if requested
+    if (m_muo_softid_useBool)
+        return muon->getUserRecord(m_muo_softid_boolName).toBool();
+    // do the cut based ID if we are not using the bool
+    if( not muon->getUserRecord("isGoodTMOneST").toBool() )
+        return false;
+    if( muon->getUserRecord("TrackerLayersWithMeas").toInt32() <= m_muo_softid_trackerLayersWithMeas_min )
+        return false;
+    if( muon->getUserRecord("PixelLayersWithMeas").toInt32() <= m_muo_softid_pixelLayersWithMeas_min )
+        return false;
+    if( not muon->getUserRecord("QualityInnerTrack").toBool() )
+        return false;
+    if( muon->getUserRecord("DxyIT").toDouble() >= m_muo_softid_dxy_max )
+        return false;
+    if( muon->getUserRecord("DzIT").toDouble() >= m_muo_softid_dz_max )
+        return false;
     return true;
 }
 
