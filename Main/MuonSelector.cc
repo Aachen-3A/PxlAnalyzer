@@ -281,9 +281,9 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
     if (!(m_muo_highptid_vHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32()))
         return false;
 
-    if (!(m_muo_highptid_dxy_max > muon->getUserRecord("DxyCocktail").toDouble()))
+    if (!(m_muo_highptid_dxy_max > fabs(muon->getUserRecord("DxyCocktail").toDouble())))
         return false;
-    if (!(m_muo_highptid_dz_max > muon->getUserRecord("DzCocktail").toDouble()))
+    if (!(m_muo_highptid_dz_max > fabs(muon->getUserRecord("DzCocktail").toDouble())))
         return false;
 
     // return true if everything passed
