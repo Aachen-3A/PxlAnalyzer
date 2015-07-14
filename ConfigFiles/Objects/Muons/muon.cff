@@ -16,9 +16,10 @@ Muon.CleanDuplicates = 0
 Muon.UseCocktail = 0
 
 # Supported ID types: 
-#   "CombinedID", "HighPtID", "TightID", "MediumID", "SoftID"
+#   "CombinedID", "HighPtID", "TightID", "MediumID", "SoftID" or "None"
 # The "CombinedID" uses the "TightID" until the specified PtSwitch is
-# reached, then it switches to the "HighPtID"
+# reached, then it switches to the "HighPtID".
+# "None" means no ID criteria are applied and all muons pass.
 Muon.ID.Type = "TightID"
 Muon.ID.PtSwitch = 200
 

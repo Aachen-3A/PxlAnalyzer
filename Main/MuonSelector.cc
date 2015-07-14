@@ -141,8 +141,10 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
         passID = passLooseID(muon);
     } else if (m_muo_id_type == "SoftID") {
         passID = passSoftID(muon);
+    } else if (m_muo_id_type == "None") {
+        passID= true;
     } else {
-        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'LooseID', 'SoftID'. The value is '" + m_muo_id_type + "'");
+        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'LooseID', 'SoftID' or 'None'. The value is '" + m_muo_id_type + "'");
         passID = false;
     }
 
@@ -153,8 +155,10 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
         passIso = passTrackerIso(muon);
     } else if (m_muo_iso_type == "Mini") {
         passIso = passMiniIso(muon);
+    } else if (m_muo_iso_type == "None") {
+        passIso = true;
     } else {
-        throw Tools::config_error("'Muon.Iso.Type' must be one of these values: 'PF', 'Tracker', 'Mini', 'SoftID'. The value is '" + m_muo_iso_type + "'");
+        throw Tools::config_error("'Muon.Iso.Type' must be one of these values: 'PF', 'Tracker', 'Mini', 'SoftID' or 'None'. The value is '" + m_muo_iso_type + "'");
         passIso = false;
     }
 
