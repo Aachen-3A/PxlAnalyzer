@@ -4,8 +4,8 @@
 # See also:
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID
 Jet.use = 1
-Jet.Type.Gen = "AK5"
-Jet.Type.Rec = "AK5"
+Jet.Type.Gen = "AK4"
+Jet.Type.Rec = "AK4"
 Jet.pt.min = 50
 Jet.eta.max = 2.4
 Jet.DeltaR.max = 0.5
