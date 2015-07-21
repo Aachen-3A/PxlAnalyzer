@@ -71,7 +71,7 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_highptid_nMatchedStations_min(cfg.GetItem< int >("Muon.HighPtID.NMatchedStations.min")),
     m_muo_highptid_vHitsMuonSys_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsMuonSys.min")),
     m_muo_highptid_vHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
-    m_muo_highptid_vHitsTracker_min(    cfg.GetItem< int >("Muon.HighPtID.VHitsTracker.min")),
+    m_muo_highptid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.HighPtID.TrackerLayersWithMeas.min")),
     m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
     m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
 {
@@ -263,7 +263,7 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const {
 
 bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
     // check if a cocktail muon exists
-    if (!muon->getUserRecord("validCocktail").toBool())
+    if (!(muon->getUserRecord("validCocktail").toBool()))
         return false;
     // return built-in bool if requested
     if (m_muo_highptid_useBool)
@@ -276,13 +276,14 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
           muon->getUserRecord("ptCocktail").toDouble()))
         return false;
 
+    // careful, these variables use user records that are not based on the cocktail track
     if (!(m_muo_highptid_nMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32()))
         return false;
-    if (!(m_muo_highptid_vHitsMuonSys_min < muon->getUserRecord("VHitsMuonSysCocktail").toInt32()))
+    if (!(m_muo_highptid_vHitsMuonSys_min < muon->getUserRecord("VHitsMuonSys").toInt32()))
         return false;
-    if (!(m_muo_highptid_vHitsPixel_min < muon->getUserRecord("VHitsPixelCocktail").toInt32()))
+    if (!(m_muo_highptid_vHitsPixel_min < muon->getUserRecord("VHitsPixel").toInt32()))
         return false;
-    if (!(m_muo_highptid_vHitsTracker_min < muon->getUserRecord("VHitsTrackerCocktail").toInt32()))
+    if (!(m_muo_highptid_trackerLayersWithMeas_min < muon->getUserRecord("TrackerLayersWithMeas").toInt32()))
         return false;
 
     if (!(m_muo_highptid_dxy_max > fabs(muon->getUserRecord("DxyCocktail").toDouble())))

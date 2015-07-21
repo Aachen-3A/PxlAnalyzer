@@ -103,7 +103,7 @@ private:
     const int         m_muo_highptid_nMatchedStations_min;
     const int         m_muo_highptid_vHitsMuonSys_min;
     const int         m_muo_highptid_vHitsPixel_min;
-    const int         m_muo_highptid_vHitsTracker_min;
+    const int         m_muo_highptid_trackerLayersWithMeas_min;
     const double      m_muo_highptid_dxy_max;
     const double      m_muo_highptid_dz_max;
 
