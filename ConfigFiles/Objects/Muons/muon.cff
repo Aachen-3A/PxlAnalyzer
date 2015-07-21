@@ -2,6 +2,7 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
 
 Muon.Use = 1
+Muon.UseCocktail = 0
 Muon.IDTag = 1
 Muon.Type.Gen = "Muon"
 Muon.Type.Rec = "Muon"
@@ -13,7 +14,6 @@ Muon.DeltaR.max = 0.4
 Muon.InvertIsolation = 0
 Muon.CleanDuplicates = 0
 
-Muon.UseCocktail = 0
 
 # Supported ID types: 
 #   "CombinedID", "HighPtID", "TightID", "MediumID", "SoftID" or "None"
