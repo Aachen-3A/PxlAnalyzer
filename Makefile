@@ -174,6 +174,8 @@ $(PROGRAM): $(OBJECTS)
 	@echo "Building $@ ..."
 	$(LD) $(LDFLAGS) $^ -o $@
 	@echo "$@ done"
+	@mkdir -p bin
+	@cp $(PROGRAM) bin/
 
 
 ########################################
