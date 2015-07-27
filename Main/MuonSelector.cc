@@ -83,9 +83,9 @@ MuonSelector::~MuonSelector() {
 }
 
 
-int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ,double const rho ) const{
+int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ) const{
     if( isRec ){
-        return muonID(muon, rho);
+        return muonID( muon );
     } else {
         //generator muon cuts
         double const muon_rel_iso = muon->getUserRecord( "GenIso" ).toDouble() / muon->getPt();
@@ -112,7 +112,7 @@ bool MuonSelector::passKinematics(pxl::Particle *muon) const {
 }
 
 
-int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
+int MuonSelector::muonID( pxl::Particle *muon ) const {
     bool passKin = false;
     bool passID = false;
     bool passIso = false;
@@ -150,7 +150,7 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
 
     // decide which isolation to perform
     if (m_muo_iso_type == "PF") {
-        passIso = passPFIso(muon, rho);
+        passIso = passPFIso( muon );
     } else if (m_muo_iso_type == "Tracker") {
         passIso = passTrackerIso(muon);
     } else if (m_muo_iso_type == "Mini") {
@@ -302,13 +302,11 @@ bool MuonSelector::passMiniIso(pxl::Particle *muon) const {
 }
 
 bool MuonSelector::passTrackerIso(pxl::Particle *muon) const {
-    // TODO(millet) implement mini iso
     double muon_iso = muon->getUserRecord( "TrkIso" );
     return (muon_iso / muon->getPt() < m_muo_iso_max);
 }
 
-bool MuonSelector::passPFIso(pxl::Particle *muon, double rho) const {
-    // TODO(millet) legacy code, check for 13TeV changes
+bool MuonSelector::passPFIso(pxl::Particle *muon) const {
     double muon_iso;
     // [sumChargedHadronPt+ max(0.,sumNeutralHadronPt+sumPhotonPt-0.5sumPUPt]/pt
     if( m_muo_iso_useDeltaBetaCorr && !m_muo_iso_useRhoCorr) {
