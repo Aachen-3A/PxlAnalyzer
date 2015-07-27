@@ -295,11 +295,6 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
 }
 
 
-bool MuonSelector::passMiniIso(pxl::Particle *muon) const {
-    // TODO(millet) implement mini iso
-    return true;
-}
-
 bool MuonSelector::passTrackerIso(pxl::Particle *muon) const {
     double muon_iso = muon->getUserRecord( "TrkIso" );
     return (muon_iso / muon->getPt() < m_muo_iso_max);
@@ -340,3 +335,19 @@ bool MuonSelector::passPFIso(pxl::Particle *muon) const {
 
     return ( ( muon_iso / muon->getPt() ) < m_muo_iso_max );
 }
+
+bool MuonSelector::passMiniIso(pxl::Particle *muon) const {
+    double muon_iso;
+    if ( m_muo_iso_puCorrection == "DB" ) {
+        muon_iso = muon->getUserRecord( "miniIsoDB" );
+    } else if ( m_muo_iso_puCorrection == "EA" ) {
+        muon_iso = muon->getUserRecord( "miniIsoEA" );
+    } else if ( m_muo_iso_puCorrection == "PFWeighted" ) {
+        muon_iso = muon->getUserRecord( "miniIsoPFWeight" );
+    } else {
+        throw Tools::config_error("When using 'Muon.Iso.Type' = '" + m_muo_iso_type + "', 'Muon.Iso.PUCorr' must be one of these values: 'DB' (deltaBeta), 'EA' (effective Area), 'PFWeighted'. The value is '" + m_muo_iso_type + "'");
+        return false;
+    }
+    return ( ( muon_iso / muon->getPt() ) < m_muo_iso_max );
+}
+
