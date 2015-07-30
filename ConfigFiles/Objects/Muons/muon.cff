@@ -6,7 +6,7 @@ Muon.UseCocktail = 0
 Muon.IDTag = 1
 Muon.Type.Gen = "Muon"
 Muon.Type.Rec = "Muon"
-
+Muon.Rho.Label = "fixedGridRhoFastjetAll"
 
 Muon.Pt.min = 25
 Muon.Eta.max = 2.1

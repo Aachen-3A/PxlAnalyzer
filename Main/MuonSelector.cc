@@ -82,9 +82,9 @@ MuonSelector::~MuonSelector() {
 }
 
 
-int MuonSelector::passMuon( pxl::Particle *muon, const bool& isRec ) const{
+int MuonSelector::passMuon( pxl::Particle *muon, double const rho, const bool& isRec) const{
     if( isRec ){
-        return muonID( muon );
+        return muonID(muon, rho);
     } else {
         //generator muon cuts
         double const muon_rel_iso = muon->getUserRecord( "GenIso" ).toDouble() / muon->getPt();
@@ -111,7 +111,7 @@ bool MuonSelector::passKinematics(pxl::Particle *muon) const {
 }
 
 
-int MuonSelector::muonID( pxl::Particle *muon ) const {
+int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
     bool passKin = false;
     bool passID = false;
     bool passIso = false;
@@ -149,9 +149,9 @@ int MuonSelector::muonID( pxl::Particle *muon ) const {
 
     // decide which isolation to perform
     if (m_muo_iso_type == "PFIso") {
-        passIso = passPFIso( muon );
+        passIso = passPFIso( muon, rho);
     } else if (m_muo_iso_type == "MiniIso") {
-        passIso = passPFIso( muon );
+        passIso = passMiniIso( muon );
     } else if (m_muo_iso_type == "TrackerIso") {
         passIso = passTrackerIso( muon );
     } else if (m_muo_iso_type == "None") {
@@ -300,9 +300,9 @@ bool MuonSelector::passTrackerIso(pxl::Particle *muon) const {
     return (muon_iso / muon->getPt() < m_muo_iso_max);
 }
 
-bool MuonSelector::passPFIso(pxl::Particle *muon) const {
+bool MuonSelector::passPFIso(pxl::Particle *muon, double rho) const {
     double muon_iso;
-    if (m_muo_iso_puCorrection == "DB") {
+    if ( m_muo_iso_puCorrection == "DB" ) {
         // formula: muon_iso = [sumChargedHadronPt+ max(0.,sumNeutralHadronPt+sumPhotonPt-0.5sumPUPtr]/pt
         muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
                 + max( 0.,
@@ -310,29 +310,25 @@ bool MuonSelector::passPFIso(pxl::Particle *muon) const {
                        + muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
                        - 0.5 * muon->getUserRecord( "PFIsoR04PU" ).toDouble()
                        );
-    } else if (m_muo_iso_puCorrection == "EA") {
-        return true;
-        //PFIsoCorr = PF(ChHad PFNoPU) + Max ((PF(Nh+Ph) - ρ’EACombined),0.0)) where ρ’=max(ρ,0.0) and with a 0.5 GeV threshold on neutrals
-        //double const photonEA = m_muo_EA.getEffectiveArea(          fabs(muon->getEta()), EffectiveArea::photon );
-        //double const neutralHadronEA = m_muo_EA.getEffectiveArea(   fabs(muon->getEta()), EffectiveArea::neutralHadron );
-
-        //muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
-                //+ max( 0.,
-                       //muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
-                       //+ muon->getUserRecord( "PFIsoR04Photons" ).toDouble()
-                       //-  rho * (photonEA+neutralHadronEA)
-                       //);
-    } else if (m_muo_iso_puCorrection == "PFWeighted") {
-        return true;
-    } else if (m_muo_iso_puCorrection == "None") {
+    } else if ( m_muo_iso_puCorrection == "EA" ) {
+        // formula: muon_iso = [sumChargedHadronPt+ max(0.,sumNeutralHadronPt+sumPhotonPt- rho*EA]/pt
+        // take conesize of 0.3 since current EA have been computed for this cone size (28.06.15)
+        double const photonEA = m_muo_EA.getEffectiveArea( fabs(muon->getEta()), EffectiveArea::photon );
+        double const neutralHadronEA = m_muo_EA.getEffectiveArea( fabs(muon->getEta()), EffectiveArea::neutralHadron );
+        muon_iso = muon->getUserRecord( "PFIsoR03ChargedHadrons" ).toDouble()
+                + max( 0.,
+                       muon->getUserRecord( "PFIsoR03NeutralHadrons" ).toDouble()
+                       + muon->getUserRecord( "PFIsoR03Photons" ).toDouble()
+                       -  rho * (photonEA+neutralHadronEA)
+                     );
+    } else if ( m_muo_iso_puCorrection == "None" ) {
         muon_iso = muon->getUserRecord( "PFIsoR04ChargedHadrons" ).toDouble()
                 + muon->getUserRecord( "PFIsoR04NeutralHadrons" ).toDouble()
                 + muon->getUserRecord( "PFIsoR04Photons" ).toDouble();
     } else {
-        throw Tools::config_error("'Muon.Iso.PUCorr' must be one of these values: 'DB' (deltaBeta), 'EA' (effective Area), 'PFWeighted', 'None'. The value is '" + m_muo_iso_type + "'");
+        throw Tools::config_error("When using 'Muon.Iso.Type' = '" + m_muo_iso_type + "', 'Muon.Iso.PUCorr' must be one of these values: 'DB' (deltaBeta), 'EA' (effective Area), 'None'. The value is '" + m_muo_iso_puCorrection + "'");
         return false;
     }
-
     return ( ( muon_iso / muon->getPt() ) < m_muo_iso_max );
 }
 
@@ -345,7 +341,7 @@ bool MuonSelector::passMiniIso(pxl::Particle *muon) const {
     } else if ( m_muo_iso_puCorrection == "PFWeighted" ) {
         muon_iso = muon->getUserRecord( "miniIsoPFWeight" );
     } else {
-        throw Tools::config_error("When using 'Muon.Iso.Type' = '" + m_muo_iso_type + "', 'Muon.Iso.PUCorr' must be one of these values: 'DB' (deltaBeta), 'EA' (effective Area), 'PFWeighted'. The value is '" + m_muo_iso_type + "'");
+        throw Tools::config_error("When using 'Muon.Iso.Type' = '" + m_muo_iso_type + "', 'Muon.Iso.PUCorr' must be one of these values: 'DB' (deltaBeta), 'EA' (effective Area), 'PFWeighted'. The value is '" + m_muo_iso_puCorrection + "'");
         return false;
     }
     return ( ( muon_iso / muon->getPt() ) < m_muo_iso_max );

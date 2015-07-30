@@ -22,20 +22,20 @@ public:
     MuonSelector(const Tools::MConfig &config );
     // Destruktor
     ~MuonSelector();
-    int passMuon( pxl::Particle *muon, const bool& isRec ) const;
+    int passMuon( pxl::Particle *muon, double const rho, const bool& isRec ) const;
 
 private:
     // Methods
-    int muonID( pxl::Particle *muon) const;
+    int muonID( pxl::Particle *muon, double rho) const;
     bool passKinematics(pxl::Particle *muon ) const;
     bool passSoftID(pxl::Particle *muon) const;
     bool passLooseID(pxl::Particle *muon) const;
     bool passMediumID(pxl::Particle *muon) const;
     bool passTightID(pxl::Particle *muon) const;
     bool passHighPtID(pxl::Particle *muon) const;
-    bool passTrackerIso(pxl::Particle *muon) const;
-    bool passPFIso(pxl::Particle *muon) const;
+    bool passPFIso(pxl::Particle *muon, double rho) const;
     bool passMiniIso(pxl::Particle *muon) const;
+    bool passTrackerIso(pxl::Particle *muon) const;
 
     // Variables
     std::string const   m_muo_id_type;
