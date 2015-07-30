@@ -2,6 +2,7 @@
 # - "Tracker" (Subdetector based)
 # - "PFIso" (PF based, cone of 0.4)
 # - "MiniIso" (PF based, cone size depends on pT) 
+#
 # see https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=60
 # and https://twiki.cern.ch/twiki/bin/view/CMS/MuonIsolationForRun2?rev=13
 # for details
@@ -13,7 +14,11 @@ Muon.Iso.Type = "PFIso"
 #   - 'None' --> no PU correction
 #   - 'DB' --> deltaBeta correction (standard for 8 TeV)
 #   - 'EA' --> effective Area correction
+# for MiniIso
+#   - 'DB' --> deltaBeta correction (standard for 8 TeV)
+#   - 'EA' --> effective Area correction
 #   - 'PFWeighted' --> neutral PF candidates are weighted corresponding to their likeliness to come from PU
+#
 # see https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId?rev=60
 # and https://twiki.cern.ch/twiki/bin/view/CMS/MuonIsolationForRun2?rev=13
 # for details
@@ -23,4 +28,3 @@ Muon.Iso.PUCorrection = "DB"
 #tracker  0.05        0.10
 #PF       0.12        0.20
 Muon.Iso.max = 0.12
-
