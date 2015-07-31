@@ -334,11 +334,11 @@ int main( int argc, char* argv[] ) {
          lumi::ID run      = event.getUserRecord( "Run" );
          lumi::ID LS       = event.getUserRecord( "LumiSection" );
          lumi::ID eventNum = event.getUserRecord( "EventNum" );
-         //if( ! runcfg.check( run, LS ) ) {
-            //++skipped;
-            //delete event_ptr;
-            //continue;
-         //}
+         if( ! runcfg.check( run, LS ) ) {
+            ++skipped;
+            delete event_ptr;
+            continue;
+         }
 
          if( runOnData && skipEvents.skip( run, LS, eventNum ) ) {
             ++skipped;
