@@ -164,6 +164,7 @@ int main( int argc, char* argv[] ) {
    bool const bJetUse = config.GetItem< bool >( "Jet.BJets.use" );
    bool const usePDF = config.GetItem< bool >( "General.usePDF" );
    bool const useSYST = config.GetItem< bool >( "General.useSYST" );
+   bool const selectGen = config.GetItem< bool >( "General.selectGen" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
       RunConfigFile = Tools::AbsolutePath( config.GetItem< string >( "General.RunConfig" ) );
@@ -408,7 +409,7 @@ int main( int argc, char* argv[] ) {
             // you should investigate!
             try {
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               //Selector.performSelection(GenEvtView, TrigEvtView, 0);
+               if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, 0);
                Selector.performSelection(RecEvtView, TrigEvtView, 0);
             } catch( Tools::unsorted_error &exc ) {
                std::cerr << "[WARNING] (main): ";

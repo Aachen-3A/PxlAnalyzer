@@ -9,7 +9,7 @@ General.IgnoreOverlaps = 0
 General.RunOnData = 0
 General.UseGeneratorWeights = 1
 General.DataPeriod = "13TeV"
-
+General.selectGen=0
 General.useSYST = 1
 
 # Comma separated list of files with events to be skipped:
