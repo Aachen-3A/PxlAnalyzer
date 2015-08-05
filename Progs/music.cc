@@ -74,6 +74,7 @@ int main( int argc, char* argv[] ) {
    //
    std::string outputDirectory = "./AnalysisOutput";
    int numberOfEvents = -1;
+   int numberOfSkipEvents = 0;
    std::string FinalCutsFile;
    std::vector<std::string> input_files;
 
@@ -112,6 +113,8 @@ int main( int argc, char* argv[] ) {
                         "A list of pxlio files to run on")
       ( "Num,N", po::value<int>(&numberOfEvents),
                      "Number of events to analyze.")
+      ( "skip", po::value<int>(&numberOfSkipEvents),
+                     "Number of events to skip.")
       ("debug", po::value<int>(&debug), "Set the debug level.\n"
                                           "0 = ERRORS,"
                                           "1 = WARNINGS,"
@@ -320,7 +323,7 @@ int main( int argc, char* argv[] ) {
          pxl::Event event = *event_ptr;
 
          if( numberOfEvents > -1 and e >= numberOfEvents ) break;
-
+         if( numberOfSkipEvents > e ) continue;
          // Break the event loop if the current event is not sensible (formatted correctly).
          if( event.getUserRecords().size() == 0 ) {
             std::cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << std::endl;
