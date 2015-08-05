@@ -1218,54 +1218,45 @@ void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView,
    //check global effects, e.g. HCAL noise
    bool global_accept = applyGlobalEventCuts( EvtView, vertices, eles, mets );
 
-   bool topo_accept = passEventTopology( muons, eles, taus, gammas, jets, mets );
+   //check if event matches event topolgy for given set of triggers
+   bool topo_accept = true;
+   if( m_useTrigger ) topo_accept = passEventTopology( muons, eles, taus, gammas, jets, mets );
    EvtView->setUserRecord( "topo_accept", topo_accept );
 
    if(m_useTrigger){
-       // Check if there are any unprescaled single muon or single electron
-       // triggers.
-       //~ bool const MuEaccept = m_triggerSelector.checkHLTMuEle( EvtView, isRec );
-       bool const MuEaccept = true;
-       if( MuEaccept ) {
-          //check if the events must be vetoed
-          bool const vetoed = m_triggerSelector.checkVeto( isRec,
-                                                           muons,
-                                                           eles,
-                                                           taus,
-                                                           gammas,
-                                                           jets,
-                                                           mets,
-                                                           TrigEvtView
-                                                           );
-          EvtView->setUserRecord( "Veto", vetoed );
 
-          bool const HLT_accept = m_triggerSelector.passHLTrigger( isRec,
-                                                                   muons,
-                                                                   eles,
-                                                                   taus,
-                                                                   gammas,
-                                                                   jets,
-                                                                   mets,
-                                                                   TrigEvtView
-                                                                   );
-          EvtView->setUserRecord( "HLT_accept", HLT_accept );
+      //check if the events must be vetoed
+      bool const vetoed = m_triggerSelector.checkVeto( isRec,
+                                                     muons,
+                                                     eles,
+                                                     taus,
+                                                     gammas,
+                                                     jets,
+                                                     mets,
+                                                     TrigEvtView
+                                                     );
+      EvtView->setUserRecord( "Veto", vetoed );
 
-          bool const triggerAccept = HLT_accept;
-          EvtView->setUserRecord( "trigger_accept", triggerAccept );
+      bool const HLT_accept = m_triggerSelector.passHLTrigger( isRec,
+                                                             muons,
+                                                             eles,
+                                                             taus,
+                                                             gammas,
+                                                             jets,
+                                                             mets,
+                                                             TrigEvtView
+                                                             );
+      EvtView->setUserRecord( "HLT_accept", HLT_accept );
 
-          bool const non_topo_accept = global_accept && filterAccept && triggerAccept && !vetoed;
-          EvtView->setUserRecord( "non_topo_accept", non_topo_accept );
+      bool const triggerAccept = HLT_accept;
+      EvtView->setUserRecord( "trigger_accept", triggerAccept );
 
-          //event accepted after all cuts
-          bool accepted = topo_accept && non_topo_accept;
-          EvtView->setUserRecord( "accepted", accepted );
-       } else {
-          EvtView->setUserRecord( "HLT_accept", false );
-          EvtView->setUserRecord( "Veto", false );
-          EvtView->setUserRecord( "trigger_accept", false );
-          EvtView->setUserRecord( "non_topo_accept", false );
-          EvtView->setUserRecord( "accepted", false );
-       }
+      bool const non_topo_accept = global_accept && filterAccept && triggerAccept && !vetoed;
+      EvtView->setUserRecord( "non_topo_accept", non_topo_accept );
+
+      //event accepted after all cuts
+      bool accepted = topo_accept && non_topo_accept;
+      EvtView->setUserRecord( "accepted", accepted );
    }else{
        EvtView->setUserRecord( "HLT_accept", true );
        EvtView->setUserRecord( "Veto", true );
