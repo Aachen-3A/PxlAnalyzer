@@ -251,8 +251,8 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
    //give a hint what failed
    else if (passKin && passID && !passIso) return 1;
    else if (passKin && !passID && passIso) return 2;
-   else if (!passKin && passID && passIso) return 3;
-   else if (passKin && !passID && !passIso) return 4;
+   else if (passKin && !passID && !passIso) return 3;
+   else if (!passKin && passID && passIso) return 4;
    return 5;
 }
 
