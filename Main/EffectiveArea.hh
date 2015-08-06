@@ -24,4 +24,4 @@ class EffectiveArea {
       BinnedMapping const m_eta_EAphotons_map;
 };
 
-#endif /*PHOTONEFFECTIVEAREA*/
+#endif /*EFFECTIVEAREA*/
