@@ -20,7 +20,6 @@ Ele.ID.switchpt=100
 import "$PXLANA/ConfigFiles/Objects/EleID/Ele_CBID_veto_r20.cff"
 import "$PXLANA/ConfigFiles/Objects/EleID/Ele_HEEP_v60.cff"
 
-
 # Errors:
 # Electron fake rate difference between MC and data: AN2012/415, Fig.21.
 Ele.Error.Fakes = 0.5

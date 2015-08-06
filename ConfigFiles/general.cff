@@ -7,8 +7,9 @@ General.CME = 13000
 General.FastSim = 0
 General.IgnoreOverlaps = 0
 General.RunOnData = 0
+General.UseGeneratorWeights = 1
 General.DataPeriod = "13TeV"
-
+General.selectGen=0
 General.useSYST = 1
 
 # Comma separated list of files with events to be skipped:
@@ -27,7 +28,7 @@ import "$PXLANA/ConfigFiles/generator.cff"
 General.usePDF = 0
 import "$PXLANA/ConfigFiles/pdf.cff"
 
-General.UseTriggers = 1
+General.UseTriggers = 0
 import "$PXLANA/ConfigFiles/trigger.cff"
 
 # Configuration files for objects (cuts and systematics)

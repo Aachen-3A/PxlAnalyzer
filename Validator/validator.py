@@ -47,6 +47,9 @@ ro.gROOT.ProcessLine( "gErrorIgnoreLevel = 3001;")
 ## Dictionary of the different results of the comparison
 compare_results = {}
 
+## Variable to store zour pxlana to recompile it correctly at the end of the validation
+mypxlana = ''
+
 ## Function to print the welcome output at the beginning of the programm
 #
 # Prints the welcome output and the program starting time, with the 
@@ -175,11 +178,11 @@ def opt_parser():
     parser.add_option( '--debug', metavar = 'LEVEL', default = 'INFO',
                        help= 'Set the debug level. Allowed values: ERROR, WARNING, INFO, DEBUG. [default = %default]' )
 
-    parser.add_option( '--executable', metavar = 'EXECUTABLE' , default = 'music',
+    parser.add_option( '--executable', metavar = 'EXECUTABLE' , default = '$MUSIC_BASE/Progs/music',
                             help = 'Name of the executable. [default = %default]')
-    parser.add_option( '--exeoption', metavar = 'EXEOPTION' , default = '--SpecialAna',
+    parser.add_option( '--exeoption', metavar = 'EXEOPTION' , default = '',
                             help = 'Options that should be passed to the executable. [default = %default]' )
-    parser.add_option( '--execonfig', metavar = 'EXECONFIG' , default = '$MUSIC_BASE/ConfigFiles/MC.cfg',
+    parser.add_option( '--execonfig', metavar = 'EXECONFIG' , default = '$MUSIC_BASE/Validator/MC.cfg',
                             help = 'Configuration file that should be passed to the executable. [default = %default]')
     parser.add_option( '--cfgfile', metavar = 'CFGFILE' , default = './config.cfg',
                             help = 'Name of the configuration file for the used files. [default = %default]' )
@@ -554,9 +557,18 @@ def comparison_performance(options):
     make_axis(ax,'run time (s)','virtual memory (MB)','new')
     ax,new_vir_usage,new_vir_time = draw_mem_histos(new_vir_histos,new_vir_time,"cornflowerblue",ax)
 
-    diff_rss = (old_rss_usage - new_rss_usage)/ old_rss_usage * 100
-    diff_time = (old_rss_time - new_rss_time)/ old_rss_time * 100
-    diff_vir = (old_vir_usage - new_vir_usage)/ old_vir_usage * 100
+    try:
+        diff_rss = (old_rss_usage - new_rss_usage)/ old_rss_usage * 100
+    except(ZeroDivisionError):
+        diff_rss = 0
+    try:
+        diff_time = (old_rss_time - new_rss_time)/ old_rss_time * 100
+    except(ZeroDivisionError):
+        diff_time = 0
+    try:
+        diff_vir = (old_vir_usage - new_vir_usage)/ old_vir_usage * 100
+    except(ZeroDivisionError):
+        diff_vir = 0
 
     if diff_rss > 0.:
         text = fig.text(0.25 , 0.01, 'memory difference: %+.1f %% \n time difference: %+.1f %%'%(diff_rss,diff_time), color='chartreuse',
@@ -776,8 +788,8 @@ def run_analysis(options,cfg_file,sample_list):
     pool.close()
     pool.join()
 
-    #for item in item_list:
-    #    run_analysis_task(item)
+    # for item in item_list:
+        # run_analysis_task(item)
 
     if not os.path.exists(options.Output):
         os.mkdir(options.Output)
@@ -828,11 +840,19 @@ def run_analysis_task(item):
             output = p2.communicate()[0]
             if output != '':
                 if "m" in output.split()[5]:
-                    rssList.append(output.split()[5].split("m")[0]) 
+                    rssList.append(output.split()[5].split("m")[0])
+                elif "k" in output.split()[5]:
+                    rssList.append(float(output.split()[5].split("g")[0])/1000)
+                elif "g" in output.split()[5]:
+                    rssList.append(float(output.split()[5].split("g")[0])*1000)
                 else:
                     rssList.append(output.split()[5]) 
                 if "m" in output.split()[4]:
-                    virtual.append(output.split()[4].split("m")[0]) 
+                    virtual.append(output.split()[4].split("m")[0])
+                elif "k" in output.split()[4]:
+                    virtual.append(float(output.split()[4].split("g")[0])/1000)
+                elif "g" in output.split()[4]:
+                    virtual.append(float(output.split()[4].split("g")[0])*1000)
                 else:
                     virtual.append(output.split()[4])
             time.sleep(1)
@@ -843,13 +863,36 @@ def run_analysis_task(item):
         exitCode = p.returncode
         if exitCode != 0:
             log.error("exitCode: " + str(exitCode))
-            log.error(output,p.communicate()[1])
+            log.error(output)
+            log.error(p.communicate()[1])
         else:
             log.debug("exitCode: " + str(exitCode))
             log.debug(output)
         usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
         cpu_time = usage_end.ru_utime - usage_start.ru_utime
-    
+
+        skipper = []
+        counter = 0
+        for item12 in rssList:
+            try:
+                bla = float(item12)
+            except(ValueError):
+                skipper.append(counter)
+            counter += 1
+        counter = 0
+        for item12 in virtual:
+            try:
+                bla = float(item12)
+            except(ValueError):
+                skipper.append(counter)
+            counter += 1
+
+        skipper = list(set(skipper))
+
+        for item12 in skipper:
+            rssList.pop(item12)
+            virtual.pop(item12)
+
         rssArray = np.array(rssList,"d")
         virtualArray = np.array(virtual,"d")
         xAxis = []
@@ -1329,14 +1372,16 @@ def make_val_compilation(options):
             log.info(" ")
             log.info(" But first cleaning everything up")
             log.info(" ")
-            log.debug("Calling 'make clean' on the PxlAnalyzer")
+            log.debug("Calling 'make clean' on the PxlButcher")
             p = subprocess.Popen(['make','clean'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             output = p.communicate()[0]
             log.debug(output)
         log.info(" ")
         log.info(" Now we will compile")
         log.info(" ")
-        p = subprocess.Popen(['make','validation','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        mypxlana = os.getenv( 'MYPXLANA' )
+        os.system('export MYPXLANA=Validator')
+        p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
         os.chdir(pwd_)
@@ -1369,6 +1414,7 @@ def make_compilation(options):
         log.info(" ")
         log.info(" Now we will compile")
         log.info(" ")
+        os.system('export MYPXLANA=%s'%mypxlana)
         p = subprocess.Popen(['make','-j8'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = p.communicate()[0]
         log.debug(output)
@@ -1378,7 +1424,7 @@ def make_compilation(options):
         log.info(" ")
 
 ## Main function to call the different sub functions
-def main():
+def main(argv):
     t0 = time.time()
 
     args,options,cfg_file = opt_parser()
@@ -1409,6 +1455,8 @@ def main():
     if decision == True or all_samples == True:
         make_new_reference(options,sample_list)
 
+        decision = True
+
         authorization = check_authorization()
 
         if authorization == True:
@@ -1422,5 +1470,7 @@ def main():
 
     farewell_output(options,t1,t0)
 
+    return decision
+
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
