@@ -157,7 +157,7 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
     } else if (m_muo_iso_type == "None") {
         passIso = true;
     } else {
-        throw Tools::config_error("'Muon.Iso.Type' must be one of these values: 'PFIso', 'MiniIso', 'TrackerIso'. The value is '" + m_muo_iso_type + "'");
+        throw Tools::config_error("'Muon.Iso.Type' must be one of these values: 'PFIso', 'MiniIso', 'TrackerIso' or 'None'. The value is '" + m_muo_iso_type + "'");
         passIso = false;
     }
 
