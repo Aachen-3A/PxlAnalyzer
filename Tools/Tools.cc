@@ -33,3 +33,14 @@ std::string Tools::removeComment( std::string line, char const commentChar ) {
 
    return line;
 }
+
+std::vector< std::string > Tools::getParticleTypeAbbreviations() {
+    std::vector< std::string > partList;
+    partList.push_back("Ele");
+    partList.push_back("Muon");
+    partList.push_back("Tau");
+    partList.push_back("Gamma");
+    partList.push_back("Jet");
+    partList.push_back("MET");
+    return partList;
+}
