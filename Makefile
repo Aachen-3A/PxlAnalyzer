@@ -115,10 +115,10 @@ EXTRA_CFLAGS  := -ffloat-store $(CMSSW_INC_PATHS) $(LHAPDF_INC_PATH) -DPXL_ENABL
 EXTRA_LDFLAGS := $(CMSSW_LIB_PATHS) $(CMSSW_LIBS) $(LHAPDF_LIB_PATH) $(LHAPDF_LIB)
 
 CC	:= g++
-CFLAGS	:= -O3 -Wall -fPIC -fsignaling-nans -funsafe-math-optimizations -fno-rounding-math -fno-signaling-nans -fcx-limited-range -fno-associative-math # -DNDEBUG # -pg for gprof
+CFLAGS	:= -O3 -Wall -fPIC -fsignaling-nans -funsafe-math-optimizations -fno-rounding-math -fno-signaling-nans -fcx-limited-range -fno-associative-math -std=gnu++11# -DNDEBUG # -pg for gprof
 
 LD	:= g++
-LDFLAGS	:= -O3fast -lz -fno-associative-math # -pg for gprof
+LDFLAGS	:= -O3fast -lz -fno-associative-math -std=gnu++11# -pg for gprof
 
 # Debug flags?
 ifdef DEBUG
