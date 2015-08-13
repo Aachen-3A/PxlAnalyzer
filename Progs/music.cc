@@ -403,13 +403,26 @@ int main( int argc, char* argv[] ) {
                // Don't do this on data!
                Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
             }
+            try {
+            if( useSYST ) {
+                // create new event views with systematic shifts
+                // use the config files to activate systematics for some objects
+                syst_shifter.init(&event);
+                syst_shifter.createShiftedViews();
+                //perform selection on all selected event views
+                for(auto& systInfo : syst_shifter.m_activeSystematics){
+                    for(auto& evtView : systInfo->eventViewPointers ){
+                        Selector.performSelection(evtView, TrigEvtView, 0);
+                    }
+                }
+            }
 
             // Sometimes a particle is unsorted in an event, where it should be
             // sorted by pt. This seems to be a PXL problem.
             // Best idea until now is to skip the whole event.
             // Do this only for MC at the moment. If this ever happens for data,
             // you should investigate!
-            try {
+
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
                if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, 0);
                Selector.performSelection(RecEvtView, TrigEvtView, 0);
@@ -421,12 +434,7 @@ int main( int argc, char* argv[] ) {
                continue;
             }
 
-            if( useSYST ) {
-                // create new event views with systematic shifts
-                // use the config files to activate systematics for some objects
-                syst_shifter.init(&event);
-                syst_shifter.createShiftedViews();
-            }
+
 
          }
          // run the fork ..

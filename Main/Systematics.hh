@@ -18,6 +18,7 @@
 /*
  * written by Michael Margos
  * (michael.margos@rwth-aachen.de)
+ * adapted by others (-;
  */
 
 class TRandom3;
@@ -27,6 +28,7 @@ public:
    Systematics(const Tools::MConfig &cfg, unsigned int const debug);
    ~Systematics();
 
+   std::vector< SystematicsInfo* > m_activeSystematics;
    void init(pxl::Event* event);
    void createShiftedViews();
 
@@ -67,9 +69,8 @@ private:
 
    TRandom3* rand;
    //~ std::vector< std::reference_wrapper<SystematicsInfo> > m_activeSystematics;
-   std::vector< SystematicsInfo* > m_activeSystematics;
-   SystematicsInfo* m_activeSystematic;
    // methods
+   SystematicsInfo* m_activeSystematic;
    void shiftMuoAndMET(std::string const shiftType);
    void shiftEleAndMET(std::string const shiftType);
    void shiftTauAndMET(std::string const shiftType);

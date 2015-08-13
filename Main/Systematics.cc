@@ -7,6 +7,7 @@
 //--------------------Constructor-----------------------------------------------------------------
 
 Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
+   m_activeSystematics( {} ),
    // read uncertainties from config
    m_ratioEleBarrel(cfg.GetItem< double      >( "Ele.Syst.Scale.Barrel" ) ),
    m_ratioEleEndcap(cfg.GetItem< double      >( "Ele.Syst.Scale.Endcap" ) ),
@@ -17,7 +18,6 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    m_TauType(       cfg.GetItem< std::string >( "Tau.Type.Rec" ) ),
    m_JetType(       cfg.GetItem< std::string >( "Jet.Type.Rec" ) ),
    m_METType(       cfg.GetItem< std::string >( "MET.Type.Rec" ) ),
-
    // To access the JEC uncertainties from file.
    m_jecType( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESType" ) ) ),
    m_jecPara( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESFile" ) ), m_jecType ),
@@ -41,7 +41,7 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
 
 {
    rand = new TRandom3();
-   m_activeSystematics = {};
+
    std::vector< std::string > availableFunctions;
    for(auto entry : systFuncMap ) availableFunctions.push_back( entry.first );
    // read in which systematics should be evaluated
