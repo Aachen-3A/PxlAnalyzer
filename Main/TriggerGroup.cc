@@ -91,7 +91,7 @@ TriggerGroup::TriggerCutsCollection TriggerGroup::initCuts( Tools::MConfig const
 TriggerGroup::PtMap TriggerGroup::initPtMin( Tools::MConfig const &cfg ) const {
    PtMap ptMinMap;
 
-   ptMinMap[ "Muo" ] = cfg.GetItem< double >( "Muon.pt.min" );
+   ptMinMap[ "Muo" ] = cfg.GetItem< double >( "Muon.Pt.min" );
    ptMinMap[ "Ele" ] = cfg.GetItem< double >( "Ele.pt.min" );
    ptMinMap[ "Tau" ] = cfg.GetItem< double >( "Tau.pt.min" );
    ptMinMap[ "Gam" ] = cfg.GetItem< double >( "Gamma.pt.min" );
