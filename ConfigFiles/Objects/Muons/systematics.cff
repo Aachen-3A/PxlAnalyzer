@@ -12,5 +12,6 @@ Muon.Error.Charge = 0.5
 #################
 ## Sytematics  ##
 #################
+Muon.Syst.Types = Scale, Resolution
 Muon.Syst.Scale = 0.05
 Muon.Syst.Res   = 0.032

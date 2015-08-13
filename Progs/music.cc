@@ -232,6 +232,7 @@ int main( int argc, char* argv[] ) {
                                                          outputDirectory,
                                                          pdfInfo,
                                                          Selector,
+                                                         syst_shifter,
                                                          debug);
 
 
@@ -422,24 +423,12 @@ int main( int argc, char* argv[] ) {
 
             if( useSYST ) {
                 // create new event views with systematic shifts
-                // (the event cannot be modified inside specialAna - especially no new event views)
-                // shifts of type 'Scale' are implemented at the moment
-                // shifts of type 'Resolution' are to be implemented
+                // use the config files to activate systematics for some objects
                 syst_shifter.init(&event);
-                syst_shifter.shiftEleAndMET("Scale");
-                //syst_shifter.shiftEleAndMET("Resolution");
-                syst_shifter.shiftMuoAndMET("Scale");
-                syst_shifter.shiftMuoAndMET("Resolution");
-                syst_shifter.shiftTauAndMET("Scale");
-                //syst_shifter.shiftTauAndMET("Resolution");
-                syst_shifter.shiftJetAndMET("Scale");
-                syst_shifter.shiftJetAndMET("Resolution");
-                syst_shifter.shiftMETUnclustered("Scale");
-                //syst_shifter.shiftMETUnclustered("Resolution");
+                syst_shifter.createShiftedViews();
             }
 
          }
-
          // run the fork ..
          fork.analyseEvent( &event );
          fork.finishEvent( &event );

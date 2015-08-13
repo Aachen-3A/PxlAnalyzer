@@ -19,5 +19,5 @@ Tau.Discriminators = decayModeFindingNewDMs,byMediumIsolationMVA3newDMwLT,agains
 #################
 ## Sytematics  ##
 #################
-
+Tau.Syst.Types = Scale
 Tau.Syst.Scale = 0.03

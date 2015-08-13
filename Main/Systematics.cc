@@ -2,7 +2,7 @@
 #include <vector>
 #include "Tools/PXL/Sort.hh"
 #include "TRandom3.h"
-
+#include "Tools/Tools.hh"
 
 //--------------------Constructor-----------------------------------------------------------------
 
@@ -22,14 +22,52 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    m_jecType( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESType" ) ) ),
    m_jecPara( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESFile" ) ), m_jecType ),
    m_jecUnc( m_jecPara ),
-
    m_jetRes( cfg ),
+   systFuncMap (
+         {{ "Ele_Scale", std::bind(&Systematics::shiftEleAndMET, this,"Scale") },
+         //~ {{ "Ele_Resolution", std::bind(&Systematics::shiftEleAndMET,this, "Resolution") },
+         { "Muon_Resolution", std::bind(&Systematics::shiftMuoAndMET, this,"Resolution") },
+         { "Muon_Scale", std::bind(&Systematics::shiftMuoAndMET, this, "Scale") },
+         //~ {{ "Tau_Resolution", std::bind(&Systematics::shiftTauAndMET, this, "Resolution") },
+         { "Tau_Scale", std::bind(&Systematics::shiftTauAndMET, this, "Scale") },
+         { "Jet_Resolution", std::bind(&Systematics::shiftJetAndMET, this, "Resolution") },
+         { "Jet_Scale", std::bind(&Systematics::shiftJetAndMET, this, "Scale") },
+         //~ {{ "MET_Resolution", std::bind(&Systematics::shiftMETUnclustered, "Resolution") },
+         { "MET_Scale", std::bind(&Systematics::shiftMETUnclustered, this, "Scale") }
+         }),
 
    m_debug(debug)
 
 
 {
-    rand = new TRandom3();
+   rand = new TRandom3();
+   m_activeSystematics = {};
+   std::vector< std::string > availableFunctions;
+   for(auto entry : systFuncMap ) availableFunctions.push_back( entry.first );
+   // read in which systematics should be evaluated
+   // loop all considered objects (Muo, Ele ...)
+   for(std::string partType : Tools::getParticleTypeAbbreviations()){
+      //add all selected systematic types
+      auto systTypes = Tools::splitString< std::string >(
+            cfg.GetItem< std::string >( partType + ".Syst.Types"),
+            true
+      );
+      for(std::string systType : systTypes){
+         std::string funcKey = partType + "_"+ systType;
+         bool isAvailable = (std::find(availableFunctions.begin(),
+                                       availableFunctions.end(),
+                                        funcKey) != availableFunctions.end());
+         if(isAvailable){
+            SystematicsInfo *thisSystematic =
+               new SystematicsInfo( partType, systType, funcKey, false);
+            m_activeSystematics.push_back( thisSystematic );
+         }else{
+            std::cout << "Systematic type " << systType
+                      <<" is not available for " << partType<<std::endl;
+            exit(1);
+         }
+      }
+   }
 }
 
 
@@ -45,6 +83,13 @@ Systematics::~Systematics(){
 //------------
 //public------
 //------------
+
+void Systematics::createShiftedViews(){
+   for(auto syst : m_activeSystematics){
+      m_activeSystematic = syst;
+      systFuncMap[ syst->m_funcKey ] ();
+   }
+}
 
 // get all particles from the event and put them into vectors for later use
 void Systematics::init(pxl::Event* event){
@@ -63,6 +108,11 @@ void Systematics::init(pxl::Event* event){
    METList.clear();
    UnclusteredEnUp.clear();
    UnclusteredEnDown.clear();
+
+   // clear shifted EventViews from last event
+   for(auto syst : m_activeSystematics){
+      syst->eventViewPointers.clear();
+   }
 
    // get all particles
    std::vector< pxl::Particle* > AllParticles;
@@ -123,7 +173,9 @@ void Systematics::shiftMuoAndMET(std::string const shiftType){
    pxl::EventView* EventViewMuonUp   = m_event->getObjectOwner().create< pxl::EventView >();
    pxl::EventView* EventViewMuonDown = m_event->getObjectOwner().create< pxl::EventView >();
    m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Up",   EventViewMuonUp);
+   m_activeSystematic->eventViewPointers.push_back( EventViewMuonUp );
    m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Down", EventViewMuonDown);
+   m_activeSystematic->eventViewPointers.push_back( EventViewMuonDown );
 
    fillMETLists(EventViewMuonUp, EventViewMuonDown);
 
@@ -394,12 +446,14 @@ void Systematics::createEventViews(std::string prefix, pxl::EventView** evup, px
    }
    success = m_event->getObjectOwner().setIndexEntry(prefix + "Up",   (*evup));
    (*evup)->setName(prefix + "Up");
+   m_activeSystematic->eventViewPointers.push_back( *evup );
    if(!success){
       std::string message = "Systematics.cc: setIndex for event view" + prefix + "Up" + " failed!";
       throw std::runtime_error(message);
    }
    success = m_event->getObjectOwner().setIndexEntry(prefix + "Down", (*evdown));
    (*evdown)->setName(prefix + "Down");
+   m_activeSystematic->eventViewPointers.push_back( *evdown );
    if(!success){
       std::string message = "Systematics.cc: setIndex for event view" + prefix + "Down" + " failed!";
       throw std::runtime_error(message);
