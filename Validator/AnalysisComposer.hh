@@ -12,6 +12,7 @@
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 
 #include "boost/program_options.hpp"
+#include "Main/Systematics.hh"
 namespace po = boost::program_options;
 using std::string;
 class AnalysisComposer {
@@ -26,6 +27,7 @@ public:
                                        string outputDirectory,
                                        pdf::PDFInfo const &pdfInfo,
                                        EventSelector &selector,
+                                       Systematics &syst,
                                        const bool debug);
     void endAnalysis();
 

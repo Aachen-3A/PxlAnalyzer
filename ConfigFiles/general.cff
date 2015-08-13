@@ -11,7 +11,8 @@ General.UseGeneratorWeights = 1
 General.DataPeriod = "13TeV"
 General.selectGen=0
 General.useSYST = 1
-
+# systematics views contain all particles beside shifted ones.
+General.Syst.fullview = 0
 # Comma separated list of files with events to be skipped:
 SkipEvents.FileList =
 

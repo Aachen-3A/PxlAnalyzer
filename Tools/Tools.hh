@@ -58,7 +58,7 @@ namespace Tools {
 
    // Remove comment from line.
    std::string removeComment( std::string line, char const commentChar = '#' );
-
+   std::string random_string( size_t length );
    // returb a vector of string identifiers for each physics object type
    std::vector< std::string > getParticleTypeAbbreviations();
    //return everything you can << into an ostream as a string

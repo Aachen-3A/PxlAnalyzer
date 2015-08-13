@@ -165,6 +165,7 @@ int main( int argc, char* argv[] ) {
    bool const bJetUse = config.GetItem< bool >( "Jet.BJets.use" );
    bool const usePDF = config.GetItem< bool >( "General.usePDF" );
    bool const useSYST = config.GetItem< bool >( "General.useSYST" );
+   bool const SYSTfullview = config.GetItem< bool >( "General.Syst.fullview" );
    bool const selectGen = config.GetItem< bool >( "General.selectGen" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
@@ -232,6 +233,7 @@ int main( int argc, char* argv[] ) {
                                                          outputDirectory,
                                                          pdfInfo,
                                                          Selector,
+                                                         syst_shifter,
                                                          debug);
 
 
@@ -402,13 +404,27 @@ int main( int argc, char* argv[] ) {
                // Don't do this on data!
                Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
             }
+            try {
+            if( useSYST ) {
+
+                // create new event views with systematic shifts
+                // use the config files to activate systematics for some objects
+                syst_shifter.init(&event);
+                syst_shifter.createShiftedViews();
+                //perform selection on all selected event views
+                for(auto& systInfo : syst_shifter.m_activeSystematics){
+                    for(auto& evtView : systInfo->eventViewPointers ){
+                        Selector.performSelection(evtView, TrigEvtView, 0);
+                    }
+                }
+            }
 
             // Sometimes a particle is unsorted in an event, where it should be
             // sorted by pt. This seems to be a PXL problem.
             // Best idea until now is to skip the whole event.
             // Do this only for MC at the moment. If this ever happens for data,
             // you should investigate!
-            try {
+
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
                if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, 0);
                Selector.performSelection(RecEvtView, TrigEvtView, 0);
@@ -419,27 +435,11 @@ int main( int argc, char* argv[] ) {
                delete event_ptr;
                continue;
             }
-
-            if( useSYST ) {
-                // create new event views with systematic shifts
-                // (the event cannot be modified inside specialAna - especially no new event views)
-                // shifts of type 'Scale' are implemented at the moment
-                // shifts of type 'Resolution' are to be implemented
-                syst_shifter.init(&event);
-                syst_shifter.shiftEleAndMET("Scale");
-                //syst_shifter.shiftEleAndMET("Resolution");
-                syst_shifter.shiftMuoAndMET("Scale");
-                syst_shifter.shiftMuoAndMET("Resolution");
-                syst_shifter.shiftTauAndMET("Scale");
-                //syst_shifter.shiftTauAndMET("Resolution");
-                syst_shifter.shiftJetAndMET("Scale");
-                syst_shifter.shiftJetAndMET("Resolution");
-                syst_shifter.shiftMETUnclustered("Scale");
-                //syst_shifter.shiftMETUnclustered("Resolution");
-            }
+            // expand shifted views containing only shifted selected particles
+            // with unshifted selected particles
+            if( useSYST && SYSTfullview ) syst_shifter.createFullViews();
 
          }
-
          // run the fork ..
          fork.analyseEvent( &event );
          fork.finishEvent( &event );

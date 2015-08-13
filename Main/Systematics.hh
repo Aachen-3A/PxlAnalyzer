@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <functional>
 #include "Pxl/Pxl/interface/pxl/core.hh"
 #include "Pxl/Pxl/interface/pxl/hep.hh"
 #include "Tools/MConfig.hh"
@@ -13,11 +14,8 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #pragma GCC diagnostic pop
+#include "SystematicsInfo.hh"
 
-/*
- * written by Michael Margos
- * (michael.margos@rwth-aachen.de)
- */
 
 class TRandom3;
 
@@ -26,16 +24,14 @@ public:
    Systematics(const Tools::MConfig &cfg, unsigned int const debug);
    ~Systematics();
 
+   std::vector< SystematicsInfo* > m_activeSystematics;
    void init(pxl::Event* event);
-
-   void shiftMuoAndMET(std::string const shiftType);
-   void shiftEleAndMET(std::string const shiftType);
-   void shiftTauAndMET(std::string const shiftType);
-   void shiftJetAndMET(std::string const shiftType);
-   void shiftMETUnclustered(std::string const shiftType);
+   void createShiftedViews();
+   void createFullViews(  pxl::EventView* baseEvtView = 0 );
 
 private:
    // variables
+   bool m_full;
    double const m_ratioEleBarrel, m_ratioEleEndcap, m_scaleMuo, m_resMuo, m_ratioTau;
    std::string const m_TauType, m_JetType, m_METType;
 
@@ -45,8 +41,12 @@ private:
    std::string const m_jecType;
    JetCorrectorParameters const m_jecPara;
    JetCorrectionUncertainty m_jecUnc;
-
    JetResolution m_jetRes;
+
+   // method map for function calls by string
+   // Method name tags should be constructed following the sheme:
+   // ParticleType_ShiftType e.g. Ele_Scale
+   std::map<std::string, std::function<void()>>  systFuncMap ;
 
    unsigned int const m_debug;
 
@@ -65,8 +65,14 @@ private:
    pxl::EventView* m_GenEvtView;
 
    TRandom3* rand;
-
+   //~ std::vector< std::reference_wrapper<SystematicsInfo> > m_activeSystematics;
    // methods
+   SystematicsInfo* m_activeSystematic;
+   void shiftMuoAndMET(std::string const shiftType);
+   void shiftEleAndMET(std::string const shiftType);
+   void shiftTauAndMET(std::string const shiftType);
+   void shiftJetAndMET(std::string const shiftType);
+   void shiftMETUnclustered(std::string const shiftType);
    bool inline checkshift(std::string const shiftType) const;
    void createEventViews(std::string prefix, pxl::EventView** evup, pxl::EventView** evdown);
    void fillMETLists(pxl::EventView* evup, pxl::EventView* evdown);

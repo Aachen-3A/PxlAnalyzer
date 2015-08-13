@@ -44,5 +44,7 @@ Ele.EffArea.EA_photons = 0.1013, 0.0988, 0.0572, 0.0842, 0.1530
 ## Sytematics  ##
 #################
 # configuration for systematic uncertainties
+#possible systematic options: Scale
+Ele.Syst.Types = Scale
 Ele.Syst.Scale.Barrel = 0.004
 Ele.Syst.Scale.Endcap = 0.008

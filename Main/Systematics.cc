@@ -2,12 +2,14 @@
 #include <vector>
 #include "Tools/PXL/Sort.hh"
 #include "TRandom3.h"
-
+#include "Tools/Tools.hh"
 
 //--------------------Constructor-----------------------------------------------------------------
 
 Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
+   m_activeSystematics( {} ),
    // read uncertainties from config
+   m_full(cfg.GetItem< bool                  >( "General.Syst.fullview" ) ),
    m_ratioEleBarrel(cfg.GetItem< double      >( "Ele.Syst.Scale.Barrel" ) ),
    m_ratioEleEndcap(cfg.GetItem< double      >( "Ele.Syst.Scale.Endcap" ) ),
    m_scaleMuo(      cfg.GetItem< double      >( "Muon.Syst.Scale" ) ),
@@ -17,19 +19,56 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    m_TauType(       cfg.GetItem< std::string >( "Tau.Type.Rec" ) ),
    m_JetType(       cfg.GetItem< std::string >( "Jet.Type.Rec" ) ),
    m_METType(       cfg.GetItem< std::string >( "MET.Type.Rec" ) ),
-
    // To access the JEC uncertainties from file.
    m_jecType( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESType" ) ) ),
    m_jecPara( Tools::ExpandPath( cfg.GetItem< std::string >( "Jet.Error.JESFile" ) ), m_jecType ),
    m_jecUnc( m_jecPara ),
-
    m_jetRes( cfg ),
+   systFuncMap (
+         {{ "Ele_Scale", std::bind(&Systematics::shiftEleAndMET, this,"Scale") },
+         //~ {{ "Ele_Resolution", std::bind(&Systematics::shiftEleAndMET,this, "Resolution") },
+         { "Muon_Resolution", std::bind(&Systematics::shiftMuoAndMET, this,"Resolution") },
+         { "Muon_Scale", std::bind(&Systematics::shiftMuoAndMET, this, "Scale") },
+         //~ {{ "Tau_Resolution", std::bind(&Systematics::shiftTauAndMET, this, "Resolution") },
+         { "Tau_Scale", std::bind(&Systematics::shiftTauAndMET, this, "Scale") },
+         { "Jet_Resolution", std::bind(&Systematics::shiftJetAndMET, this, "Resolution") },
+         { "Jet_Scale", std::bind(&Systematics::shiftJetAndMET, this, "Scale") },
+         //~ {{ "MET_Resolution", std::bind(&Systematics::shiftMETUnclustered, "Resolution") },
+         { "MET_Scale", std::bind(&Systematics::shiftMETUnclustered, this, "Scale") }
+         }),
 
    m_debug(debug)
 
 
 {
-    rand = new TRandom3();
+   rand = new TRandom3();
+
+   std::vector< std::string > availableFunctions;
+   for(auto entry : systFuncMap ) availableFunctions.push_back( entry.first );
+   // read in which systematics should be evaluated
+   // loop all considered objects (Muo, Ele ...)
+   for(std::string partType : Tools::getParticleTypeAbbreviations()){
+      //add all selected systematic types
+      auto systTypes = Tools::splitString< std::string >(
+            cfg.GetItem< std::string >( partType + ".Syst.Types"),
+            true
+      );
+      for(std::string systType : systTypes){
+         std::string funcKey = partType + "_"+ systType;
+         bool isAvailable = (std::find(availableFunctions.begin(),
+                                       availableFunctions.end(),
+                                        funcKey) != availableFunctions.end());
+         if(isAvailable){
+            SystematicsInfo *thisSystematic =
+               new SystematicsInfo( partType, systType, funcKey, false);
+            m_activeSystematics.push_back( thisSystematic );
+         }else{
+            std::cout << "Systematic type " << systType
+                      <<" is not available for " << partType<<std::endl;
+            exit(1);
+         }
+      }
+   }
 }
 
 
@@ -45,6 +84,13 @@ Systematics::~Systematics(){
 //------------
 //public------
 //------------
+
+void Systematics::createShiftedViews(){
+   for(auto syst : m_activeSystematics){
+      m_activeSystematic = syst;
+      systFuncMap[ syst->m_funcKey ] ();
+   }
+}
 
 // get all particles from the event and put them into vectors for later use
 void Systematics::init(pxl::Event* event){
@@ -64,10 +110,16 @@ void Systematics::init(pxl::Event* event){
    UnclusteredEnUp.clear();
    UnclusteredEnDown.clear();
 
+   // clear shifted EventViews from last event
+   for(auto syst : m_activeSystematics){
+      syst->eventViewPointers.clear();
+   }
+
    // get all particles
    std::vector< pxl::Particle* > AllParticles;
    m_eventView->getObjectsOfType< pxl::Particle >( AllParticles );
    pxl::sortParticles( AllParticles );
+   std::string persistent_id;
    // push them into the corresponding vectors
    for( std::vector< pxl::Particle* >::const_iterator part_it = AllParticles.begin(); part_it != AllParticles.end(); ++part_it ) {
       pxl::Particle *part = *part_it;
@@ -78,7 +130,9 @@ void Systematics::init(pxl::Event* event){
       else if( Name == m_TauType ) TauList.push_back( part );
       else if( Name == m_JetType ) JetList.push_back( part );
       else if( Name == m_METType ) METList.push_back( part );
-
+       // mark both entries with same persistent ID ( standard ID changes when cloning views=
+       persistent_id = Tools::random_string( 16 );
+       part->setUserRecord("persistent_id", persistent_id );
 
    }
 
@@ -92,6 +146,8 @@ void Systematics::init(pxl::Event* event){
       //copy already shifted MET from Event:
       if( Name == m_METType+"uncert_10") UnclusteredEnUp.push_back( part );
       else if( Name == m_METType+"uncert_11") UnclusteredEnDown.push_back( part );
+      persistent_id = Tools::random_string( 16 );
+      part->setUserRecord("persistent_id", persistent_id );
   }
 
 
@@ -120,11 +176,17 @@ void Systematics::shiftMuoAndMET(std::string const shiftType){
    double dPy_down=0;
 
    // create new EventViews inside the event
-   pxl::EventView* EventViewMuonUp   = m_event->getObjectOwner().create< pxl::EventView >();
-   pxl::EventView* EventViewMuonDown = m_event->getObjectOwner().create< pxl::EventView >();
-   m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Up",   EventViewMuonUp);
-   m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Down", EventViewMuonDown);
+   //~ pxl::EventView* EventViewMuonUp   = m_event->getObjectOwner().create< pxl::EventView >(m_eventView);
+   //~ pxl::EventView* EventViewMuonDown = m_event->getObjectOwner().create< pxl::EventView >(m_eventView);
+   //~ m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Up",   EventViewMuonUp);
+   //~ m_activeSystematic->eventViewPointers.push_back( EventViewMuonUp );
+   //~ m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Down", EventViewMuonDown);
+   //~ m_activeSystematic->eventViewPointers.push_back( EventViewMuonDown );
 
+   pxl::EventView* EventViewMuonUp   = 0;
+   pxl::EventView* EventViewMuonDown = 0;
+   std::string prefix = std::string("Muon_syst") + shiftType;
+   createEventViews(prefix, &EventViewMuonUp, &EventViewMuonDown);
    fillMETLists(EventViewMuonUp, EventViewMuonDown);
 
    // add shifted particles to these EventViews
@@ -386,20 +448,26 @@ bool inline Systematics::checkshift(std::string const shiftType) const {
 void Systematics::createEventViews(std::string prefix, pxl::EventView** evup, pxl::EventView** evdown) {
    bool success;
 
-   // create new EventViews inside the event
-   (*evup)   = m_event->getObjectOwner().create< pxl::EventView >();
-   (*evdown) = m_event->getObjectOwner().create< pxl::EventView >();
+   // create new EventViews inside the event using deep copy and drop all objects
+   // this preserves user record for the event view itself.
+   // Shifted objects will be added in further systematics computation
+   (*evup)   = m_event->getObjectOwner().create< pxl::EventView >( m_eventView );
+   (*evup)->clearObjects();
+   (*evdown) = m_event->getObjectOwner().create< pxl::EventView >( m_eventView );
+   (*evdown)->clearObjects();
    if((*evup)==0 || (*evdown)==0){
       throw std::runtime_error("Systematics.cc: creating an event view failed!");
    }
    success = m_event->getObjectOwner().setIndexEntry(prefix + "Up",   (*evup));
    (*evup)->setName(prefix + "Up");
+   m_activeSystematic->eventViewPointers.push_back( *evup );
    if(!success){
       std::string message = "Systematics.cc: setIndex for event view" + prefix + "Up" + " failed!";
       throw std::runtime_error(message);
    }
    success = m_event->getObjectOwner().setIndexEntry(prefix + "Down", (*evdown));
    (*evdown)->setName(prefix + "Down");
+   m_activeSystematic->eventViewPointers.push_back( *evdown );
    if(!success){
       std::string message = "Systematics.cc: setIndex for event view" + prefix + "Down" + " failed!";
       throw std::runtime_error(message);
@@ -434,10 +502,56 @@ void Systematics::shiftParticle(pxl::EventView* eview, pxl::Particle* const part
                           ratio*shiftedParticle->getPy(),
                           ratio*shiftedParticle->getPz(),
                           ratio*shiftedParticle->getE());
+
    return;
 }
 
+// This function creates a full event view with the full selected event (baseview))
+// content from a sys shift event view which contains only the shifted view
+void Systematics::createFullViews(  pxl::EventView* baseEvtView ){
+    bool success = 0;
+    if( baseEvtView == 0 ) baseEvtView = m_eventView;
+    // Loop all active systematics
+    for(auto& systInfo : m_activeSystematics){
+        // replace shifted views wit views where unshifted selected
+        // particles are also stored in the view
+        for( auto& systEvtView : systInfo->eventViewPointers){
+            // create a deep copy of the original view
+            pxl::EventView* fullShiftedEvtView   = m_event->getObjectOwner().create< pxl::EventView >( baseEvtView );
+            // correct the name of the new view to math the view to be replaced
+            std::string shiftedName = systEvtView->getName();
 
+            std::vector< pxl::Particle* > AllParticles;
+            fullShiftedEvtView->getObjectsOfType< pxl::Particle >( AllParticles );
+
+            std::vector< pxl::Particle* > AllParticlessShifted;
+            systEvtView->getObjectsOfType< pxl::Particle >( AllParticlessShifted );
+            // search and replace shifted particle by persistent id
+            for( auto & part : AllParticles){
+                // only particles related to a shifted particle have a persistent ID
+                // and need to be replaced.
+                for( auto& partShifted : AllParticlessShifted){
+                    if( part->hasUserRecord("persistent_id") &&
+                        partShifted->getUserRecord("persistent_id") == part->getUserRecord("persistent_id") ){
+                        // delte original part and replace it with shifted one
+                        //~ delete part;
+                        fullShiftedEvtView->removeObject(part);
+                        fullShiftedEvtView->getObjectOwner().create< pxl::Particle >(partShifted);
+                    }
+                }
+            }
+            m_event->removeObject( systEvtView );
+            success = m_event->getObjectOwner().setIndexEntry( shiftedName,   fullShiftedEvtView);
+            fullShiftedEvtView->setName(shiftedName);
+            if(!success){
+              std::string message = "Systematics.cc: setIndex for event view" + shiftedName + " failed!";
+              throw std::runtime_error(message);
+            }
+            // replace old shifted event view with new one
+            systEvtView = fullShiftedEvtView;
+        }
+    }
+}
 
 // change according MET
 void Systematics::shiftMET(double const dPx_up, double const dPx_down, double const dPy_up, double const dPy_down){

@@ -43,6 +43,7 @@ pxl::AnalysisFork AnalysisComposer::addForkObjects ( const Tools::MConfig &confi
                                         string outputDirectory,
                                         pdf::PDFInfo const &pdfInfo,
                                         EventSelector &selector,
+                                        Systematics &syst,
                                         const bool debug){
     // This is the function where you need to initalize your Analysis.
     // Create one or several implementations of pxl::AnalysisProcess and
