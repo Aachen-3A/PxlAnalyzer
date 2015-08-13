@@ -44,6 +44,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    //Muons
    m_muo_use(    cfg.GetItem< bool   >( "Muon.Use" ) ),
    m_muo_idtag( cfg.GetItem< bool   >( "Muon.IDTag" , false) ),
+   m_muo_rho_label(  cfg.GetItem< string >( "Muon.Rho.Label" ) ),
    m_muo_selector(cfg),
 
    // Electrons:
@@ -370,7 +371,7 @@ void EventSelector::varyJESMET( vector< pxl::Particle* > const &jets,
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 
-void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool &isRec) {
+void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const double muoRho, const bool &isRec) {
    if(m_muo_idtag){ // muons are tagged, not discarded
       for(vector< Particle* >::const_iterator muon = muons.begin(); muon != muons.end(); ++muon) {
 
@@ -379,7 +380,7 @@ void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const
          //else if (passKin && !passID && passIso) return 2;
          //else if (!passKin && passID && passIso) return 3;
          //return 4;
-         int retrunvalue=m_muo_selector.passMuon(*muon,isRec);
+         int retrunvalue=m_muo_selector.passMuon(*muon, muoRho, isRec);
          (*muon)->setUserRecord("IDpassed",false);
          (*muon)->setUserRecord("ISOfailed",false);
          (*muon)->setUserRecord("IDfailed",false);
@@ -420,7 +421,7 @@ void EventSelector::applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const
       thisMuon = *muon;
 
 
-      if( m_muo_selector.passMuon(thisMuon,isRec)==0 ) {
+      if( m_muo_selector.passMuon(thisMuon, muoRho, isRec)==0 ) {
 
             muonsAfterCut.push_back(thisMuon);
       } else {
@@ -1074,11 +1075,13 @@ void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView,
    const bool filterAccept = passFilterSelection( EvtView, isRec );
    EvtView->setUserRecord( "filter_accept", filterAccept );
 
+   double muoRho = 0.0;
    double eleRho = 0.0;
    double gamRho = 0.0;
    // rho is only available in Rec.
    if( isRec ) {
 
+      muoRho = EvtView->getUserRecord( m_muo_rho_label );
       eleRho = EvtView->getUserRecord( m_ele_rho_label );
 
       double rho25 = EvtView->getUserRecord( m_rho_use );
@@ -1163,7 +1166,7 @@ void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView,
    //get vertices
    vector< pxl::Vertex* > vertices;
    EvtView->getObjectsOfType< pxl::Vertex >( vertices );
-   applyCutsOnMuon( muons, isRec );
+   applyCutsOnMuon( muons, muoRho, isRec );
    applyCutsOnEle( eles, eleRho, isRec );
    applyCutsOnTau( taus, isRec );
    applyCutsOnGam( gammas, gamRho, isRec );

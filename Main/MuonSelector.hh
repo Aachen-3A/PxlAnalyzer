@@ -22,7 +22,7 @@ public:
     MuonSelector(const Tools::MConfig &config );
     // Destruktor
     ~MuonSelector();
-    int passMuon( pxl::Particle *muon, const bool& isRec ,double const rho=0. ) const;
+    int passMuon( pxl::Particle *muon, double const rho, const bool& isRec ) const;
 
 private:
     // Methods
@@ -46,9 +46,8 @@ private:
 
     // Isolation
     std::string const   m_muo_iso_type;
+    std::string const   m_muo_iso_puCorrection;
     double const        m_muo_iso_max;
-    bool const          m_muo_iso_useDeltaBetaCorr;
-    bool const          m_muo_iso_useRhoCorr;
 
     // Effective area
     EffectiveArea const m_muo_EA;

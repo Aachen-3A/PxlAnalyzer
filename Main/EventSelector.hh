@@ -67,7 +67,7 @@ private:
     bool passFilterSelection( pxl::EventView *EvtView, const bool isRec );
     // perform cuts on Particle Level
     //ATTENTION: changes particle vector!
-    void applyCutsOnMuon( std::vector< pxl::Particle* > &muons, const bool& isRec );
+    void applyCutsOnMuon( std::vector< pxl::Particle* > &muons, double const muoRho, const bool& isRec );
 
 
     void applyCutsOnEle( std::vector< pxl::Particle* > &eles,
@@ -194,6 +194,7 @@ private:
      // Muons:
     bool const          m_muo_use;
     bool const          m_muo_idtag;
+    std::string const m_muo_rho_label;
     MuonSelector const m_muo_selector;
     //double const        m_muo_pt_min;
     //double const        m_muo_eta_max;
