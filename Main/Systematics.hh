@@ -31,10 +31,11 @@ public:
    std::vector< SystematicsInfo* > m_activeSystematics;
    void init(pxl::Event* event);
    void createShiftedViews();
-
+   void createFullViews(  pxl::EventView* baseEvtView = 0 );
 
 private:
    // variables
+   bool m_full;
    double const m_ratioEleBarrel, m_ratioEleEndcap, m_scaleMuo, m_resMuo, m_ratioTau;
    std::string const m_TauType, m_JetType, m_METType;
 

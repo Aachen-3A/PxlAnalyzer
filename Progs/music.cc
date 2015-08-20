@@ -165,6 +165,7 @@ int main( int argc, char* argv[] ) {
    bool const bJetUse = config.GetItem< bool >( "Jet.BJets.use" );
    bool const usePDF = config.GetItem< bool >( "General.usePDF" );
    bool const useSYST = config.GetItem< bool >( "General.useSYST" );
+   bool const SYSTfullview = config.GetItem< bool >( "General.Syst.fullview" );
    bool const selectGen = config.GetItem< bool >( "General.selectGen" );
    bool runOnData = config.GetItem< bool >( "General.RunOnData" );
    if( runOnData ) {
@@ -405,6 +406,7 @@ int main( int argc, char* argv[] ) {
             }
             try {
             if( useSYST ) {
+
                 // create new event views with systematic shifts
                 // use the config files to activate systematics for some objects
                 syst_shifter.init(&event);
@@ -433,8 +435,9 @@ int main( int argc, char* argv[] ) {
                delete event_ptr;
                continue;
             }
-
-
+            // expand shifted views containing only shifted selected particles
+            // with unshifted selected particles
+            if( useSYST && SYSTfullview ) syst_shifter.createFullViews();
 
          }
          // run the fork ..
