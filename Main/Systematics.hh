@@ -15,11 +15,7 @@
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #pragma GCC diagnostic pop
 #include "SystematicsInfo.hh"
-/*
- * written by Michael Margos
- * (michael.margos@rwth-aachen.de)
- * adapted by others (-;
- */
+
 
 class TRandom3;
 
