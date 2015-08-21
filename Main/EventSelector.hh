@@ -36,7 +36,7 @@ public:
    // Destruktor
    ~EventSelector();
    // main method to perform the selection
-   void performSelection(pxl::EventView*  EvtView, pxl::EventView* TrigEvtView, const int& JES);
+   void performSelection(pxl::EventView*  EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView, const int& JES);
    //synchronize certain values between gen and rec event views
    void preSynchronizeGenRec( pxl::EventView *GenEvtView, pxl::EventView *RecEvtView );
    void synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventView* RecEvtView );
@@ -65,6 +65,7 @@ private:
                                     std::vector< pxl::Particle* > const &mets
                                     ) const;
     bool passFilterSelection( pxl::EventView *EvtView, const bool isRec );
+    bool passFilterSelection( pxl::EventView *EvtView );
     // perform cuts on Particle Level
     //ATTENTION: changes particle vector!
     void applyCutsOnMuon( std::vector< pxl::Particle* > &muons, double const muoRho, const bool& isRec );
@@ -177,6 +178,7 @@ private:
     std::string const                     m_filterSet_name;
     std::vector< std::string > const m_filterSet_genList;
     std::vector< std::string > const m_filterSet_recList;
+    std::vector< std::string > const m_filterHLT_recList;
 
     // Primary vertex:
     int const     m_PV_num_min;

@@ -26,6 +26,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_filterSet_name( cfg.GetItem< string >( "FilterSet.Name" ) ),
    m_filterSet_genList( Tools::splitString< string >( cfg.GetItem< string >( "FilterSet.GenList" ), true  ) ),
    m_filterSet_recList( Tools::splitString< string >( cfg.GetItem< string >( "FilterSet.RecList" ), true  ) ),
+   m_filterHLT_recList( Tools::splitString< string >( cfg.GetItem< string >( "FilterSet.RecList_HLT" ), true  ) ),
 
    // Primary vertex:
    m_PV_num_min(  cfg.GetItem< int    >( "PV.N.min" ) ),
@@ -258,9 +259,28 @@ bool EventSelector::passFilterSelection( pxl::EventView *EvtView, const bool isR
 }
 
 
+// ------------------ Check if the given filters which are saved in one EventView -------------------
+bool EventSelector::passFilterSelection( pxl::EventView *EvtView ) {
+   for( vector< string >::const_iterator filter = m_filterHLT_recList.begin(); filter != m_filterHLT_recList.end(); ++filter ) {
+      //if there is no filter by this name we can not say anything about it!
+      if(!EvtView->hasUserRecord(*filter)){
+         continue;
+      }
+      bool filterResult = EvtView->getUserRecord( *filter );
+
+      //If the filter has not fired this means that the event did not pass the
+      //selection criteria and so we don't want it.
+      //
+      if( ! filterResult ) return false;
+   }
+
+   return true;
+}
+
+
 //--------------------Helper Method to calculate the transverse invariant mass-----------------------------------------------------------------
 
-double EventSelector::TransverseInvariantMass(EventView* EvtView, const std::string& type1, const std::string& type2) {
+double EventSelector::TransverseInvariantMass(pxl::EventView* EvtView, const std::string& type1, const std::string& type2) {
    // take the particles with the highest pT of type1 and type2 and calculate transverse invariant mass
    if (EvtView->getUserRecord("Num"+type1).toInt32() < 1 || EvtView->getUserRecord("Num"+type2).toInt32() < 1) return 0.;
    vector<Particle*> type1_particles;
@@ -281,7 +301,7 @@ double EventSelector::TransverseInvariantMass(EventView* EvtView, const std::str
 
 //--------------------Helper Method to calculate the invariant mass-----------------------------------------------------------------
 
-double EventSelector::InvariantMass(EventView* EvtView, const std::string& type1, const std::string& type2) {
+double EventSelector::InvariantMass(pxl::EventView* EvtView, const std::string& type1, const std::string& type2) {
    // take the particles with the highest pT of type1 and type2 and calculate transverse invariant mass
    if (EvtView->getUserRecord("Num"+type1).toInt32() < 1 || EvtView->getUserRecord("Num"+type2).toInt32() < 1) return 0;
    vector<Particle*> type1_particles;
@@ -1061,7 +1081,7 @@ void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles )
 
 
 //--------------------This is the main method to perform the selection-----------------------------------------
-void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView, const int& JES) {   //used with either GenEvtView or RecEvtView
+void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView, const int& JES) {   //used with either GenEvtView or RecEvtView
    string process = EvtView->getUserRecord("Process");
    bool isRec = (EvtView->getUserRecord("Type").asString() == "Rec");
    if (JES == -1){
@@ -1072,7 +1092,12 @@ void EventSelector::performSelection(EventView* EvtView, EventView* TrigEvtView,
        EvtView->setUserRecord("Process", process);
     }
 
-   const bool filterAccept = passFilterSelection( EvtView, isRec );
+   bool filterAccept=false;
+   if(FilterView){
+      filterAccept = passFilterSelection( EvtView, isRec ) && passFilterSelection(FilterView);
+   }else{
+      filterAccept = passFilterSelection( EvtView, isRec );
+   }
    EvtView->setUserRecord( "filter_accept", filterAccept );
 
    double muoRho = 0.0;
