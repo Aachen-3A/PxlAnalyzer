@@ -74,7 +74,7 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
     m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
 {
-    // nothing to do here
+    m_useAlternative=false;
 }
 //--------------------Destructor-----------------------------------------------------------------
 
@@ -84,7 +84,22 @@ MuonSelector::~MuonSelector() {
 
 int MuonSelector::passMuon( pxl::Particle *muon, double const rho, const bool& isRec) const{
     if( isRec ){
-        return muonID(muon, rho);
+        try{
+            return muonID(muon, rho);
+        }catch(std::runtime_error &e) {
+            std::cout << e.what() << '\n';
+            std::cout << e.what() << '\n';
+            m_useAlternative=true;
+            m_alternativeUserVariables["DxyGTBS"]="DxyBS";
+            m_alternativeUserVariables["DzIT"]="Dz";
+            m_alternativeUserVariables["Dz"]="DzBT";
+            m_alternativeUserVariables["Dxy"]="DxyBT";
+            m_alternativeUserVariables["isGoodTMOneST"]="TMOneStationTight";
+            m_alternativeUserVariables["isGoodLastS"]="lastStationTight";
+            m_alternativeUserVariables["normalizedChi2"]="NormChi2";
+
+            return muonID(muon, rho);
+        }
     } else {
         //generator muon cuts
         double const muon_rel_iso = muon->getUserRecord( "GenIso" ).toDouble() / muon->getPt();
@@ -177,8 +192,6 @@ bool MuonSelector::passSoftID(pxl::Particle *muon) const {
     if (m_muo_softid_useBool)
         return muon->getUserRecord(m_muo_softid_boolName).toBool();
     // do the cut based ID if we are not using the bool
-    if( !( muon->getUserRecord("isGoodTMOneST").toBool() == m_muo_softid_isGoodMuon ) )
-        return false;
     if( !( muon->getUserRecord("TrackerLayersWithMeas").toInt32() > m_muo_softid_trackerLayersWithMeas_min ) )
         return false;
     if( !( muon->getUserRecord("PixelLayersWithMeas").toInt32() > m_muo_softid_pixelLayersWithMeas_min ) )
@@ -187,8 +200,18 @@ bool MuonSelector::passSoftID(pxl::Particle *muon) const {
         return false;
     if( !( fabs( muon->getUserRecord("DxyIT").toDouble() ) < m_muo_softid_dxy_max ) )
         return false;
-    if( !( fabs( muon->getUserRecord("DzIT").toDouble() ) < m_muo_softid_dz_max ) )
-        return false;
+    if(!m_useAlternative){
+        if( !( fabs( muon->getUserRecord("DzIT").toDouble() ) < m_muo_softid_dz_max ) )
+            return false;
+        if( !( muon->getUserRecord("isGoodTMOneST").toBool() == m_muo_softid_isGoodMuon ) )
+            return false;
+    }else{
+        if( !( fabs( muon->getUserRecord(m_alternativeUserVariables["DzIT"]).toDouble() ) < m_muo_softid_dz_max ) )
+            return false;
+        if( !( muon->getUserRecord(m_alternativeUserVariables["isGoodTMOneST"]).toBool() == m_muo_softid_isGoodMuon ) )
+            return false;
+    }
+
     return true;
 }
 
@@ -223,8 +246,13 @@ bool MuonSelector::passMediumID(pxl::Particle *muon) const {
     // second set:
     if( !( muon->getUserRecord("isGlobalMuon").toBool() == m_muo_mediumid_isGlobalMuon ) )
         return false;
-    if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
-        return false;
+    if(!m_useAlternative){
+        if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+            return false;
+    }else{
+        if( !( muon->getUserRecord(m_alternativeUserVariables["normalizedChi2"]).toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+            return false;
+    }
     if( !( muon->getUserRecord("chi2LocalPosition").toDouble() < m_muo_mediumid_chi2LocalPosition_max ) )
         return false;
     if( !( muon->getUserRecord("trkKink").toDouble() < m_muo_mediumid_trkKink_max ) )
@@ -243,16 +271,26 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const {
         return false;
     if( !( muon->getUserRecord("isPFMuon").toBool() == m_muo_tightid_isPFMuon ) )
         return false;
-    if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_tightid_normalizedChi2_max ) )
-        return false;
+    if(!m_useAlternative){
+        if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+            return false;
+        if( !( fabs(muon->getUserRecord("Dxy").toDouble()) < m_muo_tightid_dxy_max ) )
+            return false;
+        if( !( fabs(muon->getUserRecord("Dz").toDouble()) < m_muo_tightid_dz_max ) )
+            return false;
+    }else{
+        if( !( muon->getUserRecord(m_alternativeUserVariables["normalizedChi2"]).toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+            return false;
+        if( !( fabs(muon->getUserRecord(m_alternativeUserVariables["Dxy"]).toDouble()) < m_muo_tightid_dxy_max ) )
+            return false;
+        if( !( fabs(muon->getUserRecord(m_alternativeUserVariables["Dz"]).toDouble()) < m_muo_tightid_dz_max ) )
+            return false;
+    }
     if( !( muon->getUserRecord("VHitsMuonSys").toInt32() > m_muo_tightid_vHitsMuonSys_min ) )
         return false;
     if( !( muon->getUserRecord("NMatchedStations").toInt32() > m_muo_tightid_nMatchedStations_min ) )
         return false;
-    if( !( fabs(muon->getUserRecord("Dxy").toDouble()) < m_muo_tightid_dxy_max ) )
-        return false;
-    if( !( fabs(muon->getUserRecord("Dz").toDouble()) < m_muo_tightid_dz_max ) )
-        return false;
+
     if( !( muon->getUserRecord("VHitsPixel").toInt32() > m_muo_tightid_vHitsPixel_min ) )
         return false;
     if( !( muon->getUserRecord("TrackerLayersWithMeas").toInt32() > m_muo_tightid_trackerLayersWithMeas_min ) )
@@ -274,7 +312,6 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
     if (!(m_muo_highptid_ptRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
           muon->getUserRecord("ptCocktail").toDouble()))
         return false;
-
     // careful, these variables use user records that are not based on the cocktail track
     if (!(m_muo_highptid_nMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32()))
         return false;

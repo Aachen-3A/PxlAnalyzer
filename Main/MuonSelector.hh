@@ -108,7 +108,7 @@ private:
 
 
 
-    //~ bool mutable        m_useAlternative;
+    bool mutable        m_useAlternative;
     std::map<std::string,std::string> mutable m_alternativeUserVariables;
 };
 #endif
