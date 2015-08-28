@@ -11,10 +11,10 @@ Tracks.type = "generalTracks"
 Tracks.num.max = 5000
 
 FilterSet.Name = AllFilters
-FilterSet.GenList =
-FilterSet.RecList =
+FilterSet.GenList = ""
+FilterSet.RecList = ""
 #scrapingFilter,cschalofilter,hcallasereventfilter,ecaldeadcellfilter,trackingfailurefilter,eebadscfilter,muonpfcandidatefilter,ecallasercorrfilter,coherentnoiserelativefilter,coherentnoiseabsolutefilter
-FilterSet.RecList_HLT=Flag_HBHENoiseFilter,Flag_CSCTightHaloFilter,Flag_goodVertices,Flag_eeBadScFilter
+FilterSet.RecList_HLT=Flag_CSCTightHaloFilter,Flag_eeBadScFilter
 
 PV.N.min = 1
 PV.Z.max = 24
