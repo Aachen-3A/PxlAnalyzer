@@ -98,6 +98,7 @@ EleSelector::~EleSelector(){
 
 int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &isRec ) const {
    bool passKin=true;
+   bool passlooseID=true;
    bool passID=true;
    bool passIso=true;
 
@@ -154,7 +155,10 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
       if( m_ele_id_type == "CB" or  (m_ele_id_type == "switch" and  elePt<=m_ele_id_ptswitch)) {
          //check ID
          try{
-            if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+            if( not passlooseCBID( ele, elePt, abseta, barrel, endcap ) ){
+               passlooseID=false;
+               passID=false;
+            }else if( not passtightCBID( ele, elePt, abseta, barrel, endcap ) ){
                passID=false;
             }
          }catch(std::runtime_error &e) {
@@ -166,7 +170,10 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
             }else{
                m_alternativeUserVariables["passConversionVeto"]="passConversionVeto";
             }
-            if( not passCBID( ele, elePt, abseta, barrel, endcap ) ){
+            if( not passlooseCBID( ele, elePt, abseta, barrel, endcap ) ){
+               passlooseID=false;
+               passID=false;
+            }else if( not passtightCBID( ele, elePt, abseta, barrel, endcap ) ){
                passID=false;
             }
          }
@@ -178,8 +185,11 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
       } else if( m_ele_id_type == "HEEP" or  (m_ele_id_type == "switch" and  elePt>m_ele_id_ptswitch)) {
 
          try{
-            if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
-
+            //if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+            if( not passlooseHEEPID( ele, eleEt, barrel, endcap ) ){
+               passlooseID=false;
+               passID=false;
+            }else if (not passtightHEEPID( ele, eleEt, barrel, endcap ) ){
                passID=false;
             }
          }catch(std::runtime_error &e) {
@@ -194,11 +204,13 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
             }else{
                m_alternativeUserVariables["SCE"]="SCE";
             }
-            if( not passHEEPID( ele, eleEt, barrel, endcap ) ){
+            if( not passlooseHEEPID( ele, eleEt, barrel, endcap ) ){
+               passlooseID=false;
+               passID=false;
+            }else if (not passtightHEEPID( ele, eleEt, barrel, endcap ) ){
                passID=false;
             }
          }
-
 
          if(not passHEEP_Isolation(ele, eleEt, barrel, endcap, eleRho )){
             passIso=false;
@@ -248,12 +260,14 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
 
    //no cut failed
    if(passKin && passID && passIso) return 0;
+   else if (passKin && passlooseID && !passIso) return 5;
+   else if (passKin && passlooseID && passIso) return 6;
    //give a hint what failed
    else if (passKin && passID && !passIso) return 1;
    else if (passKin && !passID && passIso) return 2;
    else if (passKin && !passID && !passIso) return 3;
    else if (!passKin && passID && passIso) return 4;
-   return 5;
+   return 7;
 }
 
 
@@ -263,7 +277,74 @@ int EleSelector::passEle( pxl::Particle *ele, double const eleRho, bool const &i
 // Return true, if the electron passes the CutBasedID.
 // See also:
 // https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30
-bool EleSelector::passCBID( pxl::Particle const *ele,
+bool EleSelector::passlooseCBID( pxl::Particle const *ele,
+                              double const elePt,
+                              double const eleAbsEta,
+                              bool const eleBarrel,
+                              bool const eleEndcap
+                              ) const {
+   // First check if we want to use only id flags from miniaod or
+   // reperform cuts
+   if( m_ele_cbid_usebool ){
+      if(ele->hasUserRecord( m_ele_cbid_boolname ) ){
+         return ele->getUserRecord( m_ele_cbid_boolname );
+      }else{
+         std::cerr << "Error: You are tring to select Ele with CBID"<< std::endl;
+         std::cerr << "But no user record is found for boolname: "<< m_ele_cbid_boolname <<std::endl;
+         exit(1);
+      }
+    }
+
+   double sigmaIetaIeta=0;
+   if(!m_useAlternative){
+      sigmaIetaIeta = ele->getUserRecord( "full5x5_sigmaIetaIeta" );
+   }else{
+      sigmaIetaIeta = ele->getUserRecord( m_alternativeUserVariables["full5x5_sigmaIetaIeta"] );
+   }
+   if( eleBarrel and sigmaIetaIeta > m_ele_cbid_barrel_sigmaIetaIeta_max )
+      return false;
+   if( eleEndcap and sigmaIetaIeta > m_ele_cbid_endcap_sigmaIetaIeta_max )
+      return false;
+
+
+   double const Dxy = ele->getUserRecord( "Dxy" );
+   if( eleBarrel and Dxy > m_ele_cbid_barrel_Dxy_max )
+      return false;
+   if( eleEndcap and Dxy > m_ele_cbid_endcap_Dxy_max )
+      return false;
+
+   double const Dz = ele->getUserRecord( "Dz" );
+   if( eleBarrel and Dz > m_ele_cbid_barrel_Dz_max )
+      return false;
+   if( eleEndcap and Dz > m_ele_cbid_endcap_Dz_max )
+      return false;
+
+
+   double const NinnerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
+   if( eleBarrel and NinnerLayerLostHits > m_ele_cbid_barrel_NInnerLayerLostHits_max )
+      return false;
+   if( eleEndcap and NinnerLayerLostHits > m_ele_cbid_endcap_NInnerLayerLostHits_max )
+      return false;
+
+   double hasConversion=0;
+   if(!m_useAlternative){
+      hasConversion = ele->getUserRecord( "passConversionVeto" );
+   }else{
+      hasConversion = ele->getUserRecord(  m_alternativeUserVariables["passConversionVeto"] );
+   }
+   if( eleBarrel and m_ele_cbid_barrel_Conversion_reject and hasConversion )
+      return true;
+   if( eleEndcap and m_ele_cbid_endcap_Conversion_reject and hasConversion )
+      return true;
+
+   // All cuts passed!
+   return true;
+}
+
+// Return true, if the electron passes the CutBasedID.
+// See also:
+// https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification?rev=30
+bool EleSelector::passtightCBID( pxl::Particle const *ele,
                               double const elePt,
                               double const eleAbsEta,
                               bool const eleBarrel,
@@ -365,8 +446,9 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
 
    // All cuts passed!
    return true;
-}
 
+
+}
 
 
 
@@ -374,7 +456,108 @@ bool EleSelector::passCBID( pxl::Particle const *ele,
 // This function returns true, if the given electron passes the HEEP Selection.
 // See also:
 // https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
-bool EleSelector::passHEEPID( pxl::Particle const *ele,
+bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
+                                double const eleEt,
+                                bool const eleBarrel,
+                                bool const eleEndcap
+                                ) const {
+
+   // First check if we want to use only id flags from miniaod or
+   // reperform cuts
+   if( m_ele_heepid_usebool ){
+      if(ele->hasUserRecord( m_ele_heepid_boolname ) ){
+         return ele->getUserRecord( m_ele_heepid_boolname );
+      }else{
+         std::cerr << "Error: You are tring to select Ele with HEEPID"<< std::endl;
+         std::cerr << "But no user record is found for boolname: "<< m_ele_heepid_boolname <<std::endl;
+         exit(1);
+      }
+    }
+
+   // Require electron to be ECAL driven?
+   if( m_ele_heepid_requireEcalDriven and
+       not ele->getUserRecord( "ecalDriven" )
+       ) return false;
+
+   if( ele->getUserRecord( "EoP" ).toDouble() > m_ele_heepid_EoP_max )
+      return false;
+
+   // These variables are checked in the barrel as well as in the endcaps.
+   double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
+   //double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
+   double const ele_HoEM        = ele->getUserRecord( "HoEm" );
+
+   double ele_E=0;
+   if(!m_useAlternative){
+         ele_E = ele->getUserRecord( "SCE" );
+   }else{
+      ele_E= ele->getUserRecord( m_alternativeUserVariables["SCE"] );
+   }
+
+   // TODO: Remove this construct when FA11 or older samples are not used anymore.
+   // (Typo in skimmer already fixed. UserRecord: NinnerLayerLostHits.)
+   int ele_innerLayerLostHits;
+   try{
+      ele_innerLayerLostHits = ele->getUserRecord( "NMissingHits: " );
+   } catch( std::runtime_error ) {
+      ele_innerLayerLostHits = ele->getUserRecord( "NinnerLayerLostHits" );
+   } catch( ... ) {
+      throw;
+   }
+
+   if( m_ele_heepid_rejectOutOfTime and
+       ele->getUserRecord_def( "recoFlag",0 ).toUInt32() == 2
+       ) return false;
+
+   //ele in barrel
+   if( eleBarrel ) {
+      //delta eta between SC and track
+      if( ele_absDeltaEta > m_ele_heepid_barrel_deltaEta_max )
+         return false;
+
+      //avoid division by zero in hadronic over EM
+      if( ele_E == 0 )
+         return false;
+
+      //hadronic over EM
+      if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
+         return false;
+
+      if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
+         return false;
+
+      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_barrel_dxy_max )
+         return false;
+   }
+
+   //ele in endcap
+   if( eleEndcap ) {
+      //delta eta between SC and track
+      if( ele_absDeltaEta > m_ele_heepid_endcap_deltaEta_max )
+         return false;
+
+      //avoid division by zero in hadronic over EM
+      if( ele_E == 0 )
+         return false;
+
+      //hadronic over EM
+      if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
+         return false;
+
+      if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
+         return false;
+
+      if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
+         return false;
+   }
+   return true;
+}
+
+
+// This function returns true, if the given electron passes the HEEP Selection.
+// See also:
+// https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID?rev=65
+bool EleSelector::passtightHEEPID( pxl::Particle const *ele,
                                 double const eleEt,
                                 bool const eleBarrel,
                                 bool const eleEndcap

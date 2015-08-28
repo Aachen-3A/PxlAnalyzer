@@ -266,7 +266,7 @@ bool EventSelector::passFilterSelection( pxl::EventView *EvtView ) {
       if(!EvtView->hasUserRecord(*filter)){
          continue;
       }
-      bool filterResult = EvtView->getUserRecord( *filter );
+      bool filterResult = EvtView->getUserRecord( *filter ).toBool();
 
       //If the filter has not fired this means that the event did not pass the
       //selection criteria and so we don't want it.
@@ -464,15 +464,21 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
 
 
          //if(passKin && passID && passIso) return 0;
+         ////give a hint what failed
          //else if (passKin && passID && !passIso) return 1;
          //else if (passKin && !passID && passIso) return 2;
-         //else if (!passKin && passID && passIso) return 3;
-         //return 4;
+         //else if (passKin && !passID && !passIso) return 3;
+         //else if (!passKin && passID && passIso) return 4;
+         //else if (!passKin && passlooseID && !passID && !passIso) return 5;
+         //else if (!passKin && passlooseID && !passID && passIso) return 6;
+         //return 7;
          int retrunvalue=m_ele_selector.passEle( *ele, eleRho, isRec );
          (*ele)->setUserRecord("IDpassed",false);
          (*ele)->setUserRecord("ISOfailed",false);
          (*ele)->setUserRecord("IDfailed",false);
          (*ele)->setUserRecord("KINfailed",false);
+         (*ele)->setUserRecord("loosIDnoISO",false);
+         (*ele)->setUserRecord("loosIDandISO",false);
          (*ele)->setUserRecord("multipleFails",false);
          (*ele)->setUserRecord("IDFailValue",retrunvalue);
          switch(retrunvalue){
@@ -489,7 +495,19 @@ void EventSelector::applyCutsOnEle( std::vector< pxl::Particle* > &eles,
                break;
             }
             case 3: {
+               (*ele)->setUserRecord("multipleFails",true);
+               break;
+            }
+            case 4: {
                (*ele)->setUserRecord("KINfailed",true);
+               break;
+            }
+            case 5: {
+               (*ele)->setUserRecord("loosIDnoISO",true);
+               break;
+            }
+            case 6: {
+               (*ele)->setUserRecord("loosIDandISO",true);
                break;
             }
             default: {
