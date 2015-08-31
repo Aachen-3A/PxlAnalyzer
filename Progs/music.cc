@@ -372,7 +372,7 @@ int main( int argc, char* argv[] ) {
             // Write B Tag Info
             if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
             //for data we just need to run the selection
-            Selector.performSelection(RecEvtView, TrigEvtView, FilterView, 0);
+            Selector.performSelection(RecEvtView, TrigEvtView, FilterView);
          } else {
             // Don't do this on data, haha! And also not for special Ana hoho
             if (usePDF){
@@ -401,7 +401,6 @@ int main( int argc, char* argv[] ) {
 
             if( jetResCorrUse ) {
                // Change event properties according to official recommendations.
-               // (Also used for JES UP/DOWN!)
                // Don't do this on data!
                Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
             }
@@ -415,7 +414,7 @@ int main( int argc, char* argv[] ) {
                 //perform selection on all selected event views
                 for(auto& systInfo : syst_shifter.m_activeSystematics){
                     for(auto& evtView : systInfo->eventViewPointers ){
-                        Selector.performSelection(evtView, TrigEvtView, FilterView, 0);
+                        Selector.performSelection(evtView, TrigEvtView, FilterView );
                     }
                 }
             }
@@ -427,8 +426,8 @@ int main( int argc, char* argv[] ) {
             // you should investigate!
 
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, FilterView, 0);
-               Selector.performSelection(RecEvtView, TrigEvtView, FilterView, 0);
+               if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, FilterView );
+               Selector.performSelection(RecEvtView, TrigEvtView, FilterView );
             } catch( Tools::unsorted_error &exc ) {
                std::cerr << "[WARNING] (main): ";
                std::cerr << "Found unsorted particle in event no. " << e << ". ";

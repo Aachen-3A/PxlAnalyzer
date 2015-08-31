@@ -165,11 +165,6 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_hcal_noise_ID_use(  cfg.GetItem< bool   >( "HCAL.Noise.ID.use" ) ),
    m_hcal_noise_ID_name( cfg.GetItem< string >( "HCAL.Noise.ID.name" ) ),
 
-   // To access the JEC uncertainties from file.
-   m_jecType( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESType" ) ) ),
-   m_jecPara( Tools::ExpandPath( cfg.GetItem< string >( "Jet.Error.JESFile" ) ), m_jecType ),
-   m_jecUnc( m_jecPara ),
-
    m_gen_rec_map( cfg ),
 
    // Get particle names that shall be used from config and cache them.
@@ -323,71 +318,6 @@ double EventSelector::InvariantMass(pxl::EventView* EvtView, const std::string& 
    if (InvMass2 < 0) cout << "Mass Square negative: " << InvMass2 << endl;
    return std::sqrt(InvMass2);
 }
-
-//--------------------Helper Method to perform JES modifications -----------------------------------------------------------------
-//pxl particle is altered implicitly !!!
-void EventSelector::varyJES( vector< pxl::Particle* > const &jets,
-                             int const JES,
-                             bool const isRec
-                             ) {
-   if( JES != 0 && isRec == true ) {
-      //loop over all selected jets
-      for( vector< Particle* >::const_iterator rec_jet = jets.begin(); rec_jet != jets.end(); ++rec_jet ) {
-         Particle *thisJet = *rec_jet;
-
-         //The uncertainty is a function of eta and the (corrected) p_t of a jet.
-         //At the moment (CMSSW 3_8_7) L2Relative, L3Absolute (and L2L3Residual) corrections are applied to MC (data) jets.
-         m_jecUnc.setJetEta( thisJet->getEta() );
-         m_jecUnc.setJetPt( thisJet->getPt() );
-         double const JESFactor = 1. + ( JES * m_jecUnc.getUncertainty( true ) );
-
-         //WARNING: Change the actual PXL particle:
-         thisJet->setP4( JESFactor * thisJet->getPx(), JESFactor * thisJet->getPy(), JESFactor * thisJet->getPz(), JESFactor * thisJet->getE() );
-      }
-   }
-}
-
-//--------------------Helper Method to perform JES/MET modifications -----------------------------------------------------------------
-//When the jet energy is varied by the varyJES(...) method the missing energy must be adapted.
-//pxl particle is altered implicitly !!!
-void EventSelector::varyJESMET( vector< pxl::Particle* > const &jets,
-                                vector< pxl::Particle* > const &met,
-                                int const JES,
-                                bool const isRec
-                                ) {
-   if( JES != 0 && isRec == true ) {
-      //Loop over remaining jets and get the absolute amount of (transversal) energy corrected for each jet.
-      double dPx = 0, dPy = 0;
-      for( vector< Particle* >::const_iterator rec_jet = jets.begin(); rec_jet != jets.end(); ++rec_jet ) {
-         Particle *thisJet = *rec_jet;
-         m_jecUnc.setJetEta( thisJet->getEta() );
-         m_jecUnc.setJetPt( thisJet->getPt() );
-         double const unc       = JES * m_jecUnc.getUncertainty( true );
-         double const JESFactor = 1. + unc;
-
-         //unapply the correction
-         double uncorPx = thisJet->getPx() / JESFactor;
-         double uncorPy = thisJet->getPy() / JESFactor;
-
-         //and multiply with the uncertainty to get the enery amount
-         //add it up
-         dPx += uncorPx * unc;
-         dPy += uncorPy * unc;
-      }
-
-      //loop over met and correct for residual JES-variation
-      for( vector< Particle* >::const_iterator rec_met = met.begin(); rec_met != met.end(); ++rec_met ) {
-         Particle *thisMET = *rec_met;
-         double const Px = thisMET->getPx() - dPx;
-         double const Py = thisMET->getPy() - dPy;
-
-         //WARNING: Change the actual PXL particle:
-         thisMET->setP4( Px, Py, 0., sqrt(Px*Px + Py*Py) );
-         //check if MET fullfilles cuts will be done below!
-      }
-   }
-}
-
 
 //--------------------Apply cuts on Particles-----------------------------------------------------------------
 
@@ -1081,16 +1011,9 @@ void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles )
 
 
 //--------------------This is the main method to perform the selection-----------------------------------------
-void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView, const int& JES) {   //used with either GenEvtView or RecEvtView
+void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView ) {   //used with either GenEvtView or RecEvtView
    string process = EvtView->getUserRecord("Process");
    bool isRec = (EvtView->getUserRecord("Type").asString() == "Rec");
-   if (JES == -1){
-       process += "_JES_DOWN";
-       EvtView->setUserRecord("Process", process);
-    } else if(JES == 1){
-       process += "_JES_UP";
-       EvtView->setUserRecord("Process", process);
-    }
 
    bool filterAccept=false;
    if(FilterView){
@@ -1147,8 +1070,7 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
    EvtView->getObjectsOfType<pxl::Particle>(allparticles);
    pxl::sortParticles( allparticles );
 
-   // No 'bJets' are filled because 'jets' is only used in 'varyJESMET', where
-   // all jets are treated exactly the same way.
+   // No 'bJets' are filled because 'jets' is only used in
    vector< pxl::Particle* > muons,
                             eles,
                             taus,
@@ -1195,8 +1117,6 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
    applyCutsOnEle( eles, eleRho, isRec );
    applyCutsOnTau( taus, isRec );
    applyCutsOnGam( gammas, gamRho, isRec );
-   //first vary JES and then check corrected jets to pass cuts
-   //varyJES(jets, JES, isRec);
    applyCutsOnJet( jets, isRec );     //distribution into jets and b-jets
    //consistently check GenView for duplicates, important especially for GenJets and efficiency-normalization
    if( not m_ignoreOverlaps ) m_eventCleaning.cleanEvent( muons,
@@ -1206,8 +1126,7 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
                                                           jets,
                                                           isRec
                                                           );
-   //now vary also MET using ONLY selected and JES-modified jets. Maybe use dedicated jet cuts here?
-   //varyJESMET(jets, mets, JES, isRec);
+
    //after MET varied check also cuts
    applyCutsOnMET( mets, isRec );
 
