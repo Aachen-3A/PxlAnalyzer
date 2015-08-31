@@ -32,6 +32,7 @@ public:
 private:
    // variables
    bool m_full;
+   bool m_emptyShift;
    double const m_ratioEleBarrel, m_ratioEleEndcap, m_scaleMuo, m_resMuo, m_ratioTau;
    std::string const m_TauType, m_JetType, m_METType;
 
@@ -73,7 +74,6 @@ private:
    void shiftTauAndMET(std::string const shiftType);
    void shiftJetAndMET(std::string const shiftType);
    void shiftMETUnclustered(std::string const shiftType);
-   bool inline checkshift(std::string const shiftType) const;
    void createEventViews(std::string prefix, pxl::EventView** evup, pxl::EventView** evdown);
    void fillMETLists(pxl::EventView* evup, pxl::EventView* evdown);
    void shiftParticle(pxl::EventView* eview, pxl::Particle* const part , double const& ratio, double& dPx, double& dPy/*, bool const up*/);
