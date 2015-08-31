@@ -2,7 +2,7 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
 
 ## General Settings
-Muon.Use = 1
+Muon.use = 1
 Muon.UseCocktail = 0
 Muon.IDTag = 1
 Muon.Type.Gen = "Muon"
