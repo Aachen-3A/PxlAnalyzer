@@ -512,19 +512,19 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
    //ele in barrel
    if( eleBarrel ) {
       //delta eta between SC and track
-      if( ele_absDeltaEta > m_ele_heepid_barrel_deltaEta_max )
-         return false;
+      //if( ele_absDeltaEta > m_ele_heepid_barrel_deltaEta_max )
+         //return false;
 
       //avoid division by zero in hadronic over EM
       if( ele_E == 0 )
          return false;
 
       //hadronic over EM
-      if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
-         return false;
+      //if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
+         //return false;
 
-      if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
-         return false;
+      //if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
+         //return false;
 
       if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_barrel_dxy_max )
          return false;
@@ -533,19 +533,19 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
    //ele in endcap
    if( eleEndcap ) {
       //delta eta between SC and track
-      if( ele_absDeltaEta > m_ele_heepid_endcap_deltaEta_max )
-         return false;
+      //if( ele_absDeltaEta > m_ele_heepid_endcap_deltaEta_max )
+         //return false;
 
       //avoid division by zero in hadronic over EM
       if( ele_E == 0 )
          return false;
 
       //hadronic over EM
-      if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
-         return false;
+      //if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
+         //return false;
 
-      if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
-         return false;
+      //if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
+         //return false;
 
       if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
          return false;
