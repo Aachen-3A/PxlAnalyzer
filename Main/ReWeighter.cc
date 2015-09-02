@@ -18,8 +18,8 @@ ReWeighter::ReWeighter( const Tools::MConfig &cutconfig  ) :
 }
 
 
-void ReWeighter::ReWeightEvent( const pxl::Event &event ) {
-   pxl::EventView *GenEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Gen" );
+void ReWeighter::ReWeightEvent( pxl::Event* event) {
+   pxl::EventView *GenEvtView = event->getObjectOwner().findObject< pxl::EventView >( "Gen" );
 
    // Disable generator weights.
    if( not m_useGenWeights ) GenEvtView->setUserRecord( "Weight", 1.0 );
