@@ -14,7 +14,7 @@ public:
    ReWeighter( const Tools::MConfig &cutconfig  );
    ~ReWeighter() {}
 
-   void ReWeightEvent( const pxl::Event &event );
+   void ReWeightEvent( pxl::Event* event );
 
 private:
    edm::LumiReWeighting m_LumiWeights;

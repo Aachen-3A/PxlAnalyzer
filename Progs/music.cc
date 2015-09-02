@@ -324,12 +324,12 @@ int main( int argc, char* argv[] ) {
         }
          if(!event_ptr) continue;
 
-         pxl::Event event = *event_ptr;
+         //pxl::Event event = *event_ptr;
 
          if( numberOfEvents > -1 and e >= numberOfEvents ) break;
          if( numberOfSkipEvents > e ) continue;
          // Break the event loop if the current event is not sensible (formatted correctly).
-         if( event.getUserRecords().size() == 0 ) {
+         if( event_ptr->getUserRecords().size() == 0 ) {
             std::cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << std::endl;
             std::cout << "WARNING: Continue with next event." << std::endl;
             delete event_ptr;
@@ -337,9 +337,9 @@ int main( int argc, char* argv[] ) {
          }
 
          //check if we shall analyze this event
-         lumi::ID run      = event.getUserRecord( "Run" );
-         lumi::ID LS       = event.getUserRecord( "LumiSection" );
-         lumi::ID eventNum = event.getUserRecord( "EventNum" );
+         lumi::ID run      = event_ptr->getUserRecord( "Run" );
+         lumi::ID LS       = event_ptr->getUserRecord( "LumiSection" );
+         lumi::ID eventNum = event_ptr->getUserRecord( "EventNum" );
          if( ! runcfg.check( run, LS ) ) {
             ++skipped;
             delete event_ptr;
@@ -358,9 +358,9 @@ int main( int argc, char* argv[] ) {
             continue;
          }
 
-         pxl::EventView *RecEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Rec" );
-         pxl::EventView *TrigEvtView = event.getObjectOwner().findObject< pxl::EventView >( "Trig" );
-         pxl::EventView *FilterView = event.getObjectOwner().findObject< pxl::EventView >( "Filter" );
+         pxl::EventView *RecEvtView = event_ptr->getObjectOwner().findObject< pxl::EventView >( "Rec" );
+         pxl::EventView *TrigEvtView = event_ptr->getObjectOwner().findObject< pxl::EventView >( "Trig" );
+         pxl::EventView *FilterView = event_ptr->getObjectOwner().findObject< pxl::EventView >( "Filter" );
 
          if( muoCocktailUse ) {
             // Switch to cocktail muons (use the four momentum from
@@ -372,14 +372,14 @@ int main( int argc, char* argv[] ) {
             // Write B Tag Info
             if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
             //for data we just need to run the selection
-            Selector.performSelection(RecEvtView, TrigEvtView, FilterView, 0);
+            Selector.performSelection(RecEvtView, TrigEvtView, FilterView);
          } else {
             // Don't do this on data, haha! And also not for special Ana hoho
             if (usePDF){
-                pdfTool->setPDFWeights( event );
+                pdfTool->setPDFWeights( *event_ptr );
             }
-            reweighter.ReWeightEvent( event );
-            pxl::EventView* GenEvtView = event.getObjectOwner().findObject<pxl::EventView>("Gen");
+            reweighter.ReWeightEvent( event_ptr );
+            pxl::EventView* GenEvtView = event_ptr->getObjectOwner().findObject<pxl::EventView>("Gen");
 
             // Write B Tag Info
             if( bJetUse ){
@@ -401,7 +401,6 @@ int main( int argc, char* argv[] ) {
 
             if( jetResCorrUse ) {
                // Change event properties according to official recommendations.
-               // (Also used for JES UP/DOWN!)
                // Don't do this on data!
                Adaptor.applyJETMETSmearing( GenEvtView, RecEvtView, linkName );
             }
@@ -410,12 +409,12 @@ int main( int argc, char* argv[] ) {
 
                 // create new event views with systematic shifts
                 // use the config files to activate systematics for some objects
-                syst_shifter.init(&event);
+                syst_shifter.init(event_ptr);
                 syst_shifter.createShiftedViews();
                 //perform selection on all selected event views
                 for(auto& systInfo : syst_shifter.m_activeSystematics){
                     for(auto& evtView : systInfo->eventViewPointers ){
-                        Selector.performSelection(evtView, TrigEvtView, FilterView, 0);
+                        Selector.performSelection(evtView, TrigEvtView, FilterView );
                     }
                 }
             }
@@ -427,8 +426,8 @@ int main( int argc, char* argv[] ) {
             // you should investigate!
 
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
-               if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, FilterView, 0);
-               Selector.performSelection(RecEvtView, TrigEvtView, FilterView, 0);
+               if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, FilterView );
+               Selector.performSelection(RecEvtView, TrigEvtView, FilterView );
             } catch( Tools::unsorted_error &exc ) {
                std::cerr << "[WARNING] (main): ";
                std::cerr << "Found unsorted particle in event no. " << e << ". ";
@@ -442,8 +441,8 @@ int main( int argc, char* argv[] ) {
 
          }
          // run the fork ..
-         fork.analyseEvent( &event );
-         fork.finishEvent( &event );
+         fork.analyseEvent( event_ptr );
+         fork.finishEvent( event_ptr );
          delete event_ptr;
          e++;
          if( e < 10 || ( e < 100 && e % 10 == 0 ) ||

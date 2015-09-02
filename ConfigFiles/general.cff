@@ -10,9 +10,7 @@ General.RunOnData = 0
 General.UseGeneratorWeights = 1
 General.DataPeriod = "13TeV"
 General.selectGen=0
-General.useSYST = 1
-# systematics views contain all particles beside shifted ones.
-General.Syst.fullview = 0
+
 # Comma separated list of files with events to be skipped:
 SkipEvents.FileList =
 
@@ -25,6 +23,10 @@ Matching.DeltaCharge = 10.0             # off
 Generator.use = 0
 General.UseGeneratorWeights = 1
 import "$PXLANA/ConfigFiles/generator.cff"
+
+# Use Systematics
+General.useSYST = 1
+import "$PXLANA/ConfigFiles/general_systematics.cff"
 
 General.usePDF = 0
 import "$PXLANA/ConfigFiles/pdf.cff"

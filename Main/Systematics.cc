@@ -10,6 +10,7 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
    m_activeSystematics( {} ),
    // read uncertainties from config
    m_full(cfg.GetItem< bool                  >( "General.Syst.fullview" ) ),
+   m_emptyShift(cfg.GetItem< bool            >( "General.Syst.emptyShift" ) ),
    m_ratioEleBarrel(cfg.GetItem< double      >( "Ele.Syst.Scale.Barrel" ) ),
    m_ratioEleEndcap(cfg.GetItem< double      >( "Ele.Syst.Scale.Endcap" ) ),
    m_scaleMuo(      cfg.GetItem< double      >( "Muon.Syst.Scale" ) ),
@@ -150,16 +151,14 @@ void Systematics::init(pxl::Event* event){
       part->setUserRecord("persistent_id", persistent_id );
   }
 
-
-
-
    return;
 }
 
 
 
 void Systematics::shiftMuoAndMET(std::string const shiftType){
-   if(!checkshift(shiftType)) return;
+   // Do nothing if no muon in event
+   if ( not m_emptyShift and MuonList.size() == 0 ) return;
 
    bool do_resolution = false;
 
@@ -174,14 +173,6 @@ void Systematics::shiftMuoAndMET(std::string const shiftType){
    double dPy_up=0;
    double dPx_down=0;
    double dPy_down=0;
-
-   // create new EventViews inside the event
-   //~ pxl::EventView* EventViewMuonUp   = m_event->getObjectOwner().create< pxl::EventView >(m_eventView);
-   //~ pxl::EventView* EventViewMuonDown = m_event->getObjectOwner().create< pxl::EventView >(m_eventView);
-   //~ m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Up",   EventViewMuonUp);
-   //~ m_activeSystematic->eventViewPointers.push_back( EventViewMuonUp );
-   //~ m_event->setIndex(std::string("Muon") + "_syst" + shiftType + "Down", EventViewMuonDown);
-   //~ m_activeSystematic->eventViewPointers.push_back( EventViewMuonDown );
 
    pxl::EventView* EventViewMuonUp   = 0;
    pxl::EventView* EventViewMuonDown = 0;
@@ -217,16 +208,8 @@ void Systematics::shiftMuoAndMET(std::string const shiftType){
 
 
 void Systematics::shiftEleAndMET(std::string const shiftType){
-   checkshift(shiftType);
-
-   // shiftType == "Resolution"
-   if(shiftType == "Resolution"){
-      // TODO: not implemented yet!
-      std::cout << "shift type 'Resolution' not implemented yet" << std::endl;
-      return;
-   }
-
-   //else shiftType == "Scale"
+    // Do nothing if no electron in event
+   if ( not m_emptyShift and EleList.size() == 0 ) return;
 
    double ratio_barrel = m_ratioEleBarrel;
    double ratio_endcap = m_ratioEleEndcap;
@@ -266,16 +249,8 @@ void Systematics::shiftEleAndMET(std::string const shiftType){
 
 
 void Systematics::shiftTauAndMET(std::string const shiftType){
-   checkshift(shiftType);
-
-   // shiftType == "Resolution"
-   if(shiftType == "Resolution"){
-      // TODO: not implemented yet!
-      std::cout << "shift type 'Resolution' not implemented yet" << std::endl;
-      return;
-   }
-
-   //else shiftType == "Scale"
+   // Do nothing if no electron in event
+   if ( not m_emptyShift and TauList.size() == 0 ) return;
 
    double ratio = m_ratioTau;
    double dPx_up=0;
@@ -305,6 +280,8 @@ void Systematics::shiftTauAndMET(std::string const shiftType){
 
 
 void Systematics::shiftJetAndMET(std::string const shiftType){
+   // Do nothing if no jet in event
+   if ( not m_emptyShift and JetList.size() == 0 ) return;
 
    bool do_resolution = false;
 
@@ -389,14 +366,6 @@ void Systematics::shiftJetAndMET(std::string const shiftType){
 
 
 void Systematics::shiftMETUnclustered(std::string const shiftType){
-   checkshift(shiftType);
-
-   // shiftType == "Resolution"
-   if(shiftType == "Resolution"){
-      // TODO: not implemented yet!
-      std::cout << "shift type 'Resolution' not implemented yet" << std::endl;
-      return;
-   }
 
    //from MUSiCSkimmer_miniAOD.cc:
    //Get systmetShifts:
@@ -428,22 +397,9 @@ void Systematics::shiftMETUnclustered(std::string const shiftType){
    return;
 }
 
-
-
 //------------
 //private-----
 //------------
-
-bool inline Systematics::checkshift(std::string const shiftType) const {
-   // check if given shiftType is supported
-   if(not (shiftType == "Resolution") && not (shiftType == "Scale")){
-      std::cout << "Systematics.cc: only accepted shift types at the moment are 'Resolution' and 'Scale'" << std::endl;
-      return false;
-   }
-   return true;
-}
-
-
 
 void Systematics::createEventViews(std::string prefix, pxl::EventView** evup, pxl::EventView** evdown) {
    bool success;

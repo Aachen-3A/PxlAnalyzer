@@ -36,7 +36,7 @@ public:
    // Destruktor
    ~EventSelector();
    // main method to perform the selection
-   void performSelection(pxl::EventView*  EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView, const int& JES);
+   void performSelection(pxl::EventView*  EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView );
    //synchronize certain values between gen and rec event views
    void preSynchronizeGenRec( pxl::EventView *GenEvtView, pxl::EventView *RecEvtView );
    void synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventView* RecEvtView );
@@ -144,16 +144,6 @@ private:
 
     // debug method
     void dumpEventView(const pxl::EventView* EvtView);
-    // vary Jet Energy Scale
-    void varyJES( std::vector< pxl::Particle* > const &jets,
-                      int const JES,
-                      bool const isRec
-                      );
-    void varyJESMET( std::vector< pxl::Particle* > const &jets,
-                          std::vector< pxl::Particle* > const &mets,
-                          int const JES,
-                          bool const isRec
-                          );
 
     /////////////////////////////////////////////////////////////////////////////
     ////////////////////////// Selection variables: /////////////////////////////
@@ -333,13 +323,6 @@ private:
     /////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Other variables: /////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
-
-    // To access the JEC uncertainties from file.
-    // New recipe:
-    // https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources?rev=19#Code_example
-    std::string const m_jecType;
-    JetCorrectorParameters const m_jecPara;
-    JetCorrectionUncertainty m_jecUnc;
 
     // Class mapping Gen and Rec particle names.
     GenRecNameMap const m_gen_rec_map;
