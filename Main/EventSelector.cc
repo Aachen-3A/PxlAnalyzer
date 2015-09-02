@@ -541,7 +541,7 @@ bool EventSelector::passGam( pxl::Particle const *gam,
 
    if( isRec ) {
       //cut on sigmaietaieta ("eta width") which is different for EB and EE
-      double const gam_sigma_ieta_ieta = gam->getUserRecord( "iEta_iEta" );
+      double const gam_sigma_ieta_ieta = gam->getUserRecord( "sigma_iEta_iEta" );
 
       if( barrel ) {
          //Additional spike cleaning
