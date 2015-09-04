@@ -168,17 +168,17 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gen_rec_map( cfg ),
 
    // Get particle names that shall be used from config and cache them.
-   m_RecMuoName( m_gen_rec_map.get( "Muo" ).RecName ),
+   m_RecMuoName( m_gen_rec_map.get( "Muon" ).RecName ),
    m_RecEleName( m_gen_rec_map.get( "Ele" ).RecName ),
    m_RecTauName( m_gen_rec_map.get( "Tau" ).RecName ),
-   m_RecGamName( m_gen_rec_map.get( "Gam" ).RecName ),
+   m_RecGamName( m_gen_rec_map.get( "Gamma" ).RecName ),
    m_RecJetName( m_gen_rec_map.get( "Jet" ).RecName ),
    m_RecMETName( m_gen_rec_map.get( "MET" ).RecName ),
 
-   m_GenMuoName( m_gen_rec_map.get( "Muo" ).GenName ),
+   m_GenMuoName( m_gen_rec_map.get( "Muon" ).GenName ),
    m_GenEleName( m_gen_rec_map.get( "Ele" ).GenName ),
    m_GenTauName( m_gen_rec_map.get( "Tau" ).GenName ),
-   m_GenGamName( m_gen_rec_map.get( "Gam" ).GenName ),
+   m_GenGamName( m_gen_rec_map.get( "Gamma" ).GenName ),
    m_GenJetName( m_gen_rec_map.get( "Jet" ).GenName ),
    m_GenMETName( m_gen_rec_map.get( "MET" ).GenName ),
 

@@ -22,7 +22,7 @@ EventAdaptor::EventAdaptor( Tools::MConfig const &cfg,
    m_jet_res_corr_use( cfg.GetItem< bool >( "Jet.Resolutions.Corr.use" ) ),
 
    // Cache the particle names.
-   m_muo_RecName( m_gen_rec_map.get( "Muo" ).RecName ),
+   m_muo_RecName( m_gen_rec_map.get( "Muon" ).RecName ),
    m_jet_RecName( m_gen_rec_map.get( "Jet" ).RecName ),
    m_met_RecName( m_gen_rec_map.get( "MET" ).RecName )
 {
