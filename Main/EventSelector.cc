@@ -1153,10 +1153,10 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
    applyCutsOnMET( mets, isRec );
 
    //now store the number of particles of each type
-   countParticles( EvtView, muons,  "Muo", isRec );
+   countParticles( EvtView, muons,  "Muon", isRec );
    countParticles( EvtView, eles,   "Ele", isRec );
    countParticles( EvtView, taus,   "Tau", isRec );
-   countParticles( EvtView, gammas, "Gam", isRec );
+   countParticles( EvtView, gammas, "Gamma", isRec );
    countParticles( EvtView, mets,   "MET", isRec );
    countJets( EvtView, jets, isRec );
    applyCutsOnVertex( EvtView, vertices, isRec );
