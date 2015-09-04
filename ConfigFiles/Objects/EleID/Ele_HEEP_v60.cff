@@ -2,7 +2,7 @@
 # See also:
 # https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronIdentificationRun2?rev=8
 Ele.HEEPID.usebool = 1
-Ele.HEEPID.boolname = heepElectronID-HEEPV51
+Ele.HEEPID.boolname = heepElectronID-HEEPV60
 # HEEPID = High Energy Electron Pairs IDentification
 Ele.HEEPID.RequireEcalDriven = 1
 Ele.HEEPID.RejectOutOfTime = 1

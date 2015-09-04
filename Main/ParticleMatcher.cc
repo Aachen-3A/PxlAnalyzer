@@ -100,7 +100,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
    if( customMatch ) {
       //Make matching for estimation of fake rate for gammas
       rec_particles.clear();
-      ParticlePtEtaNameCriterion const critGamRec( m_gen_rec_map.get( "Gam" ).RecName );
+      ParticlePtEtaNameCriterion const critGamRec( m_gen_rec_map.get( "Gamma" ).RecName );
       particleFilter.apply( RecEvtView->getObjectOwner(),
                              rec_particles,
                              critGamRec
@@ -136,7 +136,7 @@ void ParticleMatcher::matchObjects( EventView const *GenEvtView,
 
       //match SIM converted photons to GEN photons
       gen_particles.clear();
-      ParticlePtEtaNameCriterion const critGamGen( m_gen_rec_map.get( "Gam" ).GenName );
+      ParticlePtEtaNameCriterion const critGamGen( m_gen_rec_map.get( "Gamma" ).GenName );
       particleFilter.apply( GenEvtView->getObjectOwner(),
                              gen_particles,
                              critGamGen

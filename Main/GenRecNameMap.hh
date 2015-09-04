@@ -60,10 +60,10 @@ class GenRecNameMap {
    private:
       NameMap const initNameMap() const {
          NameMap GenRecMap;
-         GenRecMap[ "Muo" ] = GenRecNamePair( m_muo_type_gen, m_muo_type_rec );
+         GenRecMap[ "Muon" ] = GenRecNamePair( m_muo_type_gen, m_muo_type_rec );
          GenRecMap[ "Ele" ] = GenRecNamePair( m_ele_type_gen, m_ele_type_rec );
          GenRecMap[ "Tau" ] = GenRecNamePair( m_tau_type_gen, m_tau_type_rec );
-         GenRecMap[ "Gam" ] = GenRecNamePair( m_gam_type_gen, m_gam_type_rec );
+         GenRecMap[ "Gamma" ] = GenRecNamePair( m_gam_type_gen, m_gam_type_rec );
          GenRecMap[ "Jet" ] = GenRecNamePair( m_jet_type_gen, m_jet_type_rec );
          GenRecMap[ "MET" ] = GenRecNamePair( m_met_type_gen, m_met_type_rec );
 
