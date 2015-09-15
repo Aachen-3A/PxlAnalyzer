@@ -73,7 +73,7 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_highptid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.HighPtID.TrackerLayersWithMeas.min")),
     m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
     m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max")),
-    
+
     // Tracker ID
     m_muo_trackerid_useBool(             cfg.GetItem< bool >("Muon.TrackerID.UseBool")),
     m_muo_trackerid_boolName(            cfg.GetItem< string >("Muon.TrackerID.BoolName")),
@@ -83,7 +83,7 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_trackerid_vHitsPixel_min(      cfg.GetItem< int >("Muon.TrackerID.VHitsPixel.min")),
     m_muo_trackerid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.TrackerID.TrackerLayersWithMeas.min")),
     m_muo_trackerid_dxy_max(             cfg.GetItem< double >("Muon.TrackerID.Dxy.max")),
-    m_muo_trackerid_dz_max(              cfg.GetItem< double >("Muon.TrackerID.Dz.max"))    
+    m_muo_trackerid_dz_max(              cfg.GetItem< double >("Muon.TrackerID.Dz.max"))
 {
     m_useAlternative=false;
 }
@@ -260,7 +260,7 @@ bool MuonSelector::passMediumID(pxl::Particle *muon) const {
     if( !( muon->getUserRecord("isGlobalMuon").toBool() == m_muo_mediumid_isGlobalMuon ) )
         return false;
     if(!m_useAlternative){
-        if( muon->hasUserRecord("normalizedChi2") && !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+        if(muon->hasUserRecord("normalizedChi2") && !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
             return false;
     }else{
         if(!( muon->getUserRecord(m_alternativeUserVariables["normalizedChi2"]).toDouble() < m_muo_mediumid_normalizedChi2_max ) )
