@@ -260,7 +260,7 @@ bool MuonSelector::passMediumID(pxl::Particle *muon) const {
     if( !( muon->getUserRecord("isGlobalMuon").toBool() == m_muo_mediumid_isGlobalMuon ) )
         return false;
     if(!m_useAlternative){
-        if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+        if(muon->hasUserRecord("normalizedChi2") && !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
             return false;
     }else{
         if( !( muon->getUserRecord(m_alternativeUserVariables["normalizedChi2"]).toDouble() < m_muo_mediumid_normalizedChi2_max ) )
@@ -285,7 +285,7 @@ bool MuonSelector::passTightID(pxl::Particle *muon) const {
     if( !( muon->getUserRecord("isPFMuon").toBool() == m_muo_tightid_isPFMuon ) )
         return false;
     if(!m_useAlternative){
-        if( !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
+        if(muon->hasUserRecord("normalizedChi2") && !( muon->getUserRecord("normalizedChi2").toDouble() < m_muo_mediumid_normalizedChi2_max ) )
             return false;
         if( !( fabs(muon->getUserRecord("Dxy").toDouble()) < m_muo_tightid_dxy_max ) )
             return false;
