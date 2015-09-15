@@ -72,7 +72,18 @@ MuonSelector::MuonSelector( const Tools::MConfig &cfg ):
     m_muo_highptid_vHitsPixel_min(      cfg.GetItem< int >("Muon.HighPtID.VHitsPixel.min")),
     m_muo_highptid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.HighPtID.TrackerLayersWithMeas.min")),
     m_muo_highptid_dxy_max(             cfg.GetItem< double >("Muon.HighPtID.Dxy.max")),
-    m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max"))
+    m_muo_highptid_dz_max(              cfg.GetItem< double >("Muon.HighPtID.Dz.max")),
+    
+    // Tracker ID
+    m_muo_trackerid_useBool(             cfg.GetItem< bool >("Muon.TrackerID.UseBool")),
+    m_muo_trackerid_boolName(            cfg.GetItem< string >("Muon.TrackerID.BoolName")),
+    m_muo_trackerid_isTrackerMuon(        cfg.GetItem< bool >("Muon.TrackerID.IsTrackerMuon")),
+    m_muo_trackerid_ptRelativeError_max( cfg.GetItem< double >("Muon.TrackerID.PtRelativeError.max")),
+    m_muo_trackerid_nMatchedStations_min(cfg.GetItem< int >("Muon.TrackerID.NMatchedStations.min")),
+    m_muo_trackerid_vHitsPixel_min(      cfg.GetItem< int >("Muon.TrackerID.VHitsPixel.min")),
+    m_muo_trackerid_trackerLayersWithMeas_min(cfg.GetItem< int >("Muon.TrackerID.TrackerLayersWithMeas.min")),
+    m_muo_trackerid_dxy_max(             cfg.GetItem< double >("Muon.TrackerID.Dxy.max")),
+    m_muo_trackerid_dz_max(              cfg.GetItem< double >("Muon.TrackerID.Dz.max"))    
 {
     m_useAlternative=false;
 }
@@ -155,10 +166,12 @@ int MuonSelector::muonID(pxl::Particle *muon , double rho) const {
         passID = passLooseID(muon);
     } else if (m_muo_id_type == "SoftID") {
         passID = passSoftID(muon);
+    } else if (m_muo_id_type == "TrackerID") {
+	    passID = passTrackerID(muon);
     } else if (m_muo_id_type == "None") {
         passID= true;
     } else {
-        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'LooseID', 'SoftID' or 'None'. The value is '" + m_muo_id_type + "'");
+        throw Tools::config_error("'Muon.ID.Type' must be one of these values: 'CombinedID', 'TightID', 'MediumID', 'LooseID', 'SoftID', 'TrackerID' or 'None'. The value is '" + m_muo_id_type + "'");
         passID = false;
     }
 
@@ -330,6 +343,38 @@ bool MuonSelector::passHighPtID(pxl::Particle *muon) const {
     // return true if everything passed
     return true;
 }
+
+bool MuonSelector::passTrackerID(pxl::Particle *muon) const {
+    // check if a cocktail muon exists
+    if (!(muon->getUserRecord("validCocktail").toBool()))
+        return false;
+    // return built-in bool if requested
+    if (m_muo_trackerid_useBool)
+        return muon->getUserRecord(m_muo_trackerid_boolName).toBool();
+
+    // do the cut based ID if we are not using the bool
+    if (!(m_muo_trackerid_isTrackerMuon == muon->getUserRecord("isTrackerMuon").toBool()))
+        return false;
+    if (!(m_muo_trackerid_ptRelativeError_max > muon->getUserRecord("ptErrorCocktail").toDouble() /
+          muon->getUserRecord("ptCocktail").toDouble()))
+        return false;
+    // careful, these variables use user records that are not based on the cocktail track
+    if (!(m_muo_trackerid_nMatchedStations_min < muon->getUserRecord("NMatchedStations").toInt32()))
+        return false;
+    if (!(m_muo_trackerid_vHitsPixel_min < muon->getUserRecord("VHitsPixel").toInt32()))
+        return false;
+    if (!(m_muo_trackerid_trackerLayersWithMeas_min < muon->getUserRecord("TrackerLayersWithMeas").toInt32()))
+        return false;
+
+    if (!(m_muo_trackerid_dxy_max > fabs(muon->getUserRecord("DxyCocktail").toDouble())))
+        return false;
+    if (!(m_muo_trackerid_dz_max > fabs(muon->getUserRecord("DzCocktail").toDouble())))
+        return false;
+
+    // return true if everything passed
+    return true;
+}
+
 
 
 bool MuonSelector::passTrackerIso(pxl::Particle *muon) const {

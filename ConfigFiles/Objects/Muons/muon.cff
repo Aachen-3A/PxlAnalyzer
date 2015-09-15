@@ -23,6 +23,7 @@ Muon.CleanDuplicates = 0
 #   - "TightID"
 #   - "MediumID"
 #   - "SoftID"
+#	- "TrackerID" --> Modified HighPtID for boosted topology
 #   - "None" --> No ID criteria are applied, all muons pass
 # References:
 #   - https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
@@ -70,6 +71,7 @@ import "$PXLANA/ConfigFiles/Objects/Muons/loose.cff"
 import "$PXLANA/ConfigFiles/Objects/Muons/medium.cff"
 import "$PXLANA/ConfigFiles/Objects/Muons/tight.cff"
 import "$PXLANA/ConfigFiles/Objects/Muons/highpt.cff"
+import "$PXLANA/ConfigFiles/Objects/Muons/tracker.cff"
 
 import "$PXLANA/ConfigFiles/Objects/Muons/effectivearea.cff"
 import "$PXLANA/ConfigFiles/Objects/Muons/systematics.cff"
