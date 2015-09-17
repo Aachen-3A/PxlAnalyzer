@@ -336,6 +336,12 @@ int main( int argc, char* argv[] ) {
             continue;
          }
 
+         if( event.getObjectOwner().findObject< pxl::EventView >( "Rec" ) == 0 ) {
+            delete event_ptr;
+            e++;
+            continue;
+         }
+
          //check if we shall analyze this event
          lumi::ID run      = event_ptr->getUserRecord( "Run" );
          lumi::ID LS       = event_ptr->getUserRecord( "LumiSection" );
