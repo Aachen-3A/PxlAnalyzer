@@ -336,7 +336,8 @@ int main( int argc, char* argv[] ) {
             continue;
          }
 
-         if( event.getObjectOwner().findObject< pxl::EventView >( "Rec" ) == 0 ) {
+         if( event_ptr->getObjectOwner().findObject< pxl::EventView >( "Rec" ) == 0 ) {
+            fork.analyseEvent( event_ptr );
             delete event_ptr;
             e++;
             continue;
