@@ -37,6 +37,7 @@ public:
    ~EventSelector();
    // main method to perform the selection
    void performSelection(pxl::EventView*  EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView );
+    std::map< std::string, bool > getParticleUseMap( const Tools::MConfig &cfg );
    //synchronize certain values between gen and rec event views
    void preSynchronizeGenRec( pxl::EventView *GenEvtView, pxl::EventView *RecEvtView );
    void synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventView* RecEvtView );
@@ -44,7 +45,7 @@ public:
    double TransverseInvariantMass(pxl::EventView* GenEvtView, const std::string& type1, const std::string& type2);
    // calculate invariant mass of particle of Type1 and Type2
    double InvariantMass(pxl::EventView* GenEvtView, const std::string& type1, const std::string& type2);
-
+  std::map< std::string, std::vector< pxl::Particle* > > getParticleLists ( pxl::EventView* EvtView, bool isRec );
    bool passEventTopology( int const numMuo,
                            int const numEle,
                            int const numTau,
@@ -342,7 +343,7 @@ private:
     std::string const m_GenMETName;
 
     EventCleaning const m_eventCleaning;
-
+    std::map< std::string, bool > particleUseMap;
     TriggerSelector const m_triggerSelector;
 };
 #endif

@@ -43,7 +43,7 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_tracks_num_max( cfg.GetItem< unsigned int >( "Tracks.num.max" ) ),
 
    //Muons
-   m_muo_use(    cfg.GetItem< bool   >( "Muon.Use" ) ),
+   m_muo_use(    cfg.GetItem< bool   >( "Muon.use" ) ),
    m_muo_idtag( cfg.GetItem< bool   >( "Muon.IDTag" , false) ),
    m_muo_rho_label(  cfg.GetItem< string >( "Muon.Rho.Label" ) ),
    m_muo_selector(cfg),
@@ -168,23 +168,25 @@ EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    m_gen_rec_map( cfg ),
 
    // Get particle names that shall be used from config and cache them.
-   m_RecMuoName( m_gen_rec_map.get( "Muo" ).RecName ),
+   m_RecMuoName( m_gen_rec_map.get( "Muon" ).RecName ),
    m_RecEleName( m_gen_rec_map.get( "Ele" ).RecName ),
    m_RecTauName( m_gen_rec_map.get( "Tau" ).RecName ),
-   m_RecGamName( m_gen_rec_map.get( "Gam" ).RecName ),
+   m_RecGamName( m_gen_rec_map.get( "Gamma" ).RecName ),
    m_RecJetName( m_gen_rec_map.get( "Jet" ).RecName ),
    m_RecMETName( m_gen_rec_map.get( "MET" ).RecName ),
 
-   m_GenMuoName( m_gen_rec_map.get( "Muo" ).GenName ),
+   m_GenMuoName( m_gen_rec_map.get( "Muon" ).GenName ),
    m_GenEleName( m_gen_rec_map.get( "Ele" ).GenName ),
    m_GenTauName( m_gen_rec_map.get( "Tau" ).GenName ),
-   m_GenGamName( m_gen_rec_map.get( "Gam" ).GenName ),
+   m_GenGamName( m_gen_rec_map.get( "Gamma" ).GenName ),
    m_GenJetName( m_gen_rec_map.get( "Jet" ).GenName ),
    m_GenMETName( m_gen_rec_map.get( "MET" ).GenName ),
 
    m_eventCleaning( cfg ),
+   particleUseMap ( getParticleUseMap( cfg ) ),
    m_triggerSelector( cfg )
 {
+
 //   if( (not m_gam_Vgamma2011PhotonID_use xor m_gam_CutBasedPhotonID2012_use xor m_gam_CutBasedPhotonID2012Flag_use ) && ( not m_gam_Vgamma2011PhotonID_use && m_gam_CutBasedPhotonID2012_use && m_gam_CutBasedPhotonID2012Flag_use ) ) {
 //      stringstream error;
 //      error << "In config file: ";
@@ -229,7 +231,14 @@ void EventSelector::synchronizeGenRec( pxl::EventView* GenEvtView, pxl::EventVie
    GenEvtView->setUserRecord( "accepted", gen_accepted && generator_accept && gen_filter_accepted );
    RecEvtView->setUserRecord( "accepted", rec_accepted && generator_accept && gen_filter_accepted );
 }
-
+// Get a bool map of the use choice for each particle Type
+std::map< std::string, bool > EventSelector::getParticleUseMap( const Tools::MConfig &cfg ){
+    std::map< std::string, bool > useMap = std::map< std::string, bool >();
+    for(auto  partName : Tools::getParticleTypeAbbreviations() ){
+        useMap[ partName ] = cfg.GetItem< bool   >( std::string(partName) + ".use" ) ;
+    }
+    return useMap;
+}
 
 // ------------------ Check if the given filters have fired -------------------
 bool EventSelector::passFilterSelection( pxl::EventView *EvtView, const bool isRec ) {
@@ -1008,7 +1017,47 @@ void EventSelector::checkOrder( std::vector< pxl::Particle* > const &particles )
    }
 }
 
+// Sort the particles in an event in lists and return them
+std::map< std::string, std::vector< pxl::Particle* > > EventSelector::getParticleLists ( pxl::EventView* EvtView, bool isRec ){
 
+   std::map< std::string, std::vector< pxl::Particle* > > particleMap;
+   auto particleTypeAbbreviations = Tools::getParticleTypeAbbreviations();
+   for( auto partName : particleTypeAbbreviations ){
+      particleMap[partName] = std::vector< pxl::Particle* >();
+   }
+   if( !isRec ) { particleMap["S3"] = std::vector< pxl::Particle* >(); }
+
+   // get all particles
+   vector<pxl::Particle*> allparticles;
+   EvtView->getObjectsOfType<pxl::Particle>(allparticles);
+   pxl::sortParticles( allparticles );
+
+   for (vector<pxl::Particle*>::const_iterator part = allparticles.begin(); part != allparticles.end(); ++part) {
+      string name = (*part)->getName();
+      // Only fill the collection if we want to use the particle!
+      // If the collections are not filled, the particles are also ignored in
+      // the event cleaning.
+      for( auto partName : particleTypeAbbreviations ){
+         if( isRec ){
+            if( particleUseMap[ partName ] and name == m_gen_rec_map.get( partName ).RecName){
+               particleMap[partName].push_back( *part );
+            }
+         }else{
+            if( particleUseMap[ partName ] and name == m_gen_rec_map.get( partName ).GenName){
+               particleMap[partName].push_back( *part );
+            }else if(name == "S3"){
+               particleMap[partName].push_back( *part );
+            }
+         }
+      }
+   }
+   //check that the particles are ordered by Pt
+   for( auto partName : particleTypeAbbreviations ){
+      checkOrder( particleMap[partName] );
+   }
+
+   return  particleMap;
+}
 
 //--------------------This is the main method to perform the selection-----------------------------------------
 void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* TrigEvtView, pxl::EventView* FilterView ) {   //used with either GenEvtView or RecEvtView
@@ -1065,12 +1114,6 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
          }
       }
    }
-   // get all particles
-   vector<pxl::Particle*> allparticles;
-   EvtView->getObjectsOfType<pxl::Particle>(allparticles);
-   pxl::sortParticles( allparticles );
-
-   // No 'bJets' are filled because 'jets' is only used in
    vector< pxl::Particle* > muons,
                             eles,
                             taus,
@@ -1079,36 +1122,15 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
                             mets,
                             s3_particles;
 
-   for (vector<pxl::Particle*>::const_iterator part = allparticles.begin(); part != allparticles.end(); ++part) {
-      string name = (*part)->getName();
-      // Only fill the collection if we want to use the particle!
-      // If the collections are not filled, the particles are also ignored in
-      // the event cleaning.
-      if( isRec ) {
-         if(      m_muo_use and name == m_RecMuoName ) muons.push_back( *part );
-         else if( m_ele_use and name == m_RecEleName ) eles.push_back( *part );
-         else if( m_tau_use and name == m_RecTauName ) taus.push_back( *part );
-         else if( m_gam_use and name == m_RecGamName ) gammas.push_back( *part );
-         else if( m_jet_use and name == m_RecJetName ) jets.push_back( *part );
-         else if( m_met_use and name == m_RecMETName ) mets.push_back( *part );
-         // There are no S3 particles in Rec.
-      } else {
-         if(      m_muo_use and name == m_GenMuoName ) muons.push_back( *part );
-         else if( m_ele_use and name == m_GenEleName ) eles.push_back( *part );
-         else if( m_tau_use and name == m_GenTauName ) taus.push_back( *part );
-         else if( m_gam_use and name == m_GenGamName ) gammas.push_back( *part );
-         else if( m_jet_use and name == m_GenJetName ) jets.push_back( *part );
-         else if( m_met_use and name == m_GenMETName ) mets.push_back( *part );
-         else if( m_gen_use and name == "S3" ) s3_particles.push_back(*part);
-      }
-   }
-   //check that the particles are ordered by Pt
-   checkOrder( taus );
-   checkOrder(muons);
-   checkOrder(eles);
-   checkOrder(gammas);
-   checkOrder(jets);
-   checkOrder(mets);
+   std::map< std::string, std::vector< pxl::Particle* > > particleMap = getParticleLists( EvtView, isRec );
+   muons  = particleMap["Muon"];
+   eles   = particleMap["Ele"];
+   taus   = particleMap["Tau"];
+   gammas = particleMap["Gamma"];
+   jets   = particleMap["Jet"];
+   mets   = particleMap["MET"];
+   if( ! isRec ) muons = particleMap["S3"];
+
 
    //get vertices
    vector< pxl::Vertex* > vertices;
@@ -1131,10 +1153,10 @@ void EventSelector::performSelection(pxl::EventView* EvtView, pxl::EventView* Tr
    applyCutsOnMET( mets, isRec );
 
    //now store the number of particles of each type
-   countParticles( EvtView, muons,  "Muo", isRec );
+   countParticles( EvtView, muons,  "Muon", isRec );
    countParticles( EvtView, eles,   "Ele", isRec );
    countParticles( EvtView, taus,   "Tau", isRec );
-   countParticles( EvtView, gammas, "Gam", isRec );
+   countParticles( EvtView, gammas, "Gamma", isRec );
    countParticles( EvtView, mets,   "MET", isRec );
    countJets( EvtView, jets, isRec );
    applyCutsOnVertex( EvtView, vertices, isRec );

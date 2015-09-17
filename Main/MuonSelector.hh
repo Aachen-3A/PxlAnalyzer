@@ -33,6 +33,7 @@ private:
     bool passMediumID(pxl::Particle *muon) const;
     bool passTightID(pxl::Particle *muon) const;
     bool passHighPtID(pxl::Particle *muon) const;
+    bool passTrackerID(pxl::Particle *muon) const;
     bool passPFIso(pxl::Particle *muon, double rho) const;
     bool passMiniIso(pxl::Particle *muon) const;
     bool passTrackerIso(pxl::Particle *muon) const;
@@ -105,6 +106,17 @@ private:
     const int         m_muo_highptid_trackerLayersWithMeas_min;
     const double      m_muo_highptid_dxy_max;
     const double      m_muo_highptid_dz_max;
+    
+    // Tracker ID variables (for boosted typology)
+    const bool        m_muo_trackerid_useBool;
+    const std::string m_muo_trackerid_boolName;
+    const bool        m_muo_trackerid_isTrackerMuon;
+    const double      m_muo_trackerid_ptRelativeError_max;
+    const int         m_muo_trackerid_nMatchedStations_min;
+    const int         m_muo_trackerid_vHitsPixel_min;
+    const int         m_muo_trackerid_trackerLayersWithMeas_min;
+    const double      m_muo_trackerid_dxy_max;
+    const double      m_muo_trackerid_dz_max;    
 
 
 
