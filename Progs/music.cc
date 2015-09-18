@@ -329,12 +329,12 @@ int main( int argc, char* argv[] ) {
          if( numberOfEvents > -1 and e >= numberOfEvents ) break;
          if( numberOfSkipEvents > e ) continue;
          // Break the event loop if the current event is not sensible (formatted correctly).
-         if( event_ptr->getUserRecords().size() == 0 ) {
-            std::cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << std::endl;
-            std::cout << "WARNING: Continue with next event." << std::endl;
-            delete event_ptr;
-            continue;
-         }
+         //if( event_ptr->getUserRecords().size() == 0 ) {
+            //std::cout << "WARNING: Found corrupt pxlio event with User Record size 0 in file " << fileName << "." << std::endl;
+            //std::cout << "WARNING: Continue with next event." << std::endl;
+            //delete event_ptr;
+            //continue;
+         //}
 
          if( event_ptr->getObjectOwner().findObject< pxl::EventView >( "Rec" ) == 0 ) {
             fork.analyseEvent( event_ptr );
