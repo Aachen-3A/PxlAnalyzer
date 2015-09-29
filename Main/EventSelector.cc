@@ -826,7 +826,7 @@ bool EventSelector::passJet( pxl::Particle *jet, const bool &isRec ) const {
    return true;
 }
 
-
+// set counts for event view
 void EventSelector::countParticles( pxl::EventView *EvtView,
                                     std::vector< pxl::Particle* > const &particles,
                                     std::string const &name,
@@ -840,7 +840,16 @@ void EventSelector::countParticles( pxl::EventView *EvtView,
 
    EvtView->setUserRecord( label, particles.size() );
 }
-
+// Get a map of counts for a map of particle lists as created by getParticleLists
+// use this function e.g. if you have modified particle lists as count particles changes
+// the eventView wide count user record
+std::map< std::string, int > EventSelector::getParticleCountMap( std::map< std::string, std::vector< pxl::Particle* > > particleLists){
+   std::map< std::string, int > countMap;
+   for( auto& partList : particleLists ){
+         countMap.emplace( partList.first, partList.second.size() );
+   }
+   return countMap;
+}
 
 void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec ) {
    unsigned int numJet = 0;
