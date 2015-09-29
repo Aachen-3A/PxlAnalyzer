@@ -1055,12 +1055,15 @@ std::map< std::string, std::vector< pxl::Particle* > > EventSelector::getParticl
          if( isRec ){
             if( particleUseMap[ partName ] and name == m_gen_rec_map.get( partName ).RecName){
                particleMap[partName].push_back( *part );
+               break;
             }
          }else{
             if( particleUseMap[ partName ] and name == m_gen_rec_map.get( partName ).GenName){
                particleMap[partName].push_back( *part );
+               break;
             }else if(name == "S3"){
-               particleMap[partName].push_back( *part );
+               particleMap["S3"].push_back( *part );
+               break;
             }
          }
       }
