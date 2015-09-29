@@ -61,7 +61,7 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
                                         funcKey) != availableFunctions.end());
          if(isAvailable){
             SystematicsInfo *thisSystematic =
-               new SystematicsInfo( partType, systType, funcKey, false);
+               new SystematicsInfo( partType, systType, funcKey );
             m_activeSystematics.push_back( thisSystematic );
          }else{
             std::cout << "Systematic type " << systType
@@ -89,7 +89,7 @@ Systematics::~Systematics(){
 void Systematics::createShiftedViews(){
    for(auto syst : m_activeSystematics){
       m_activeSystematic = syst;
-      systFuncMap[ syst->m_funcKey ] ();
+      if( syst->m_isDifferential ) systFuncMap[ syst->m_funcKey ] ();
    }
 }
 
