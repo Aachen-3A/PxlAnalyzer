@@ -12,6 +12,7 @@ using namespace std;
 
 EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // General selection:
+   oldNameMap(  ),
    m_data(           cfg.GetItem< bool >( "General.RunOnData" ) ),
    m_ignoreOverlaps( cfg.GetItem< bool >( "General.IgnoreOverlaps" ) ),
    // When running on data, FastSim is always false!
@@ -549,8 +550,12 @@ bool EventSelector::passGam( pxl::Particle const *gam,
    }
 
    if( isRec ) {
+
       //cut on sigmaietaieta ("eta width") which is different for EB and EE
-      double const gam_sigma_ieta_ieta = gam->getUserRecord( "sigma_iEta_iEta" );
+      //double const gam_sigma_ieta_ieta = gam->getUserRecord( "sigma_iEta_iEta" );
+      //~ double const gam_sigma_ieta_ieta = gam->getUserRecord( oldNameMap.getUserRecordName( gam, std::string("Gamma"), std::string("sigma_iEta_iEta") ) );
+      double const gam_sigma_ieta_ieta = gam->getUserRecord(
+        oldNameMap.getUserRecordName( gam, "Gamma", "sigma_iEta_iEta" ) );
 
       if( barrel ) {
          //Additional spike cleaning

@@ -27,7 +27,7 @@ Decision.
 #include "Main/GenRecNameMap.hh"
 #include "Main/EffectiveArea.hh"
 
-
+#include "OldNameMapper.hh"
 
 class EventSelector {
 public:
@@ -57,6 +57,8 @@ public:
    void checkOrder( std::vector< pxl::Particle* > const &particles ) const;
 
 private:
+    // objects
+    OldNameMapper oldNameMap;
     // Methods;
     bool passEventTopology( std::vector< pxl::Particle* > const &muos,
                                     std::vector< pxl::Particle* > const &eles,
