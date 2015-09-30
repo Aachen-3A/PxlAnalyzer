@@ -189,7 +189,7 @@ int main( int argc, char* argv[] ) {
    system( ( "mkdir -p " + outputDirectory ).c_str() );
    system( ( "cd " + outputDirectory ).c_str() );
    chdir( outputDirectory.c_str() );
-   system( ( "cp " + FinalCutsFile  + " . " ).c_str() );
+   //system( ( "cp " + FinalCutsFile  + " . " ).c_str() );
    if( !RunConfigFile.empty() ) system( ( "cp " + RunConfigFile + " . " ).c_str() );
 
    if( runOnData ) system( "mkdir -p Event-lists" );
