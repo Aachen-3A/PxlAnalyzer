@@ -12,6 +12,7 @@ using namespace std;
 
 EventSelector::EventSelector( const Tools::MConfig &cfg ) :
    // General selection:
+   oldNameMap(  ),
    m_data(           cfg.GetItem< bool >( "General.RunOnData" ) ),
    m_ignoreOverlaps( cfg.GetItem< bool >( "General.IgnoreOverlaps" ) ),
    // When running on data, FastSim is always false!
@@ -567,8 +568,12 @@ bool EventSelector::passGam( pxl::Particle const *gam,
    }
 
    if( isRec ) {
+
       //cut on sigmaietaieta ("eta width") which is different for EB and EE
-      double const gam_sigma_ieta_ieta = gam->getUserRecord( "sigma_iEta_iEta" );
+      //double const gam_sigma_ieta_ieta = gam->getUserRecord( "sigma_iEta_iEta" );
+      //~ double const gam_sigma_ieta_ieta = gam->getUserRecord( oldNameMap.getUserRecordName( gam, std::string("Gamma"), std::string("sigma_iEta_iEta") ) );
+      double const gam_sigma_ieta_ieta = gam->getUserRecord(
+        oldNameMap.getUserRecordName( gam, "Gamma", "sigma_iEta_iEta" ) );
 
       if( barrel ) {
          //Additional spike cleaning
@@ -839,7 +844,7 @@ bool EventSelector::passJet( pxl::Particle *jet, const bool &isRec ) const {
    return true;
 }
 
-
+// set counts for event view
 void EventSelector::countParticles( pxl::EventView *EvtView,
                                     std::vector< pxl::Particle* > const &particles,
                                     std::string const &name,
@@ -853,7 +858,16 @@ void EventSelector::countParticles( pxl::EventView *EvtView,
 
    EvtView->setUserRecord( label, particles.size() );
 }
-
+// Get a map of counts for a map of particle lists as created by getParticleLists
+// use this function e.g. if you have modified particle lists as count particles changes
+// the eventView wide count user record
+std::map< std::string, int > EventSelector::getParticleCountMap( std::map< std::string, std::vector< pxl::Particle* > > particleLists){
+   std::map< std::string, int > countMap;
+   for( auto& partList : particleLists ){
+         countMap.emplace( partList.first, partList.second.size() );
+   }
+   return countMap;
+}
 
 void EventSelector::countJets( pxl::EventView *EvtView, std::vector< pxl::Particle* > &jets, const bool &isRec ) {
    unsigned int numJet = 0;
@@ -1059,12 +1073,15 @@ std::map< std::string, std::vector< pxl::Particle* > > EventSelector::getParticl
          if( isRec ){
             if( particleUseMap[ partName ] and name == m_gen_rec_map.get( partName ).RecName){
                particleMap[partName].push_back( *part );
+               break;
             }
          }else{
             if( particleUseMap[ partName ] and name == m_gen_rec_map.get( partName ).GenName){
                particleMap[partName].push_back( *part );
+               break;
             }else if(name == "S3"){
-               particleMap[partName].push_back( *part );
+               particleMap["S3"].push_back( *part );
+               break;
             }
          }
       }

@@ -54,6 +54,9 @@ Jet.BJets.use = 0
 ############################
 Jet.BJets.Algo = "combinedInclusiveSecondaryVertexV2BJetTags"
 Jet.BJets.Discr.min = -9999
+Jet.BJets.separate = 0
+Jet.BJets.Type.Gen = "b"
+Jet.BJets.Type.Rec = "b"
 # Choose Algorithm for Flavour Identification of (B)Jets:
 # - algoFlavour
 # - physicsFlavour

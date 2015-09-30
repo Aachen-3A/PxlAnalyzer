@@ -60,7 +60,7 @@ namespace Tools {
    std::string removeComment( std::string line, char const commentChar = '#' );
    std::string random_string( size_t length );
    // returb a vector of string identifiers for each physics object type
-   std::vector< std::string > getParticleTypeAbbreviations();
+   std::vector< std::string > getParticleTypeAbbreviations(bool useBJet = false);
    //return everything you can << into an ostream as a string
    template< class T > std::string toString( T &input ) {
       std::stringstream out;

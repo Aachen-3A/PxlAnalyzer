@@ -4,13 +4,14 @@
 SystematicsInfo::SystematicsInfo(std::string particleType,
         std::string sysType,
         std::string funcKey,
-        bool isCorrelated ):
+        bool isDifferential,
+        double constantShift ):
     eventViewPointers( {} ),
-    m_isCorrelated( isCorrelated ),
+    m_isDifferential( isDifferential ),
     m_particleType( particleType ),
     m_sysType( sysType ),
-    m_funcKey( funcKey )
-
+    m_funcKey( funcKey ),
+    m_constantShift( constantShift )
 {}
 
 //--------------------Destructor------------------------------------------------------------------
