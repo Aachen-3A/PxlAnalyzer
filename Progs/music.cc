@@ -376,10 +376,10 @@ int main( int argc, char* argv[] ) {
          }
 
          if( runOnData ){
-            // Write B Tag Info
-            if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
             //for data we just need to run the selection
             Selector.performSelection(RecEvtView, TrigEvtView, FilterView);
+            // Write B Tag Info
+            if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
          } else {
             // Don't do this on data, haha! And also not for special Ana hoho
             if (usePDF){
