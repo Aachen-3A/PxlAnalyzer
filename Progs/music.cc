@@ -349,6 +349,11 @@ int main( int argc, char* argv[] ) {
          lumi::ID eventNum = event_ptr->getUserRecord( "EventNum" );
          if( ! runcfg.check( run, LS ) ) {
             ++skipped;
+            if( debug > 1 ) {
+               std::cerr << "[INFO] (SkipEvents): " << std::endl;
+               std::cerr << "Skipping Run/LS/Event: ";
+               std::cerr <<  run << ":" <<  LS << ":" <<  eventNum << std::endl;
+            }
             delete event_ptr;
             continue;
          }
