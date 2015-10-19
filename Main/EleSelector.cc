@@ -462,7 +462,7 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
                                 bool const eleEndcap
                                 ) const {
 
-   // First check if we want to use only id flags from miniaod or
+    // First check if we want to use only id flags from miniaod or
    // reperform cuts
    if( m_ele_heepid_usebool ){
       if(ele->hasUserRecord( m_ele_heepid_boolname ) ){
@@ -479,12 +479,12 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
        not ele->getUserRecord( "ecalDriven" )
        ) return false;
 
-   if( ele->getUserRecord( "EoP" ).toDouble() > m_ele_heepid_EoP_max )
-      return false;
+   //if( ele->getUserRecord( "EoP" ).toDouble() > m_ele_heepid_EoP_max )
+      //return false;
 
    // These variables are checked in the barrel as well as in the endcaps.
    double const ele_absDeltaEta = fabs( ele->getUserRecord( "DEtaSCVtx" ).toDouble() );
-   //double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
+   double const ele_absDeltaPhi = fabs( ele->getUserRecord( "DPhiSCVtx" ).toDouble() );
    double const ele_HoEM        = ele->getUserRecord( "HoEm" );
 
    double ele_E=0;
@@ -493,6 +493,8 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
    }else{
       ele_E= ele->getUserRecord( m_alternativeUserVariables["SCE"] );
    }
+
+
 
    // TODO: Remove this construct when FA11 or older samples are not used anymore.
    // (Typo in skimmer already fixed. UserRecord: NinnerLayerLostHits.)
@@ -512,8 +514,12 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
    //ele in barrel
    if( eleBarrel ) {
       //delta eta between SC and track
-      //if( ele_absDeltaEta > m_ele_heepid_barrel_deltaEta_max )
-         //return false;
+      if( ele_absDeltaEta > m_ele_heepid_barrel_deltaEta_max )
+         return false;
+
+      //delta phi between SC and track
+      if( ele_absDeltaPhi > m_ele_heepid_barrel_deltaPhi_max )
+         return false;
 
       //avoid division by zero in hadronic over EM
       if( ele_E == 0 )
@@ -522,9 +528,27 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
       //hadronic over EM
       //if( ele_HoEM > (m_ele_heepid_barrel_HoEM_slope / ele_E + m_ele_heepid_barrel_HoEM_max) )
          //return false;
+      //shower shape
+      double e5x5=0;
+      double e1x5=0;
+      double e2x5=0;
+      if(!m_useAlternative){
+         e5x5 = ele->getUserRecord( "full5x5_e5x5" );
+         e1x5 = ele->getUserRecord( "full5x5_e1x5" );
+         e2x5 = ele->getUserRecord( "full5x5_e2x5Max" );
+      }else{
+         e5x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e5x5"] );
+         e1x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e1x5"] );
+         e2x5 = ele->getUserRecord( m_alternativeUserVariables["full5x5_e2x5Max"] );
+      }
 
-      //if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
-         //return false;
+
+      if( e1x5/e5x5 < m_ele_heepid_barrel_e1x5_min and
+          e2x5/e5x5 < m_ele_heepid_barrel_e2x5_min
+          ) return false;
+
+      if( ele_innerLayerLostHits > m_ele_heepid_barrel_NInnerLayerLostHits_max )
+         return false;
 
       if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_barrel_dxy_max )
          return false;
@@ -533,8 +557,12 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
    //ele in endcap
    if( eleEndcap ) {
       //delta eta between SC and track
-      //if( ele_absDeltaEta > m_ele_heepid_endcap_deltaEta_max )
-         //return false;
+      if( ele_absDeltaEta > m_ele_heepid_endcap_deltaEta_max )
+         return false;
+
+      //delta phi between SC and track
+      if( ele_absDeltaPhi > m_ele_heepid_endcap_deltaPhi_max )
+         return false;
 
       //avoid division by zero in hadronic over EM
       if( ele_E == 0 )
@@ -544,8 +572,18 @@ bool EleSelector::passlooseHEEPID( pxl::Particle const *ele,
       //if( ele_HoEM > (m_ele_heepid_endcap_HoEM_slope/ele_E + m_ele_heepid_endcap_HoEM_max) )
          //return false;
 
-      //if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
-         //return false;
+      //sigma iEta-iEta
+      if(!m_useAlternative){
+         if( ele->getUserRecord( "full5x5_sigmaIetaIeta" ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
+            return false;
+      }else{
+         if( ele->getUserRecord( m_alternativeUserVariables["full5x5_sigmaIetaIeta"] ).toDouble() > m_ele_heepid_endcap_sigmaIetaIeta_max )
+            return false;
+      }
+
+
+      if( ele_innerLayerLostHits > m_ele_heepid_endcap_NInnerLayerLostHits_max )
+         return false;
 
       if( ele->getUserRecord( "Dxy" ).toDouble() > m_ele_heepid_endcap_dxy_max )
          return false;
