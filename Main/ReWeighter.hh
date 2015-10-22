@@ -19,5 +19,6 @@ public:
 private:
    edm::LumiReWeighting m_LumiWeights;
    const bool m_useGenWeights;
+   const bool m_useREcoVertices;
    const bool m_usePileUpReWeighting;
 };

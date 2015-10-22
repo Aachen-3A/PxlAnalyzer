@@ -13,6 +13,7 @@ ReWeighter::ReWeighter( const Tools::MConfig &cutconfig  ) :
                   cutconfig.GetItem< std::string >( "Pileup.DataHistName", "pileup" )
                   ),
    m_useGenWeights( cutconfig.GetItem< bool >( "General.UseGeneratorWeights" ) ),
+   m_useREcoVertices( cutconfig.GetItem< bool >( "Pileup.UseRecoVertices" ) ),
    m_usePileUpReWeighting( cutconfig.GetItem< bool >( "Pileup.UsePileupReWeighting" ) )
 {
 }
@@ -20,12 +21,16 @@ ReWeighter::ReWeighter( const Tools::MConfig &cutconfig  ) :
 
 void ReWeighter::ReWeightEvent( pxl::Event* event) {
    pxl::EventView *GenEvtView = event->getObjectOwner().findObject< pxl::EventView >( "Gen" );
+   pxl::EventView *RecEvtView = event->getObjectOwner().findObject< pxl::EventView >( "Rec" );
 
    // Disable generator weights.
    if( not m_useGenWeights ) GenEvtView->setUserRecord( "Weight", 1.0 );
 
    if( m_usePileUpReWeighting ) {
-      float const numVerticesPUTrue = GenEvtView->getUserRecord( "NumVerticesPUTrue" );
+      float numVerticesPUTrue = GenEvtView->getUserRecord( "NumVerticesPUTrue" );
+      if(m_useREcoVertices){
+         numVerticesPUTrue = RecEvtView->getUserRecord( "NumVertices" );
+      }
 
       double const pileupWeight = m_LumiWeights.weight( numVerticesPUTrue );
 

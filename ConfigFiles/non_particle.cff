@@ -30,3 +30,5 @@ Pileup.DataHistFile = "$MUSIC_BASE/ConfigFiles/ConfigInputs/Data_PileUp_pxlCorr_
 Pileup.DataHistName = "pileup"
 Pileup.GenHistFile = "$MUSIC_BASE/ConfigFiles/ConfigInputs/MC_PileUp_SU12_S10.root"
 Pileup.GenHistName = "pileup"
+Pileup.UseRecoVertices = 1
+
