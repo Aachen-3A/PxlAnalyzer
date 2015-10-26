@@ -22,7 +22,7 @@ PV.Rho.max = 2
 PV.NDOF.min = 5
 
 # HCAL noise:
-HCAL.Noise.ID.use = 0
+HCAL.Noise.ID.use = 1
 HCAL.Noise.ID.name = "HCALNoisy"
 
 Pileup.UsePileupReWeighting = 0
