@@ -97,7 +97,7 @@ void specialAna::analyseEvent( const pxl::Event* event ) {
 
     for(uint i = 0; i < MuonList->size(); i++){
         if(MuonList->at(i)->getPt() < 25 or TMath::Abs(MuonList->at(i)->getEta()) > 2.1)continue;
-        if(Check_Muo_ID(MuonList->at(i))){
+        if(MuonList->at(i)->getUserRecord("IDpassed").asBool()){
             Fill_Particle_histos(2, MuonList->at(i));
         }
     }
@@ -231,30 +231,24 @@ bool specialAna::Check_Tau_ID(pxl::Particle* tau) {
     return passed;
 }
 
-bool specialAna::Check_Muo_ID(pxl::Particle* muon) {
-	bool passed = false;
-	muon->getUserRecord("isHighPtMuon").asBool() ? passed = true : passed = false;
-	return passed;
-}
+bool specialAna::TriggerSelector(const pxl::Event* event) {
+    bool triggered = false;
 
-bool specialAna::TriggerSelector(const pxl::Event* event){
-    bool triggered=false;
+    std::vector< std::string >  m_trigger_string;
+    m_trigger_string.push_back("HLT_HLT_Ele90_CaloIdVT_GsfTrkIdT");
+    m_trigger_string.push_back("HLT_Ele80_CaloIdVT_GsfTrkIdT");
+    m_trigger_string.push_back("HLT_Ele80_CaloIdVT_TrkIdT");
+    m_trigger_string.push_back("HLT_HLT_Mu40_v");
+    m_trigger_string.push_back("HLT_HLT_Mu50_v");
+    m_trigger_string.push_back("HLT_HLT_Mu40_eta2p1_v");
+    m_trigger_string.push_back("HLT_MonoCentralPFJet80");
 
-    pxl::UserRecords::const_iterator us = m_TrigEvtView->getUserRecords().begin();
-    for( ; us != m_TrigEvtView->getUserRecords().end(); ++us ) {
-        if (
-            string::npos != (*us).first.find( "HLT_HLT_Ele90_CaloIdVT_GsfTrkIdT") or
-            string::npos != (*us).first.find( "HLT_Ele80_CaloIdVT_GsfTrkIdT") or
-            string::npos != (*us).first.find( "HLT_Ele80_CaloIdVT_TrkIdT") or
-            //string::npos != (*us).first.find( "HLT_HLT_Ele27_WP80_v") or
-            string::npos != (*us).first.find( "HLT_HLT_Mu40_v") or
-            string::npos != (*us).first.find( "HLT_HLT_Mu40_eta2p1_v") or
-            //string::npos != (*us).first.find( "HLT_HLT_IsoMu30_v") or
-            string::npos != (*us).first.find( "HLT_MonoCentralPFJet80")
-        ){
-            triggered=(*us).second;
-            if(triggered){
-                break;
+    for (auto const it : m_trigger_string) {
+
+        for (auto us : m_TrigEvtView->getUserRecords()) {
+            if (std::string::npos != us.first.find(it)) {
+                triggered = true;
+                triggers.insert(us.first);
             }
         }
     }
@@ -373,20 +367,20 @@ void specialAna::endJob( const Serializable* ) {
     file1->cd();
     file1->mkdir("Taus");
     file1->cd("Taus/");
-    HistClass::WriteAll("_Tau_");
+    HistClass::WriteAll("Tau_");
     //HistClass::Write2("Tau_eta_phi");
     file1->cd();
     file1->mkdir("Muons");
     file1->cd("Muons/");
-    HistClass::WriteAll("_Muon_");
+    HistClass::WriteAll("Muon_");
     file1->cd();
     file1->mkdir("METs");
     file1->cd("METs/");
-    HistClass::WriteAll("_MET_");
+    HistClass::WriteAll("MET_");
     file1->cd();
     file1->mkdir("Eles");
     file1->cd("Eles/");
-    HistClass::WriteAll("_Ele_");
+    HistClass::WriteAll("Ele_");
     file1->cd();
     file1->mkdir("Trees");
     file1->cd("Trees/");
