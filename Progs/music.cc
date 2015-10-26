@@ -37,7 +37,7 @@
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
-//~ using namespace std;
+
 
 namespace
 {
@@ -376,10 +376,10 @@ int main( int argc, char* argv[] ) {
          }
 
          if( runOnData ){
-            // Write B Tag Info
-            if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
             //for data we just need to run the selection
             Selector.performSelection(RecEvtView, TrigEvtView, FilterView);
+            // Write B Tag Info
+            if( bJetUse )  TypeWriter.writeJetTypes(RecEvtView);
          } else {
             // Don't do this on data, haha! And also not for special Ana hoho
             if (usePDF){
@@ -387,12 +387,6 @@ int main( int argc, char* argv[] ) {
             }
             reweighter.ReWeightEvent( event_ptr );
             pxl::EventView* GenEvtView = event_ptr->getObjectOwner().findObject<pxl::EventView>("Gen");
-
-            // Write B Tag Info
-            if( bJetUse ){
-                TypeWriter.writeJetTypes(RecEvtView);
-                TypeWriter.writeJetTypes(GenEvtView);
-            }
 
             Selector.preSynchronizeGenRec( GenEvtView, RecEvtView );
 
@@ -435,6 +429,12 @@ int main( int argc, char* argv[] ) {
                // Apply cuts, remove duplicates, recalculate Event Class, perform >= 1 lepton cut, redo matching, set index:
                if(selectGen) Selector.performSelection(GenEvtView, TrigEvtView, FilterView );
                Selector.performSelection(RecEvtView, TrigEvtView, FilterView );
+
+               // Write B Tag Info
+                if( bJetUse ){
+                    TypeWriter.writeJetTypes(RecEvtView);
+                    TypeWriter.writeJetTypes(GenEvtView);
+                }
             } catch( Tools::unsorted_error &exc ) {
                std::cerr << "[WARNING] (main): ";
                std::cerr << "Found unsorted particle in event no. " << e << ". ";

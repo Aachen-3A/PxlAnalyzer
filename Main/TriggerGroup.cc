@@ -237,17 +237,20 @@ TriggerGroup::TriggerResults TriggerGroup::getTriggerResults( pxl::EventView con
 
    bool any_trigger_found = false;
 
-   for( Triggers::const_iterator trigger = m_triggers.begin(); trigger != m_triggers.end(); ++trigger ) {
-      string const triggerName = m_triggerPrefix + *trigger;
-      try{
-         if( triggerEvtView->hasUserRecord( triggerName ) ){
-             triggerResults[ triggerName ] = true;
-             any_trigger_found = true;
-         }else{
-             triggerResults[ triggerName ] = false;
-        }
-      } catch( std::runtime_error &exc ) {
-         std::cout << "Weird try catch in getTriggerResults in TriggerGroup.cc" << std::endl;
+   if ( (*m_triggers.begin()) != "" ) {
+      for( Triggers::const_iterator trigger = m_triggers.begin(); trigger != m_triggers.end(); ++trigger ) {
+         string const triggerName = *trigger;
+         try{
+            string userRecord = triggerEvtView->getUserRecords().toString();
+            if( userRecord.find( triggerName ) != std::string::npos ){
+                triggerResults[ triggerName ] = true;
+                any_trigger_found = true;
+            }else{
+                triggerResults[ triggerName ] = false;
+           }
+         } catch( std::runtime_error &exc ) {
+            std::cout << "Weird try catch in getTriggerResults in TriggerGroup.cc" << std::endl;
+         }
       }
    }
 

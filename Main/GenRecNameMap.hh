@@ -22,25 +22,7 @@ class GenRecNameMap {
       typedef NameMap::const_iterator const_iterator;
 
       GenRecNameMap( Tools::MConfig const &cfg ) :
-         m_muo_type_gen( cfg.GetItem< std::string >( "Muon.Type.Gen" ) ),
-         m_muo_type_rec( cfg.GetItem< std::string >( "Muon.Type.Rec" ) ),
-
-         m_ele_type_gen( cfg.GetItem< std::string >( "Ele.Type.Gen" ) ),
-         m_ele_type_rec( cfg.GetItem< std::string >( "Ele.Type.Rec" ) ),
-
-         m_tau_type_gen( cfg.GetItem< std::string >( "Tau.Type.Gen" ) ),
-         m_tau_type_rec( cfg.GetItem< std::string >( "Tau.Type.Rec" ) ),
-
-         m_gam_type_gen( cfg.GetItem< std::string >( "Gamma.Type.Gen" ) ),
-         m_gam_type_rec( cfg.GetItem< std::string >( "Gamma.Type.Rec" ) ),
-
-         m_jet_type_gen( cfg.GetItem< std::string >( "Jet.Type.Gen" ) ),
-         m_jet_type_rec( cfg.GetItem< std::string >( "Jet.Type.Rec" ) ),
-
-         m_met_type_gen( cfg.GetItem< std::string >( "MET.Type.Gen" ) ),
-         m_met_type_rec( cfg.GetItem< std::string >( "MET.Type.Rec" ) ),
-
-         m_gen_rec_map( initNameMap() )
+         m_gen_rec_map( initNameMap( cfg ) )
       {}
 
       GenRecNamePair const &get( std::string const &object ) const {
@@ -58,36 +40,25 @@ class GenRecNameMap {
       const_iterator end() const { return m_gen_rec_map.end(); }
 
    private:
-      NameMap const initNameMap() const {
+      NameMap const initNameMap( Tools::MConfig const &cfg ) const {
          NameMap GenRecMap;
-         GenRecMap[ "Muon" ] = GenRecNamePair( m_muo_type_gen, m_muo_type_rec );
-         GenRecMap[ "Ele" ] = GenRecNamePair( m_ele_type_gen, m_ele_type_rec );
-         GenRecMap[ "Tau" ] = GenRecNamePair( m_tau_type_gen, m_tau_type_rec );
-         GenRecMap[ "Gamma" ] = GenRecNamePair( m_gam_type_gen, m_gam_type_rec );
-         GenRecMap[ "Jet" ] = GenRecNamePair( m_jet_type_gen, m_jet_type_rec );
-         GenRecMap[ "MET" ] = GenRecNamePair( m_met_type_gen, m_met_type_rec );
+         std::string genName;
+         std::string recName;
+         for( auto partName : Tools::getParticleTypeAbbreviations() ){
+            if( partName == "b" ){
+               genName = cfg.GetItem< std::string >( "Jet.BJets.Type.Gen" );
+               recName = cfg.GetItem< std::string >( "Jet.BJets.Type.Ren" );
+            }else{
+               genName = cfg.GetItem< std::string >( partName + ".Type.Gen" );
+               recName = cfg.GetItem< std::string >( partName + ".Type.Rec" );
+            }
+            GenRecMap[ partName ] = GenRecNamePair( genName, recName );
+         }
 
          return GenRecMap;
       }
 
-      std::string const m_muo_type_gen;
-      std::string const m_muo_type_rec;
-
-      std::string const m_ele_type_gen;
-      std::string const m_ele_type_rec;
-
-      std::string const m_tau_type_gen;
-      std::string const m_tau_type_rec;
-
-      std::string const m_gam_type_gen;
-      std::string const m_gam_type_rec;
-
-      std::string const m_jet_type_gen;
-      std::string const m_jet_type_rec;
-
-      std::string const m_met_type_gen;
       std::string const m_met_type_rec;
-
       NameMap const m_gen_rec_map;
 };
 

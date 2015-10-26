@@ -29,6 +29,7 @@ class JetTypeWriter {
 
       // bJet specific
       std::string const 	 m_bJet_algo;			            // What criterion do we check?
+      bool const            m_bJet_separate;                 // Flag if the name of the particle is changed from m_rec_map["Jet"] to m_rec_map["B"]
       float const           m_bJet_discriminatorThreshold;	// What threshold is used?
       std::string const 	 m_bJet_userRecordKey;		      // Which UserRecord do we write to?
       std::string const 	 m_bJet_gen_FlavourAlgo;		   // What generator information to use?

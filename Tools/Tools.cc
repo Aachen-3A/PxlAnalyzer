@@ -52,7 +52,7 @@ std::string Tools::random_string( size_t length )
     return str;
 }
 
-std::vector< std::string > Tools::getParticleTypeAbbreviations() {
+std::vector< std::string > Tools::getParticleTypeAbbreviations( bool useBJet ) {
     std::vector< std::string > partList;
     partList.push_back("Ele");
     partList.push_back("Muon");
@@ -60,5 +60,6 @@ std::vector< std::string > Tools::getParticleTypeAbbreviations() {
     partList.push_back("Gamma");
     partList.push_back("Jet");
     partList.push_back("MET");
+    if(useBJet)partList.push_back("b");
     return partList;
 }

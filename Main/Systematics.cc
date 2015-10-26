@@ -61,7 +61,7 @@ Systematics::Systematics(const Tools::MConfig &cfg, unsigned int const debug):
                                         funcKey) != availableFunctions.end());
          if(isAvailable){
             SystematicsInfo *thisSystematic =
-               new SystematicsInfo( partType, systType, funcKey, false);
+               new SystematicsInfo( partType, systType, funcKey );
             m_activeSystematics.push_back( thisSystematic );
          }else{
             std::cout << "Systematic type " << systType
@@ -89,7 +89,7 @@ Systematics::~Systematics(){
 void Systematics::createShiftedViews(){
    for(auto syst : m_activeSystematics){
       m_activeSystematic = syst;
-      systFuncMap[ syst->m_funcKey ] ();
+      if( syst->m_isDifferential ) systFuncMap[ syst->m_funcKey ] ();
    }
 }
 
@@ -482,8 +482,12 @@ void Systematics::createFullViews(  pxl::EventView* baseEvtView ){
 
             std::vector< pxl::Particle* > AllParticlessShifted;
             systEvtView->getObjectsOfType< pxl::Particle >( AllParticlessShifted );
+
+            bool delPart;
+
             // search and replace shifted particle by persistent id
             for( auto & part : AllParticles){
+                delPart = false;
                 // only particles related to a shifted particle have a persistent ID
                 // and need to be replaced.
                 for( auto& partShifted : AllParticlessShifted){
@@ -491,11 +495,13 @@ void Systematics::createFullViews(  pxl::EventView* baseEvtView ){
                         partShifted->getUserRecord("persistent_id") == part->getUserRecord("persistent_id") ){
                         // delte original part and replace it with shifted one
                         //~ delete part;
-                        fullShiftedEvtView->removeObject(part);
+                        delPart = true;
                         fullShiftedEvtView->getObjectOwner().create< pxl::Particle >(partShifted);
                     }
                 }
+                if (delPart) fullShiftedEvtView->removeObject(part);
             }
+
             m_event->removeObject( systEvtView );
             success = m_event->getObjectOwner().setIndexEntry( shiftedName,   fullShiftedEvtView);
             fullShiftedEvtView->setName(shiftedName);
